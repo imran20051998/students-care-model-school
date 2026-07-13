@@ -1,0 +1,529 @@
+import express, { Request, Response, NextFunction } from "express";
+import path from "path";
+import fs from "fs";
+import multer from "multer";
+import { createServer as createViteServer } from "vite";
+
+// Set up directory paths
+const UPLOADS_DIR = path.join(process.cwd(), "uploads");
+const DB_FILE = path.join(process.cwd(), "db_store.json");
+
+// Ensure uploads directory exists
+if (!fs.existsSync(UPLOADS_DIR)) {
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+}
+
+// Multer storage configuration
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, UPLOADS_DIR);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    const ext = path.extname(file.originalname).toLowerCase();
+    cb(null, file.fieldname + "-" + uniqueSuffix + ext);
+  },
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only JPEG, PNG, JPG, and WEBP image formats are allowed"));
+    }
+  },
+});
+
+// Mock database structures
+interface SchoolSettings {
+  siteNameBn: string;
+  siteNameEn: string;
+  addressBn: string;
+  addressEn: string;
+  eiin: string;
+  foundedYear: string;
+  helpline: string;
+  email: string;
+  website: string;
+  bannerColor: string;
+  bannerFontSize: number;
+  bannerGradient: boolean;
+  logoUrl: string;
+}
+
+interface Student {
+  sl: number;
+  photo: string;
+  roll: string;
+  name: string;
+  class: string;
+  section: string;
+  guardian: string;
+  phone: string;
+  created_at: string;
+}
+
+interface DatabaseStore {
+  settings: SchoolSettings;
+  slider: any[] | null;
+  students: Student[];
+}
+
+const DEFAULT_SETTINGS: SchoolSettings = {
+  siteNameBn: "স্টুডেন্টস কেয়ার মডেল স্কুল",
+  siteNameEn: "Students Care Model School",
+  addressBn: "কর্ণফুলী, চট্টগ্রাম",
+  addressEn: "Karnafuli, Chattogram",
+  eiin: "134256",
+  foundedYear: "২০১৫",
+  helpline: "01812-345678",
+  email: "info@studentscaremodel.edu.bd",
+  website: "www.studentscaremodel.edu.bd",
+  bannerColor: "#025644",
+  bannerFontSize: 32,
+  bannerGradient: true,
+  logoUrl: "",
+};
+
+const INITIAL_STUDENTS: Student[] = [
+  {
+    sl: 1024,
+    photo: "",
+    roll: "12",
+    name: "Aarav Hossain",
+    class: "Class VIII",
+    section: "A",
+    guardian: "Rashid Hossain",
+    phone: "01711223344",
+    created_at: new Date().toISOString(),
+  },
+  {
+    sl: 1025,
+    photo: "",
+    roll: "05",
+    name: "Maya Rahman",
+    class: "Class VI",
+    section: "B",
+    guardian: "Sumi Rahman",
+    phone: "01712998877",
+    created_at: new Date().toISOString(),
+  },
+  {
+    sl: 1026,
+    photo: "",
+    roll: "18",
+    name: "Tanvir Ahmed",
+    class: "Class IX",
+    section: "A",
+    guardian: "Karim Ahmed",
+    phone: "01718554433",
+    created_at: new Date().toISOString(),
+  },
+  {
+    sl: 1027,
+    photo: "",
+    roll: "22",
+    name: "Nadia Islam",
+    class: "Class VII",
+    section: "C",
+    guardian: "Lipi Islam",
+    phone: "01719112233",
+    created_at: new Date().toISOString(),
+  },
+];
+
+// Read database or initialize
+function getDb(): DatabaseStore {
+  if (fs.existsSync(DB_FILE)) {
+    try {
+      return JSON.parse(fs.readFileSync(DB_FILE, "utf-8"));
+    } catch (e) {
+      console.error("Error parsing db_store.json, resetting to defaults", e);
+    }
+  }
+  const initialDb: DatabaseStore = {
+    settings: DEFAULT_SETTINGS,
+    slider: null,
+    students: INITIAL_STUDENTS,
+  };
+  saveDb(initialDb);
+  return initialDb;
+}
+
+function saveDb(db: DatabaseStore) {
+  fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), "utf-8");
+}
+
+async function startServer() {
+  const app = express();
+  const PORT = 3000;
+
+  // Middlewares
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
+
+  // Serve static uploads
+  app.use("/uploads", express.static(UPLOADS_DIR));
+  app.use("/php_backend/uploads", express.static(UPLOADS_DIR));
+  app.use("/public/php_backend/uploads", express.static(UPLOADS_DIR));
+
+  // CORS headers
+  app.use((req, res, next) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, X-Requested-With, Authorization");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    if (req.method === "OPTIONS") {
+      res.sendStatus(200);
+      return;
+    }
+    next();
+  });
+
+  // ==========================================
+  // API Routes representing PHP Endpoints
+  // ==========================================
+
+  // 1. Get Settings & Banner (get_banner.php)
+  const getBannerHandler = (req: Request, res: Response) => {
+    const db = getDb();
+    res.json({
+      status: "success",
+      settings: db.settings,
+      slider: db.slider,
+    });
+  };
+  app.get("/php_backend/get_banner.php", getBannerHandler);
+  app.get("/public/php_backend/get_banner.php", getBannerHandler);
+
+  // 2. Save Settings & Banner (save_banner.php)
+  const saveBannerHandler = (req: Request, res: Response) => {
+    upload.single("logo")(req, res, (err) => {
+      if (err) {
+        return res.status(400).json({ status: "error", message: err.message });
+      }
+
+      const db = getDb();
+      const body = req.body;
+
+      let logoUrl = db.settings.logoUrl;
+      if (req.file) {
+        logoUrl = "php_backend/uploads/" + req.file.filename;
+      } else if (body.logoUrl !== undefined) {
+        logoUrl = body.logoUrl;
+      }
+
+      db.settings = {
+        siteNameBn: body.siteNameBn || db.settings.siteNameBn,
+        siteNameEn: body.siteNameEn || db.settings.siteNameEn,
+        addressBn: body.addressBn || db.settings.addressBn,
+        addressEn: body.addressEn || db.settings.addressEn,
+        eiin: body.eiin || db.settings.eiin,
+        foundedYear: body.foundedYear || db.settings.foundedYear,
+        helpline: body.helpline || db.settings.helpline,
+        email: body.email || db.settings.email,
+        website: body.website || db.settings.website,
+        bannerColor: body.bannerColor || db.settings.bannerColor,
+        bannerFontSize: body.bannerFontSize ? parseInt(body.bannerFontSize, 10) : db.settings.bannerFontSize,
+        bannerGradient: body.bannerGradient === "true" || body.bannerGradient === "1" || body.bannerGradient === true,
+        logoUrl,
+      };
+
+      saveDb(db);
+
+      res.json({
+        status: "success",
+        message: "Settings and banner parameters saved successfully!",
+        settings: db.settings,
+      });
+    });
+  };
+  app.post("/php_backend/save_banner.php", saveBannerHandler);
+  app.post("/public/php_backend/save_banner.php", saveBannerHandler);
+
+  // 3. Save Slider (save_slider.php)
+  const saveSliderHandler = (req: Request, res: Response) => {
+    const db = getDb();
+    let sliderJson = req.body.slider;
+
+    if (!sliderJson && req.body) {
+      if (req.body.slider !== undefined) {
+        sliderJson = req.body.slider;
+      } else if (Array.isArray(req.body)) {
+        sliderJson = req.body;
+      }
+    }
+
+    if (typeof sliderJson === "string") {
+      try {
+        db.slider = JSON.parse(sliderJson);
+      } catch (e) {
+        return res.status(400).json({ status: "error", message: "Invalid slider JSON format" });
+      }
+    } else if (Array.isArray(sliderJson)) {
+      db.slider = sliderJson;
+    } else if (sliderJson) {
+      db.slider = [sliderJson];
+    }
+
+    saveDb(db);
+
+    res.json({
+      status: "success",
+      message: "Slider parameters saved successfully!",
+      slider: db.slider,
+    });
+  };
+  app.post("/php_backend/save_slider.php", saveSliderHandler);
+  app.post("/public/php_backend/save_slider.php", saveSliderHandler);
+
+  // 4. Insert Student (insert.php)
+  const insertStudentHandler = (req: Request, res: Response) => {
+    upload.single("photo")(req, res, (err) => {
+      if (err) {
+        return res.status(400).json({ status: "error", message: err.message });
+      }
+
+      const body = req.body;
+      const roll = body.roll;
+      const name = body.name;
+      const className = body.class;
+      const section = body.section || "A";
+      const guardian = body.guardian || "N/A";
+      const phone = body.phone;
+
+      if (!roll || !name || !className || !phone) {
+        return res.status(400).json({
+          status: "error",
+          message: "Validation Failed: Roll, Name, Class, and Phone Number are mandatory.",
+        });
+      }
+
+      const db = getDb();
+
+      // Check duplicate in same class
+      const exists = db.students.some(
+        (s) => s.class.toLowerCase() === className.toLowerCase() && s.roll === roll
+      );
+
+      if (exists) {
+        return res.status(400).json({
+          status: "error",
+          message: "Integrity constraint violation: This roll number is already taken in this class.",
+        });
+      }
+
+      let photoPath = "";
+      if (req.file) {
+        photoPath = "uploads/" + req.file.filename;
+      }
+
+      const newStudent: Student = {
+        sl: db.students.length > 0 ? Math.max(...db.students.map((s) => s.sl)) + 1 : 1001,
+        photo: photoPath,
+        roll,
+        name,
+        class: className,
+        section,
+        guardian,
+        phone,
+        created_at: new Date().toISOString(),
+      };
+
+      db.students.push(newStudent);
+      saveDb(db);
+
+      res.status(201).json({
+        status: "success",
+        message: "Student record has been successfully inserted into the database table!",
+        student: {
+          name: newStudent.name,
+          roll: newStudent.roll,
+          class: newStudent.class,
+          section: newStudent.section,
+          photo: newStudent.photo || "No Photo Uploaded",
+        },
+      });
+    });
+  };
+  app.post("/insert.php", insertStudentHandler);
+  app.post("/php_backend/insert.php", insertStudentHandler);
+  app.post("/public/php_backend/insert.php", insertStudentHandler);
+
+  // 5. Get Students List (get_students.php)
+  const getStudentsHandler = (req: Request, res: Response) => {
+    const db = getDb();
+    const classFilter = req.query.class as string;
+    const sectionFilter = req.query.section as string;
+    const searchFilter = req.query.search as string;
+
+    let filtered = [...db.students];
+
+    if (classFilter) {
+      filtered = filtered.filter((s) => s.class.toLowerCase() === classFilter.toLowerCase());
+    }
+    if (sectionFilter) {
+      filtered = filtered.filter((s) => s.section.toLowerCase() === sectionFilter.toLowerCase());
+    }
+    if (searchFilter) {
+      const q = searchFilter.toLowerCase();
+      filtered = filtered.filter(
+        (s) =>
+          s.name.toLowerCase().includes(q) ||
+          s.roll.toLowerCase().includes(q) ||
+          s.phone.toLowerCase().includes(q)
+      );
+    }
+
+    res.json({
+      status: "success",
+      count: filtered.length,
+      students: filtered,
+    });
+  };
+  app.get("/php_backend/get_students.php", getStudentsHandler);
+  app.get("/public/php_backend/get_students.php", getStudentsHandler);
+
+  // 6. Student Login (login.php)
+  const loginHandler = (req: Request, res: Response) => {
+    const db = getDb();
+    const body = req.body;
+
+    const username = body.username ? body.username.trim() : "";
+    const password = body.password ? body.password.trim() : "";
+    const className = body.class ? body.class.trim() : "";
+    const roll = body.roll ? body.roll.trim() : "";
+    const phone = body.phone ? body.phone.trim() : "";
+
+    // Admin check
+    if (username === "admin" && (password === "admin123" || password === "admin")) {
+      return res.json({
+        status: "success",
+        role: "admin",
+        message: "Admin successfully authenticated!",
+        user: {
+          name: "Administrator",
+          username: "admin",
+          role: "admin",
+        },
+      });
+    }
+
+    // Student Check
+    if (className && roll && phone) {
+      const student = db.students.find(
+        (s) =>
+          s.class.toLowerCase() === className.toLowerCase() &&
+          s.roll === roll &&
+          s.phone === phone
+      );
+
+      if (student) {
+        return res.json({
+          status: "success",
+          role: "student",
+          message: "Student successfully authenticated!",
+          student: {
+            sl: student.sl,
+            roll: student.roll,
+            name: student.name,
+            class: student.class,
+            section: student.section,
+            photo: student.photo,
+          },
+        });
+      } else {
+        return res.status(401).json({
+          status: "error",
+          message: "Authentication failed: Invalid Class, Roll, or Phone Number combinations.",
+        });
+      }
+    }
+
+    res.status(400).json({
+      status: "error",
+      message: "Bad Request: Please provide admin or student login details.",
+    });
+  };
+  app.post("/php_backend/login.php", loginHandler);
+  app.post("/public/php_backend/login.php", loginHandler);
+
+  // 7. Reset Student Password/Phone (reset_password.php)
+  const resetPasswordHandler = (req: Request, res: Response) => {
+    const db = getDb();
+    const body = req.body;
+
+    const roll = body.roll ? body.roll.trim() : "";
+    const className = body.class ? body.class.trim() : "";
+    const phone = body.phone ? body.phone.trim() : "";
+    const newPhone = body.new_phone ? body.new_phone.trim() : "";
+
+    if (!roll || !className || !phone) {
+      return res.status(400).json({
+        status: "error",
+        message: "Validation Failed: Roll, Class, and Current Phone are required.",
+      });
+    }
+
+    const studentIndex = db.students.findIndex(
+      (s) =>
+        s.class.toLowerCase() === className.toLowerCase() &&
+        s.roll === roll &&
+        s.phone === phone
+    );
+
+    if (studentIndex === -1) {
+      return res.status(404).json({
+        status: "error",
+        message: "Verification failed: Student record matching these details was not found.",
+      });
+    }
+
+    if (!newPhone) {
+      return res.json({
+        status: "success",
+        message: "Student identity verified successfully.",
+        student: {
+          name: db.students[studentIndex].name,
+        },
+      });
+    }
+
+    db.students[studentIndex].phone = newPhone;
+    saveDb(db);
+
+    res.json({
+      status: "success",
+      message: "Student phone contact details successfully updated in the database!",
+    });
+  };
+  app.post("/php_backend/reset_password.php", resetPasswordHandler);
+  app.post("/public/php_backend/reset_password.php", resetPasswordHandler);
+
+
+  // Vite middleware for development
+  if (process.env.NODE_ENV !== "production") {
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: "spa",
+    });
+    app.use(vite.middlewares);
+  } else {
+    const distPath = path.join(process.cwd(), "dist");
+    app.use(express.static(distPath));
+    app.get("*", (req: Request, res: Response) => {
+      res.sendFile(path.join(distPath, "index.html"));
+    });
+  }
+
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Server running on http://0.0.0.0:${PORT}`);
+  });
+}
+
+startServer().catch((err) => {
+  console.error("Failed to start fullstack server:", err);
+});
