@@ -142,7 +142,7 @@ interface StudentPortalProps {
 export default function StudentPortal({ lang: propLang, onBackToHome }: StudentPortalProps) {
   // Local dynamic language state
   const [lang, setLang] = useState<'bn' | 'en'>(() => {
-    return (localStorage.getItem('portal_lang') as 'bn' | 'en') || 'en';
+    return (localStorage.getItem('portal_lang') as 'bn' | 'en') || propLang || 'bn';
   });
 
   useEffect(() => {
