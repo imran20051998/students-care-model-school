@@ -4454,12 +4454,15 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
             </div>
 
             {/* Custom Interactive Technical Maintenance Credit */}
-            <div className="hidden lg:flex bg-emerald-50/50 border border-emerald-100/60 px-4 py-1.5 rounded-full overflow-hidden w-96 select-none items-center">
-              <p className="animate-marquee text-[11px] text-emerald-800 font-extrabold leading-tight whitespace-nowrap">
-                🔧 {lang === 'bn' 
-                  ? 'সফটওয়্যার তৈরি ও রক্ষণাবেক্ষণে: মো. ইমরান হোসেন, সিনিয়র শিক্ষক, স্টুডেন্টস কেয়ার মডেল স্কুল (01814913049)' 
-                  : 'Software Development & Maintenance: Md. Imran Hosen, Senior Teacher, Students Care Model School (01814913049)'}
-              </p>
+            <div className="hidden lg:flex bg-gradient-to-r from-emerald-950 via-[#025644] to-[#005c53] border border-emerald-500/40 px-4 py-2 rounded-full overflow-hidden w-[480px] select-none items-center gap-2.5 shadow-md">
+              <span className="shrink-0 flex items-center justify-center bg-emerald-800/90 p-1.5 rounded-full text-amber-300 shadow-sm animate-pulse">
+                🔧
+              </span>
+              <div className="grow overflow-hidden relative">
+                <p className="animate-marquee text-xs text-white font-black tracking-wide whitespace-nowrap">
+                  সফটওয়্যার তৈরি ও রক্ষণাবেক্ষণে: মো. ইমরান হোসেন, সিনিয়র শিক্ষক, স্টুডেন্টস কেয়ার মডেল স্কুল (01814913049)
+                </p>
+              </div>
             </div>
 
             {/* Right Side Info Badges */}
