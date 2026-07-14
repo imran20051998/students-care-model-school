@@ -13685,22 +13685,25 @@ async function buildAttendanceExcelSheet(monthName, className, section, students
 
                     setStudents(prev => [newStudent, ...prev]);
 
-                    // Send POST request to https://studentscaremodelschool.com/insert.php using FormData
-                    const fd = new FormData();
-                    fd.append('roll', addStudentForm.rollNumber);
-                    fd.append('name', addStudentForm.fullName);
-                    fd.append('class', addStudentForm.className);
-                    fd.append('section', addStudentForm.section);
-                    fd.append('guardian', addStudentForm.guardianName || addStudentForm.fatherName || 'Parent / Guardian');
-                    fd.append('phone', addStudentForm.guardianMobile);
-                    if (studentPhotoFile) {
-                      fd.append('photo', studentPhotoFile);
-                    }
+                    // Send POST request to PHP Backend using FormData
+        const fd = new FormData();
+        fd.append('student_name', addStudentForm.fullName);
+        fd.append('class_name', addStudentForm.className);
+        fd.append('section', addStudentForm.section);
+        fd.append('roll', addStudentForm.rollNumber);
+        fd.append('phone_number', addStudentForm.guardianMobile);
+        fd.append('father_name', addStudentForm.fatherName || '');
+        fd.append('mother_name', addStudentForm.guardianName || '');
+        fd.append('student_address', 'Bangladesh');
+        
+        if (studentPhotoFile) {
+            fd.append('student_image', studentPhotoFile);
+        }
 
-                    fetch('/insert.php', {
-                      method: 'POST',
-                      body: fd
-                    })
+        fetch('/php_backend/insert.php', {
+            method: 'POST',
+            body: fd
+        })
                     .then(res => {
                       if (!res.ok) {
                         console.warn('Backend insert.php returned non-OK status');
