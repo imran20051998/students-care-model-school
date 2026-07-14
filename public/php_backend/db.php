@@ -8,7 +8,7 @@
 $host     = 'localhost';
 $dbname   = 'u398502275_StudentData';
 $username = 'u398502275_studentdata';
-$password = '';
+$password = 'Cisfa1998$#@';
 
 try {
     // Create PDO connection with secure attributes
