@@ -9,6 +9,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $phone_number    = $_POST['phone_number'];
     $father_name     = $_POST['father_name'];
     $mother_name     = $_POST['mother_name'];
+    $section = $_POST['section'] ?? ''; // ফর্মের সেকশন ইনপুট
+    $roll    = $_POST['roll'] ?? '';    // ফর্মের রোল ইনপুট (যেমন: 03, 12)
     $student_address = $_POST['student_address'];
 
     try {
@@ -55,17 +57,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // ছবি নির্দিষ্ট ফোল্ডারে মুভ করা
     if (move_uploaded_file($image_tmp, $target_file)) {
         try {
-            // SQL Query প্রস্তুত করা
-            $sql = "INSERT INTO students (student_name, roll_number, class_name, phone_number, father_name, mother_name, student_address, student_image) 
-                    VALUES (:student_name, :roll_number, :class_name, :phone_number, :father_name, :mother_name, :student_address, :student_image)";
+            // SQL Query প্রস্তুত করা (section এবং roll কলাম যুক্ত করা হয়েছে)
+            $sql = "INSERT INTO students (student_name, roll_number, class_name, section, roll, phone_number, father_name, mother_name, student_address, student_image) 
+                    VALUES (:student_name, :roll_number, :class_name, :section, :roll, :phone_number, :father_name, :mother_name, :student_address, :student_image)";
             
             $stmt = $pdo->prepare($sql);
             
             // ডাটা বাইন্ড করে এক্সিকিউট করা
             $stmt->execute([
                 ':student_name'    => $student_name,
-                ':roll_number'     => $roll_number,
+                ':roll_number'     => $roll_number, // এটি আপনার STD-1024 আইডি হিসেবে জমা হবে
                 ':class_name'      => $class_name,
+                ':section'         => $section,      // নতুন যুক্ত করা হলো
+                ':roll'            => $roll,         // নতুন যুক্ত করা হলো
                 ':phone_number'    => $phone_number,
                 ':father_name'     => $father_name,
                 ':mother_name'     => $mother_name,
