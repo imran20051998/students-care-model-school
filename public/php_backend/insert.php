@@ -5,12 +5,29 @@ require 'db.php';
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // ফর্ম থেকে ডাটা নেওয়া
     $student_name    = $_POST['student_name'];
-    $roll_number     = $_POST['roll_number'];
     $class_name      = $_POST['class_name'];
     $phone_number    = $_POST['phone_number'];
     $father_name     = $_POST['father_name'];
     $mother_name     = $_POST['mother_name'];
     $student_address = $_POST['student_address'];
+
+    try {
+        // সর্বশেষ স্টুডেন্টের আইডি বের করে নতুন আইডি জেনারেট করা (যেমন: STD-1024)
+        $id_query = $pdo->query("SELECT roll_number FROM students WHERE roll_number LIKE 'STD-%' ORDER BY id DESC LIMIT 1");
+        $last_student = $id_query->fetch();
+
+        if ($last_student) {
+            $last_number = (int)str_replace('STD-', '', $last_student['roll_number']);
+            $next_number = $last_number + 1;
+        } else {
+            $next_number = 1001; 
+        }
+        
+        $roll_number = 'STD-' . $next_number; 
+
+    } catch (PDOException $e) {
+        die("আইডি জেনারেশন এরর: " . $e->getMessage());
+    }
 
     // ছবির ইনফরমেশন
     $image_name = $_FILES['student_image']['name'];
@@ -20,16 +37,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // লাইভ সার্ভারের সঠিক পাথ নির্ধারণ
     $upload_dir = __DIR__ . '/uploads/';
 
-    // যদি কোনো কারণে সার্ভারে ফোল্ডার না থাকে বা পারমিশন না থাকে, তবে তৈরি ও পারমিশন সেট করবে
+    // গিটহাব থেকে আসা ফোল্ডারের পারমিশন কোড থেকে ফোর্সমডিফাই করা (0777)
     if (!is_dir($upload_dir)) {
-        mkdir($upload_dir, 0755, true);
+        mkdir($upload_dir, 0777, true);
+    } else {
+        chmod($upload_dir, 0777); // ফোল্ডার অলরেডি থাকলে তার পারমিশন 777 করে দেবে
     }
 
     // ছবির একটি ইউনিক নাম তৈরি করা
     $unique_image_name = time() . '_' . preg_replace("/[^a-zA-Z0-9.]/", "_", $image_name);
     $target_file = $upload_dir . $unique_image_name;
 
-    // ফর্ম আপলোডে কোনো ইন্টারনাল এরর আছে কিনা চেক করা
     if ($image_error !== UPLOAD_ERR_OK) {
         die("PHP Image Upload Error Code: " . $image_error);
     }
@@ -55,18 +73,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 ':student_image'   => $unique_image_name
             ]);
 
-            // সফল হলে অ্যালার্ট দিয়ে রিডাইরেক্ট
-            echo "<script>alert('স্টুডেন্ট ডাটা সফলভাবে যোগ করা হয়েছে!'); window.location.href='students.php';</script>";
+            echo "<script>alert('স্টুডেন্ট ডাটা সফলভাবে যোগ করা হয়েছে! আইডি: $roll_number'); window.location.href='students.php';</script>";
             
         } catch (PDOException $e) {
             die("ডাটাবেজ এরর: " . $e->getMessage());
         }
     } else {
-        // এবার যদি আপলোড না হয়, তবে সার্ভারের আসল সমস্যাটি এখানে প্রিন্ট হবে
         $last_error = error_get_last();
         echo "<h3>ছবি আপলোড করতে সমস্যা হয়েছে!</h3>";
-        echo "লোকাল পাথ ট্রাই করা হয়েছিল: " . $target_file . "<br>";
-        echo "সার্ভার মেসেজ: " . ($last_error ? $last_error['message'] : 'ফোল্ডার পারমিশন (Permission 755) ইস্যু হতে পারে।');
+        echo "সার্ভার মেসেজ: " . ($last_error ? $last_error['message'] : 'পারমিশন ইস্যু।');
     }
 }
 ?>
