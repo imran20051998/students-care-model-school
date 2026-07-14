@@ -1,7 +1,6 @@
 <?php
 // ১. ডাটাবেজ কানেকশন ফাইলটি যুক্ত করা
-require_back 'db.php'; 
-
+require 'db.php';
 try {
     // ২. স্টুডেন্ট ডাটা তুলে আনার জন্য SQL Query (ধরে নিচ্ছি আপনার টেবিলের নাম 'students')
     $sql = "SELECT * FROM students";
