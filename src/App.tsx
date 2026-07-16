@@ -957,6 +957,32 @@ export default function App() {
                   {/* Left Column (Main Content - lg:col-span-8) */}
                   <div className="lg:col-span-8 space-y-6">
                     {(() => {
+                      const defaultFeatures = [
+                        { id: '1', titleBn: 'মানসম্মত শিক্ষা', titleEn: 'Quality Education', descBn: 'আধুনিক কারিকুলাম ও নৈতিক শিক্ষার সমন্বয়।', descEn: 'Blending state curricula with ethical grooming.', icon: 'GraduationCap', color: 'emerald', order: 1, status: 'active' },
+                        { id: '2', titleBn: 'নিরাপদ ক্যাম্পাস', titleEn: 'Safe Campus', descBn: 'সিসিটিভি দ্বারা নিয়ন্ত্রিত সুরক্ষিত ক্যাম্পাস।', descEn: 'Fully secured under 24/7 camera monitoring.', icon: 'ShieldCheck', color: 'rose', order: 2, status: 'active' },
+                        { id: '3', titleBn: 'সহশিক্ষা কার্যক্রম', titleEn: 'Co-curricular Activities', descBn: 'ডিবেট, স্পোর্টস ও সাংস্কৃতিক চর্চা।', descEn: 'Promoting debate, scout, arts, and athletics.', icon: 'Sparkles', color: 'sky', order: 3, status: 'active' }
+                      ];
+
+                      const coreFeatures = (frontendData?.features && frontendData.features.length > 0)
+                        ? frontendData.features
+                        : defaultFeatures;
+
+                      const renderIcon = (name: string, className?: string) => {
+                        switch (name) {
+                          case 'GraduationCap': return <GraduationCap className={className} />;
+                          case 'ShieldCheck': return <ShieldCheck className={className} />;
+                          case 'Award': return <Award className={className} />;
+                          case 'BookOpen': return <BookOpen className={className} />;
+                          case 'Sparkles': return <Sparkles className={className} />;
+                          case 'Users': return <Users className={className} />;
+                          case 'Heart': return <Heart className={className} />;
+                          case 'Clock': return <Clock className={className} />;
+                          case 'Calendar': return <Calendar className={className} />;
+                          case 'Globe': return <Globe className={className} />;
+                          default: return <GraduationCap className={className} />;
+                        }
+                      };
+
                       const blocks = [
                         {
                           id: 'about',
@@ -1117,58 +1143,113 @@ export default function App() {
                         {
                           id: 'features',
                           node: (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                              {/* Card 1: শিক্ষার্থীদের কর্নার (Pink Header) */}
-                              <div id="students-corner-card" className="bg-white rounded-2xl overflow-hidden border border-gray-200/90 shadow-xs flex flex-col">
-                                <div className="bg-[#e11d48] text-white font-extrabold text-sm sm:text-base px-5 py-3 flex items-center gap-2 text-left">
-                                  <Users className="h-4 w-4" />
-                                  <span>{lang === 'bn' ? (frontendData?.sectionsList?.find((s: any) => s.id === 'features')?.nameBn || 'শিক্ষার্থীদের কর্নার') : (frontendData?.sectionsList?.find((s: any) => s.id === 'features')?.nameEn || 'Students Corner')}</span>
+                            <div className="space-y-6">
+                              {/* Core Features Grid */}
+                              <div className="bg-white rounded-2xl overflow-hidden border border-gray-200/90 shadow-xs p-6 space-y-4">
+                                <div className="border-b border-gray-150 pb-3 text-left">
+                                  <h3 className="text-base sm:text-lg font-black text-[#0f172a] flex items-center gap-2">
+                                    <Sparkles className="h-5 w-5 text-emerald-500 animate-pulse" />
+                                    <span>{lang === 'bn' ? (frontendData?.sectionsList?.find((s: any) => s.id === 'features')?.nameBn || 'আমাদের মূল বৈশিষ্ট্যসমূহ') : (frontendData?.sectionsList?.find((s: any) => s.id === 'features')?.nameEn || 'Our Core Features & Strengths')}</span>
+                                  </h3>
+                                  <p className="text-xs text-gray-405 font-bold mt-1">
+                                    {lang === 'bn' 
+                                      ? 'স্টুডেন্টস কেয়ার মডেল স্কুলের অনন্য বৈশিষ্ট্য ও সাফল্যের চালিকাশক্তি' 
+                                      : 'The foundation of our student care and academic success'}
+                                  </p>
                                 </div>
-                                <div className="p-5 text-left bg-[#fffefd] space-y-2.5">
-                                  {[
-                                    { bn: "৬ষ্ঠ শ্রেণী", en: "Class 6" },
-                                    { bn: "৭ম শ্রেণী", en: "Class 7" },
-                                    { bn: "৮ম শ্রেণী", en: "Class 8" },
-                                    { bn: "৯ম শ্রেণী", en: "Class 9" },
-                                    { bn: "১০ম শ্রেণী", en: "Class 10" }
-                                  ].map((item, idx) => (
-                                    <div 
-                                      key={idx} 
-                                      onClick={() => setActiveTab('portal')}
-                                      className="flex items-center gap-2.5 text-xs sm:text-sm text-gray-700 font-extrabold hover:text-[#e11d48] cursor-pointer transition-colors pb-2 border-b border-rose-100/30 last:border-b-0"
-                                    >
-                                      <span className="w-1.5 h-1.5 rounded-full bg-[#e11d48]" />
-                                      <span>{lang === 'bn' ? item.bn : item.en}</span>
-                                    </div>
-                                  ))}
+
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                  {coreFeatures
+                                    .filter((item: any) => item.status !== 'inactive')
+                                    .sort((a: any, b: any) => (Number(a.order) || 99) - (Number(b.order) || 99))
+                                    .map((item: any, idx: number) => {
+                                      const itemIcon = item.icon || (idx === 0 ? 'GraduationCap' : idx === 1 ? 'ShieldCheck' : idx === 2 ? 'Sparkles' : 'GraduationCap');
+                                      const itemColor = item.color || (idx === 0 ? 'emerald' : idx === 1 ? 'rose' : idx === 2 ? 'sky' : 'emerald');
+                                      
+                                      const colorClasses = 
+                                        itemColor === 'emerald' ? { bg: 'bg-emerald-50 text-emerald-600', border: 'border-emerald-100 hover:border-emerald-200 hover:shadow-emerald-50/50' } :
+                                        itemColor === 'rose' ? { bg: 'bg-rose-50 text-rose-600', border: 'border-rose-100 hover:border-rose-200 hover:shadow-rose-50/50' } :
+                                        itemColor === 'sky' ? { bg: 'bg-sky-50 text-sky-600', border: 'border-sky-100 hover:border-sky-200 hover:shadow-sky-50/50' } :
+                                        itemColor === 'blue' ? { bg: 'bg-blue-50 text-blue-600', border: 'border-blue-100 hover:border-blue-200 hover:shadow-blue-50/50' } :
+                                        itemColor === 'amber' ? { bg: 'bg-amber-50 text-amber-600', border: 'border-amber-100 hover:border-amber-200 hover:shadow-amber-50/50' } :
+                                        itemColor === 'violet' ? { bg: 'bg-violet-50 text-[#8b5cf6]', border: 'border-violet-100 hover:border-violet-200 hover:shadow-violet-50/50' } :
+                                        { bg: 'bg-emerald-50 text-emerald-600', border: 'border-emerald-100 hover:border-emerald-200 hover:shadow-emerald-50/50' };
+
+                                      return (
+                                        <div 
+                                          key={item.id} 
+                                          className={`bg-white border rounded-2xl p-5 text-left transition-all duration-300 hover:shadow-md flex flex-col items-start gap-4 ${colorClasses.border}`}
+                                        >
+                                          <div className={`p-3 rounded-2xl shrink-0 ${colorClasses.bg}`}>
+                                            {renderIcon(itemIcon, "h-6 w-6")}
+                                          </div>
+                                          <div className="space-y-1">
+                                            <h4 className="font-extrabold text-[#0f172a] text-sm sm:text-base tracking-tight leading-snug">
+                                              {lang === 'bn' ? item.titleBn : item.titleEn}
+                                            </h4>
+                                            <p className="text-gray-500 text-xs font-semibold leading-relaxed">
+                                              {lang === 'bn' ? item.descBn : item.descEn}
+                                            </p>
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
                                 </div>
                               </div>
 
-                              {/* Card 2: শিক্ষকমণ্ডলীর কর্নার (Green Header) */}
-                              <div id="teachers-corner-card" className="bg-white rounded-2xl overflow-hidden border border-gray-200/90 shadow-xs flex flex-col">
-                                <div className="bg-[#009a68] text-white font-extrabold text-sm sm:text-base px-5 py-3 flex items-center gap-2 text-left">
-                                  <Users className="h-4 w-4" />
-                                  <span>{lang === 'bn' ? 'শিক্ষকমণ্ডলীর কর্নার' : 'Respected Teachers'}</span>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Card 1: শিক্ষার্থীদের কর্নার (Pink Header) */}
+                                <div id="students-corner-card" className="bg-white rounded-2xl overflow-hidden border border-gray-200/90 shadow-xs flex flex-col">
+                                  <div className="bg-[#e11d48] text-white font-extrabold text-sm sm:text-base px-5 py-3 flex items-center gap-2 text-left">
+                                    <Users className="h-4 w-4" />
+                                    <span>{lang === 'bn' ? 'শিক্ষার্থীদের কর্নার' : 'Students Corner'}</span>
+                                  </div>
+                                  <div className="p-5 text-left bg-[#fffefd] space-y-2.5">
+                                    {[
+                                      { bn: "৬ষ্ঠ শ্রেণী", en: "Class 6" },
+                                      { bn: "৭ম শ্রেণী", en: "Class 7" },
+                                      { bn: "৮ম শ্রেণী", en: "Class 8" },
+                                      { bn: "৯ম শ্রেণী", en: "Class 9" },
+                                      { bn: "১০ম শ্রেণী", en: "Class 10" }
+                                    ].map((item, idx) => (
+                                      <div 
+                                        key={idx} 
+                                        onClick={() => setActiveTab('portal')}
+                                        className="flex items-center gap-2.5 text-xs sm:text-sm text-gray-700 font-extrabold hover:text-[#e11d48] cursor-pointer transition-colors pb-2 border-b border-rose-100/30 last:border-b-0"
+                                      >
+                                        <span className="w-1.5 h-1.5 rounded-full bg-[#e11d48]" />
+                                        <span>{lang === 'bn' ? item.bn : item.en}</span>
+                                      </div>
+                                    ))}
+                                  </div>
                                 </div>
-                                <div className="p-5 text-left bg-[#fafdfb] space-y-2.5">
-                                  {[
-                                    { bn: "বাংলা ডিপার্টমেন্ট", en: "Bangla Department" },
-                                    { bn: "ইংলিশ ডিপার্টমেন্ট", en: "English Department" },
-                                    { bn: "বিজ্ঞান ডিপার্টমেন্ট", en: "Science Department" },
-                                    { bn: "স্টাফ", en: "Office Staff" }
-                                  ].map((item, idx) => (
-                                    <div 
-                                      key={idx}
-                                      onClick={() => {
-                                        const el = document.getElementById('academic-staff-divider');
-                                        if (el) el.scrollIntoView({ behavior: 'smooth' });
-                                      }}
-                                      className="flex items-center gap-2.5 text-xs sm:text-sm text-gray-700 font-extrabold hover:text-[#009a68] cursor-pointer transition-colors pb-2 border-b border-emerald-100/30 last:border-b-0"
-                                    >
-                                      <span className="w-1.5 h-1.5 rounded-full bg-[#009a68]" />
-                                      <span>{lang === 'bn' ? item.bn : item.en}</span>
-                                    </div>
-                                  ))}
+
+                                {/* Card 2: শিক্ষকমণ্ডলীর কর্নার (Green Header) */}
+                                <div id="teachers-corner-card" className="bg-white rounded-2xl overflow-hidden border border-gray-200/90 shadow-xs flex flex-col">
+                                  <div className="bg-[#009a68] text-white font-extrabold text-sm sm:text-base px-5 py-3 flex items-center gap-2 text-left">
+                                    <Users className="h-4 w-4" />
+                                    <span>{lang === 'bn' ? 'Respected Teachers' : 'Respected Teachers'}</span>
+                                  </div>
+                                  <div className="p-5 text-left bg-[#fafdfb] space-y-2.5">
+                                    {[
+                                      { bn: "বাংলা ডিপার্টমেন্ট", en: "Bangla Department" },
+                                      { bn: "ইংলিশ ডিপার্টমেন্ট", en: "English Department" },
+                                      { bn: "বিজ্ঞান ডিপার্টমেন্ট", en: "Science Department" },
+                                      { bn: "স্টাফ", en: "Office Staff" }
+                                    ].map((item, idx) => (
+                                      <div 
+                                        key={idx}
+                                        onClick={() => {
+                                          const el = document.getElementById('academic-staff-divider');
+                                          if (el) el.scrollIntoView({ behavior: 'smooth' });
+                                        }}
+                                        className="flex items-center gap-2.5 text-xs sm:text-sm text-gray-700 font-extrabold hover:text-[#009a68] cursor-pointer transition-colors pb-2 border-b border-emerald-100/30 last:border-b-0"
+                                      >
+                                        <span className="w-1.5 h-1.5 rounded-full bg-[#009a68]" />
+                                        <span>{lang === 'bn' ? item.bn : item.en}</span>
+                                      </div>
+                                    ))}
+                                  </div>
                                 </div>
                               </div>
                             </div>

@@ -72,7 +72,8 @@ import {
   Save,
   Database,
   Copy,
-  Code
+  Code,
+  Heart
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -13472,6 +13473,317 @@ class PageSectionController extends Controller {
                           >
                             <Save className="h-4 w-4" />
                             <span>Save Changes</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  if (frontendSubTab === 'features') {
+                    const availableIcons = [
+                      { name: 'GraduationCap', label: 'Graduation Cap' },
+                      { name: 'ShieldCheck', label: 'Shield Check' },
+                      { name: 'Award', label: 'Award Badge' },
+                      { name: 'BookOpen', label: 'Open Book' },
+                      { name: 'Sparkles', label: 'Sparkles' },
+                      { name: 'Users', label: 'Users Group' },
+                      { name: 'Heart', label: 'Heart' },
+                      { name: 'Clock', label: 'Clock' },
+                      { name: 'Calendar', label: 'Calendar' },
+                      { name: 'Globe', label: 'Globe' }
+                    ];
+
+                    const availableColors = [
+                      { name: 'emerald', bg: 'bg-emerald-500' },
+                      { name: 'blue', bg: 'bg-blue-500' },
+                      { name: 'rose', bg: 'bg-rose-500' },
+                      { name: 'amber', bg: 'bg-amber-500' },
+                      { name: 'violet', bg: 'bg-violet-500' },
+                      { name: 'sky', bg: 'bg-sky-500' },
+                      { name: 'purple', bg: 'bg-purple-500' }
+                    ];
+
+                    const renderIconComponent = (name: string, className?: string) => {
+                      switch (name) {
+                        case 'GraduationCap': return <GraduationCap className={className} />;
+                        case 'ShieldCheck': return <ShieldCheck className={className} />;
+                        case 'Award': return <Award className={className} />;
+                        case 'BookOpen': return <BookOpen className={className} />;
+                        case 'Sparkles': return <Sparkles className={className} />;
+                        case 'Users': return <Users className={className} />;
+                        case 'Heart': return <Heart className={className} />;
+                        case 'Clock': return <Clock className={className} />;
+                        case 'Calendar': return <Calendar className={className} />;
+                        case 'Globe': return <Globe className={className} />;
+                        default: return <GraduationCap className={className} />;
+                      }
+                    };
+
+                    return (
+                      <div className="space-y-6 text-xs text-gray-700 font-bold">
+                        <div className="flex justify-between items-center bg-teal-50/50 p-4 rounded-xl border border-teal-100">
+                          <div className="text-left">
+                            <h4 className="font-extrabold text-[#005c53] uppercase tracking-wide">Core Features / Strengths Settings</h4>
+                            <p className="text-[10px] text-gray-400 font-semibold mt-1">Manage the core school characteristics shown in high-contrast card-based sections on the public home page.</p>
+                          </div>
+                          <span className="text-[10px] bg-teal-100 text-[#005c53] px-2.5 py-0.5 rounded-full font-mono font-black">
+                            {listItems.length} features configured
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {listItems.map((item: any, idx: number) => {
+                            const itemIcon = item.icon || (idx === 0 ? 'GraduationCap' : idx === 1 ? 'ShieldCheck' : idx === 2 ? 'Sparkles' : 'GraduationCap');
+                            const itemColor = item.color || (idx === 0 ? 'emerald' : idx === 1 ? 'rose' : idx === 2 ? 'sky' : 'emerald');
+                            const itemOrder = item.order || (idx + 1);
+                            const itemStatus = item.status || 'active';
+                            
+                            return (
+                              <div key={item.id} className="bg-white border border-gray-150 rounded-2xl p-5 space-y-4 shadow-2xs text-left relative overflow-hidden">
+                                <div className="flex justify-between items-center border-b border-gray-100 pb-3">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-extrabold text-[#005c53] text-xs">Feature #{idx + 1}</span>
+                                    <span className={`px-2 py-0.5 rounded text-[9px] font-extrabold uppercase ${itemStatus === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-500'}`}>
+                                      {itemStatus === 'active' ? 'Active' : 'Inactive'}
+                                    </span>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setFrontendData((prev: any) => ({
+                                        ...prev,
+                                        features: (prev.features || []).filter((s: any) => s.id !== item.id)
+                                      }));
+                                      addAuditLog("Admin deleted a core feature entry.");
+                                    }}
+                                    className="text-rose-600 hover:bg-rose-50 p-1.5 rounded-lg cursor-pointer transition-colors"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
+                                </div>
+
+                                <div className="bg-[#fcfdfe] p-4 rounded-xl border border-gray-100/70">
+                                  <p className="text-[9px] font-black tracking-widest text-gray-400 mb-2.5 uppercase">LIVE PREVIEW</p>
+                                  <div className="bg-white p-4 rounded-xl shadow-xs border border-gray-100/90 flex items-start gap-4 text-left">
+                                    <div className={`p-3 rounded-xl shrink-0 ${
+                                      itemColor === 'emerald' ? 'bg-emerald-50 text-emerald-600' :
+                                      itemColor === 'rose' ? 'bg-rose-50 text-rose-600' :
+                                      itemColor === 'sky' ? 'bg-sky-50 text-sky-600' :
+                                      itemColor === 'blue' ? 'bg-blue-50 text-blue-600' :
+                                      itemColor === 'amber' ? 'bg-amber-50 text-amber-600' :
+                                      itemColor === 'violet' ? 'bg-violet-50 text-[#8b5cf6]' :
+                                      'bg-emerald-50 text-emerald-600'
+                                    }`}>
+                                      {renderIconComponent(itemIcon, "h-6 w-6")}
+                                    </div>
+                                    <div className="space-y-1">
+                                      <h4 className="font-black text-[#0f172a] text-sm leading-snug">
+                                        {lang === 'bn' ? (item.titleBn || 'শিরোনাম যোগ করুন') : (item.titleEn || 'Add Title')}
+                                      </h4>
+                                      <p className="text-gray-500 text-[11px] font-semibold leading-relaxed">
+                                        {lang === 'bn' ? (item.descBn || 'বর্ণনা যোগ করুন') : (item.descEn || 'Add Description')}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="space-y-3 pt-2">
+                                  <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1">
+                                      <label className="text-gray-500 uppercase text-[9px] block font-black tracking-wider">Title (Bangla)</label>
+                                      <input
+                                        type="text"
+                                        placeholder="উদা. মানসম্মত শিক্ষা"
+                                        value={item.titleBn || ''}
+                                        onChange={(e) => {
+                                          const val = e.target.value;
+                                          setFrontendData((prev: any) => ({
+                                            ...prev,
+                                            features: prev.features.map((f: any) => f.id === item.id ? { ...f, titleBn: val } : f)
+                                          }));
+                                        }}
+                                        className="w-full bg-slate-50 border border-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-[#005c53] font-extrabold text-gray-800 text-xs"
+                                      />
+                                    </div>
+                                    <div className="space-y-1">
+                                      <label className="text-gray-500 uppercase text-[9px] block font-black tracking-wider">Title (English)</label>
+                                      <input
+                                        type="text"
+                                        placeholder="e.g. Quality Education"
+                                        value={item.titleEn || ''}
+                                        onChange={(e) => {
+                                          const val = e.target.value;
+                                          setFrontendData((prev: any) => ({
+                                            ...prev,
+                                            features: prev.features.map((f: any) => f.id === item.id ? { ...f, titleEn: val } : f)
+                                          }));
+                                        }}
+                                        className="w-full bg-slate-50 border border-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-[#005c53] font-extrabold text-gray-800 text-xs"
+                                      />
+                                    </div>
+                                  </div>
+
+                                  <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1">
+                                      <label className="text-gray-500 uppercase text-[9px] block font-black tracking-wider">Description (Bangla)</label>
+                                      <textarea
+                                        placeholder="উদা. আধুনিক কারিকুলাম ও নৈতিক শিক্ষার সমন্বয়।"
+                                        value={item.descBn || ''}
+                                        onChange={(e) => {
+                                          const val = e.target.value;
+                                          setFrontendData((prev: any) => ({
+                                            ...prev,
+                                            features: prev.features.map((f: any) => f.id === item.id ? { ...f, descBn: val } : f)
+                                          }));
+                                        }}
+                                        rows={2}
+                                        className="w-full bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg focus:outline-none focus:border-[#005c53] font-semibold text-gray-800 text-xs"
+                                      />
+                                    </div>
+                                    <div className="space-y-1">
+                                      <label className="text-gray-500 uppercase text-[9px] block font-black tracking-wider">Description (English)</label>
+                                      <textarea
+                                        placeholder="e.g. Blending modern curriculum with moral lessons."
+                                        value={item.descEn || ''}
+                                        onChange={(e) => {
+                                          const val = e.target.value;
+                                          setFrontendData((prev: any) => ({
+                                            ...prev,
+                                            features: prev.features.map((f: any) => f.id === item.id ? { ...f, descEn: val } : f)
+                                          }));
+                                        }}
+                                        rows={2}
+                                        className="w-full bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg focus:outline-none focus:border-[#005c53] font-semibold text-gray-800 text-xs"
+                                      />
+                                    </div>
+                                  </div>
+
+                                  <div className="grid grid-cols-2 gap-4 pt-2 border-t border-gray-100">
+                                    <div className="space-y-1.5 text-left">
+                                      <label className="text-gray-500 uppercase text-[9px] block font-black tracking-wider">Choose Card Icon</label>
+                                      <div className="grid grid-cols-5 gap-1.5 bg-slate-50 p-2 rounded-xl border border-slate-200 max-h-[100px] overflow-y-auto">
+                                        {availableIcons.map((ic) => {
+                                          const isSelected = itemIcon === ic.name;
+                                          return (
+                                            <button
+                                              key={ic.name}
+                                              type="button"
+                                              onClick={() => {
+                                                setFrontendData((prev: any) => ({
+                                                  ...prev,
+                                                  features: prev.features.map((f: any) => f.id === item.id ? { ...f, icon: ic.name } : f)
+                                                }));
+                                              }}
+                                              title={ic.label}
+                                              className={`p-1.5 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
+                                                isSelected 
+                                                  ? 'bg-[#005c53] text-white scale-110 shadow-xs' 
+                                                  : 'bg-white text-gray-400 hover:text-[#005c53] border border-gray-200'
+                                              }`}
+                                            >
+                                              {renderIconComponent(ic.name, "h-3.5 w-3.5")}
+                                            </button>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+
+                                    <div className="space-y-1.5 text-left">
+                                      <label className="text-gray-500 uppercase text-[9px] block font-black tracking-wider">Theme Color Accent</label>
+                                      <div className="flex flex-wrap gap-2 bg-slate-50 p-2 rounded-xl border border-slate-200 items-center justify-center min-h-[50px] h-full">
+                                        {availableColors.map((col) => {
+                                          const isSelected = itemColor === col.name;
+                                          return (
+                                            <button
+                                              key={col.name}
+                                              type="button"
+                                              onClick={() => {
+                                                setFrontendData((prev: any) => ({
+                                                  ...prev,
+                                                  features: prev.features.map((f: any) => f.id === item.id ? { ...f, color: col.name } : f)
+                                                }));
+                                              }}
+                                              title={col.name}
+                                              className={`w-6 h-6 rounded-full cursor-pointer transition-all flex items-center justify-center ${col.bg} ${
+                                                isSelected ? 'ring-3 ring-offset-1 ring-[#005c53] scale-110' : 'opacity-70 hover:opacity-100'
+                                              }`}
+                                            >
+                                              {isSelected && <Check className="h-3 w-3 text-white stroke-[3]" />}
+                                            </button>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div className="grid grid-cols-2 gap-3 pt-2">
+                                    <div className="space-y-1">
+                                      <label className="text-gray-500 uppercase text-[9px] block font-black tracking-wider">Serial Order</label>
+                                      <input
+                                        type="number"
+                                        min="1"
+                                        value={itemOrder}
+                                        onChange={(e) => {
+                                          const val = parseInt(e.target.value) || 1;
+                                          setFrontendData((prev: any) => ({
+                                            ...prev,
+                                            features: prev.features.map((f: any) => f.id === item.id ? { ...f, order: val } : f)
+                                          }));
+                                        }}
+                                        className="w-full bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg focus:outline-none focus:border-[#005c53] font-semibold text-gray-800 text-xs"
+                                      />
+                                    </div>
+                                    <div className="space-y-1">
+                                      <label className="text-gray-500 uppercase text-[9px] block font-black tracking-wider">Status</label>
+                                      <select
+                                        value={itemStatus}
+                                        onChange={(e) => {
+                                          const val = e.target.value;
+                                          setFrontendData((prev: any) => ({
+                                            ...prev,
+                                            features: prev.features.map((f: any) => f.id === item.id ? { ...f, status: val } : f)
+                                          }));
+                                        }}
+                                        className="w-full bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg focus:outline-none focus:border-[#005c53] font-semibold text-gray-850 cursor-pointer text-xs"
+                                      >
+                                        <option value="active">Active (সক্রিয়)</option>
+                                        <option value="inactive">Inactive (নিষ্ক্রিয়)</option>
+                                      </select>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        <div className="flex justify-between items-center bg-gray-50 p-4 rounded-xl border border-gray-200 mt-4">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFrontendData((prev: any) => {
+                                const currentFeatures = prev.features || [];
+                                const newFeature = {
+                                  id: Date.now().toString(),
+                                  titleBn: 'নতুন বৈশিষ্ট্য',
+                                  titleEn: 'New Core Feature',
+                                  descBn: 'আমাদের চমৎকার শিক্ষাগত বা অবকাঠামোগত সুবিধা।',
+                                  descEn: 'Our premium educational and logistical strength.',
+                                  icon: 'GraduationCap',
+                                  color: 'emerald',
+                                  order: currentFeatures.length + 1,
+                                  status: 'active'
+                                };
+                                return {
+                                  ...prev,
+                                  features: [...currentFeatures, newFeature]
+                                };
+                              });
+                              addAuditLog("Admin added a new core feature.");
+                            }}
+                            className="px-4 py-2.5 bg-[#025644] hover:bg-[#01352a] text-white rounded-xl cursor-pointer font-black inline-flex items-center gap-1.5 shadow-xs transition-colors"
+                          >
+                            <Plus className="h-4 w-4" /> Add New Feature
                           </button>
                         </div>
                       </div>
