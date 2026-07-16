@@ -354,19 +354,19 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
   }, [academicClasses]);
 
   // Academic Subjects list state
-  const [academicSubjects, setAcademicSubjects] = useState<Array<{ code: string; name: string; class: string; teacher: string }>>(() => {
+  const [academicSubjects, setAcademicSubjects] = useState<Array<{ code: string; name: string; class: string; teacher: string; type?: string }>>(() => {
     const saved = localStorage.getItem('school_academic_subjects');
     if (saved) {
       try { return JSON.parse(saved); } catch (e) {}
     }
     return [
-      { code: 'PHY-101', name: 'Physics', class: 'Class 9-A', teacher: 'Mr. Abdul Hye' },
-      { code: 'CHE-102', name: 'Chemistry', class: 'Class 9-A', teacher: 'Dr. Farhana Rahman' },
-      { code: 'MTH-103', name: 'Higher Math', class: 'Class 9-A', teacher: 'Mr. Rafiqul Islam' },
-      { code: 'BIO-104', name: 'Biology', class: 'Class 9-A', teacher: 'Dr. Farhana Rahman' },
-      { code: 'ENG-201', name: 'English', class: 'Class 8-A', teacher: 'Mrs. Tasnim Jahan' },
-      { code: 'BEN-202', name: 'Bengali', class: 'Class 8-A', teacher: 'Mrs. Shamima Sultana' },
-      { code: 'MAT-203', name: 'General Math', class: 'Class 8-A', teacher: 'Mr. Rafiqul Islam' }
+      { code: 'PHY-101', name: 'Physics', class: 'Class 9-A', teacher: 'Mr. Abdul Hye', type: 'Theory' },
+      { code: 'CHE-102', name: 'Chemistry', class: 'Class 9-A', teacher: 'Dr. Farhana Rahman', type: 'Practical' },
+      { code: 'MTH-103', name: 'Higher Math', class: 'Class 9-A', teacher: 'Mr. Rafiqul Islam', type: 'Theory' },
+      { code: 'BIO-104', name: 'Biology', class: 'Class 9-A', teacher: 'Dr. Farhana Rahman', type: 'Practical' },
+      { code: 'ENG-201', name: 'English', class: 'Class 8-A', teacher: 'Mrs. Tasnim Jahan', type: 'Theory' },
+      { code: 'BEN-202', name: 'Bengali', class: 'Class 8-A', teacher: 'Mrs. Shamima Sultana', type: 'Theory' },
+      { code: 'MAT-203', name: 'General Math', class: 'Class 8-A', teacher: 'Mr. Rafiqul Islam', type: 'Theory' }
     ];
   });
 
@@ -911,6 +911,8 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
   const [targetClass, setTargetClass] = useState<string>('Class 9-A');
   const [minGPA, setMinGPA] = useState<number>(3.00);
   const [promotionLogged, setPromotionLogged] = useState<boolean>(false);
+  const [editingSubjectCode, setEditingSubjectCode] = useState<string | null>(null);
+  const [subjectFilterClass, setSubjectFilterClass] = useState<string>('All');
 
   useEffect(() => {
     localStorage.setItem('school_class_sections_list', JSON.stringify(classSectionsList));
@@ -953,7 +955,7 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
 
   // Forms for adding academic items
   const [academicNewClassForm, setAcademicNewClassForm] = useState({ name: '', shift: 'Morning', group: 'General', classTeacher: '' });
-  const [academicNewSubjectForm, setAcademicNewSubjectForm] = useState({ code: '', name: '', class: 'Class 9-A', teacher: '' });
+  const [academicNewSubjectForm, setAcademicNewSubjectForm] = useState({ code: '', name: '', class: 'Class 9-A', teacher: '', type: 'Theory' });
   const [academicNewDutyForm, setAcademicNewDutyForm] = useState({ examName: 'Half-Yearly Exam 2026', date: '2026-07-15', room: '', invigilator: '', shift: 'Morning' });
   const [academicNewSeatingForm, setAcademicNewSeatingForm] = useState({ examName: 'Half-Yearly Exam 2026', classLevel: 'Class 9-A', hallName: '', capacity: 40, date: '2026-07-15' });
 
@@ -8027,126 +8029,300 @@ def approve_admission_application(request, pk):
                   {/* =================================================== */}
                   {academicSubTab === 'subject' && (
                     <div className="bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs text-left space-y-6">
-                      <div className="border-b border-gray-100 pb-4">
-                        <h3 className="font-extrabold text-gray-900 text-lg">Subject Course Catalog</h3>
-                        <p className="text-xs text-gray-400 font-bold">Define school course catalogs, subject codes, and maps to specialized mentors</p>
+                      <div className="border-b border-gray-100 pb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <div>
+                          <h3 className="font-extrabold text-gray-900 text-lg">
+                            {lang === 'bn' ? 'বিষয় তালিকা ও ব্যবস্থাপনা' : 'Subject Course Catalog'}
+                          </h3>
+                          <p className="text-xs text-gray-400 font-semibold mt-1">
+                            {lang === 'bn' ? 'বিদ্যালয়ের বিষয় তালিকা, বিষয় কোড এবং ধরন ও শিক্ষক নির্ধারণ করুন।' : 'Define school course catalogs, subject codes, types, and maps to specialized mentors'}
+                          </p>
+                        </div>
+                        {/* Class Filter Dropdown */}
+                        <div className="flex items-center gap-2">
+                          <label className="text-xs font-bold text-gray-500 whitespace-nowrap">
+                            {lang === 'bn' ? 'ক্লাস ফিল্টার:' : 'Filter Class:'}
+                          </label>
+                          <select
+                            value={subjectFilterClass}
+                            onChange={(e) => setSubjectFilterClass(e.target.value)}
+                            className="text-xs px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-600 font-bold text-gray-700 cursor-pointer shadow-3xs"
+                          >
+                            <option value="All">{lang === 'bn' ? 'সকল ক্লাস' : 'All Classes'}</option>
+                            {(academicClasses && academicClasses.length > 0
+                              ? academicClasses.map(c => c.name)
+                              : Array.from(new Set(academicSubjects.map(s => s.class)))
+                            ).map((cName) => (
+                              <option key={cName} value={cName}>{cName}</option>
+                            ))}
+                          </select>
+                        </div>
                       </div>
 
                       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {/* Form Panel */}
-                        <div className="bg-gray-50 border border-gray-200 p-5 rounded-2xl space-y-4">
-                          <h4 className="font-extrabold text-gray-800 text-sm">Add New Subject Course</h4>
+                        {/* Form Panel: Add / Edit Subject */}
+                        <div className="bg-gray-50 border border-gray-200 p-5 rounded-2xl space-y-4 h-fit">
+                          <div className="flex items-center justify-between border-b border-gray-150 pb-2.5">
+                            <h4 className="font-extrabold text-gray-800 text-sm">
+                              {editingSubjectCode 
+                                ? (lang === 'bn' ? 'বিষয় সংশোধন করুন' : 'Edit Subject Course')
+                                : (lang === 'bn' ? 'নতুন বিষয় যুক্ত করুন' : 'Add New Subject')
+                              }
+                            </h4>
+                            {editingSubjectCode && (
+                              <button
+                                onClick={() => {
+                                  setEditingSubjectCode(null);
+                                  setAcademicNewSubjectForm({ code: '', name: '', class: 'Class 9-A', teacher: '', type: 'Theory' });
+                                }}
+                                className="text-[10px] text-rose-500 hover:text-rose-700 font-bold flex items-center gap-1 bg-rose-50 px-2 py-1 rounded-md"
+                              >
+                                <X className="h-3 w-3" />
+                                {lang === 'bn' ? 'বাতিল' : 'Cancel'}
+                              </button>
+                            )}
+                          </div>
+
                           <form onSubmit={(e) => {
                             e.preventDefault();
                             if (!academicNewSubjectForm.code.trim() || !academicNewSubjectForm.name.trim()) return;
-                            const exists = academicSubjects.some(s => s.code.toUpperCase() === academicNewSubjectForm.code.toUpperCase());
-                            if (exists) {
-                              setAdminErrorMsg("This subject course code already exists!");
-                              setTimeout(() => setAdminErrorMsg(''), 3000);
-                              return;
+                            const targetCode = academicNewSubjectForm.code.trim().toUpperCase();
+
+                            if (editingSubjectCode) {
+                              const exists = academicSubjects.some(
+                                s => s.code.toUpperCase() === targetCode && s.code.toUpperCase() !== editingSubjectCode.toUpperCase()
+                              );
+                              if (exists) {
+                                setAdminErrorMsg(lang === 'bn' ? "এই বিষয় কোডটি অন্য বিষয়ের জন্য সংরক্ষিত!" : "This subject code already exists for another subject!");
+                                setTimeout(() => setAdminErrorMsg(''), 3000);
+                                return;
+                              }
+                              setAcademicSubjects(prev => prev.map(s => 
+                                s.code.toUpperCase() === editingSubjectCode.toUpperCase()
+                                  ? { ...academicNewSubjectForm, code: targetCode }
+                                  : s
+                              ));
+                              setEditingSubjectCode(null);
+                              setAcademicNewSubjectForm({ code: '', name: '', class: 'Class 9-A', teacher: '', type: 'Theory' });
+                              setAdminSuccessMsg(lang === 'bn' ? "বিষয়টি সফলভাবে আপডেট করা হয়েছে!" : "Subject updated successfully!");
+                              setTimeout(() => setAdminSuccessMsg(''), 3000);
+                            } else {
+                              const exists = academicSubjects.some(s => s.code.toUpperCase() === targetCode);
+                              if (exists) {
+                                setAdminErrorMsg(lang === 'bn' ? "এই বিষয় কোডটি ইতিমধ্যে নিবন্ধিত!" : "This subject code already exists!");
+                                setTimeout(() => setAdminErrorMsg(''), 3000);
+                                return;
+                              }
+                              setAcademicSubjects(prev => [
+                                ...prev,
+                                { ...academicNewSubjectForm, code: targetCode }
+                              ]);
+                              setAcademicNewSubjectForm({ code: '', name: '', class: 'Class 9-A', teacher: '', type: 'Theory' });
+                              setAdminSuccessMsg(lang === 'bn' ? "নতুন বিষয়টি সফলভাবে সংরক্ষণ করা হয়েছে!" : "New subject course saved to catalog!");
+                              setTimeout(() => setAdminSuccessMsg(''), 3000);
                             }
-                            setAcademicSubjects(prev => [
-                              ...prev,
-                              { ...academicNewSubjectForm, code: academicNewSubjectForm.code.toUpperCase() }
-                            ]);
-                            setAcademicNewSubjectForm({ code: '', name: '', class: 'Class 9-A', teacher: '' });
-                            setAdminSuccessMsg("New subject course saved to catalog!");
-                            setTimeout(() => setAdminSuccessMsg(''), 3000);
                           }} className="space-y-4 text-xs">
-                            <div className="grid grid-cols-3 gap-3">
-                              <div className="col-span-1 space-y-1">
-                                <label className="block font-bold text-gray-500">Course Code</label>
-                                <input
-                                  type="text"
-                                  placeholder="e.g. PHY-101"
-                                  required
-                                  value={academicNewSubjectForm.code}
-                                  onChange={(e) => setAcademicNewSubjectForm(prev => ({ ...prev, code: e.target.value }))}
-                                  className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-[#005c53] font-bold text-gray-800 shadow-3xs"
-                                />
-                              </div>
-                              <div className="col-span-2 space-y-1">
-                                <label className="block font-bold text-gray-500">Subject Title</label>
-                                <input
-                                  type="text"
-                                  placeholder="e.g. Theoretical Physics"
-                                  required
-                                  value={academicNewSubjectForm.name}
-                                  onChange={(e) => setAcademicNewSubjectForm(prev => ({ ...prev, name: e.target.value }))}
-                                  className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-[#005c53] font-bold text-gray-800 shadow-3xs"
-                                />
-                              </div>
+                            
+                            {/* Subject Name */}
+                            <div className="space-y-1 text-left">
+                              <label className="block font-bold text-gray-600">
+                                {lang === 'bn' ? 'বিষয়ের নাম (Subject Name)' : 'Subject Name'} <span className="text-rose-500">*</span>
+                              </label>
+                              <input
+                                type="text"
+                                placeholder={lang === 'bn' ? 'যেমন: Mathematics, English' : 'e.g. Mathematics, English'}
+                                required
+                                value={academicNewSubjectForm.name}
+                                onChange={(e) => setAcademicNewSubjectForm(prev => ({ ...prev, name: e.target.value }))}
+                                className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 font-semibold text-gray-800 shadow-3xs"
+                              />
                             </div>
-                            <div className="grid grid-cols-2 gap-3">
-                              <div className="space-y-1">
-                                <label className="block font-bold text-gray-500">Target Class</label>
-                                <select
-                                  value={academicNewSubjectForm.class}
-                                  onChange={(e) => setAcademicNewSubjectForm(prev => ({ ...prev, class: e.target.value }))}
-                                  className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-[#005c53] font-bold text-gray-700 cursor-pointer"
-                                >
-                                  {academicClasses.map(c => (
+
+                            {/* Subject Code */}
+                            <div className="space-y-1 text-left">
+                              <label className="block font-bold text-gray-600">
+                                {lang === 'bn' ? 'বিষয় কোড (Subject Code)' : 'Subject Code'} <span className="text-rose-500">*</span>
+                              </label>
+                              <input
+                                type="text"
+                                placeholder={lang === 'bn' ? 'যেমন: 101, 102' : 'e.g. 101, 102'}
+                                required
+                                value={academicNewSubjectForm.code}
+                                onChange={(e) => setAcademicNewSubjectForm(prev => ({ ...prev, code: e.target.value }))}
+                                className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 font-semibold text-gray-800 shadow-3xs"
+                              />
+                            </div>
+
+                            {/* Target Class Selection */}
+                            <div className="space-y-1 text-left">
+                              <label className="block font-bold text-gray-600">
+                                {lang === 'bn' ? 'শ্রেণী (Class)' : 'Class'} <span className="text-rose-500">*</span>
+                              </label>
+                              <select
+                                value={academicNewSubjectForm.class}
+                                onChange={(e) => setAcademicNewSubjectForm(prev => ({ ...prev, class: e.target.value }))}
+                                className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 font-semibold text-gray-700 cursor-pointer shadow-3xs"
+                              >
+                                {(academicClasses && academicClasses.length > 0) ? (
+                                  academicClasses.map(c => (
                                     <option key={c.id} value={c.name}>{c.name}</option>
-                                  ))}
-                                </select>
-                              </div>
-                              <div className="space-y-1">
-                                <label className="block font-bold text-gray-500">Subject Teacher</label>
-                                <select
-                                  value={academicNewSubjectForm.teacher}
-                                  onChange={(e) => setAcademicNewSubjectForm(prev => ({ ...prev, teacher: e.target.value }))}
-                                  className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-[#005c53] font-bold text-gray-700 cursor-pointer"
-                                >
-                                  <option value="">Select Instructor</option>
-                                  {availableTeachers.filter(t => t !== 'Teacher').map(t => (
-                                    <option key={t} value={t}>{t}</option>
-                                  ))}
-                                </select>
-                              </div>
+                                  ))
+                                ) : (
+                                  ['Class 9-A', 'Class 9-B', 'Class 10-A', 'Class 10-B', 'Class 8-A', 'Class 8-B'].map(name => (
+                                    <option key={name} value={name}>{name}</option>
+                                  ))
+                                )}
+                              </select>
                             </div>
-                            <button type="submit" className="w-full py-3 bg-[#005c53] hover:bg-[#004d44] text-white font-extrabold rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer">
+
+                            {/* Subject Type Selection */}
+                            <div className="space-y-1 text-left">
+                              <label className="block font-bold text-gray-600">
+                                {lang === 'bn' ? 'বিষয়ের ধরন (Subject Type)' : 'Subject Type'} <span className="text-rose-500">*</span>
+                              </label>
+                              <select
+                                value={academicNewSubjectForm.type || 'Theory'}
+                                onChange={(e) => setAcademicNewSubjectForm(prev => ({ ...prev, type: e.target.value }))}
+                                className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 font-semibold text-gray-700 cursor-pointer shadow-3xs"
+                              >
+                                <option value="Theory">{lang === 'bn' ? 'Theory (তত্ত্বীয়)' : 'Theory'}</option>
+                                <option value="Practical">{lang === 'bn' ? 'Practical (ব্যবহারিক)' : 'Practical'}</option>
+                                <option value="Optional">{lang === 'bn' ? 'Optional (ঐচ্ছিক)' : 'Optional'}</option>
+                              </select>
+                            </div>
+
+                            {/* Subject Teacher Option */}
+                            <div className="space-y-1 text-left">
+                              <label className="block font-bold text-gray-600">
+                                {lang === 'bn' ? 'বিষয় শিক্ষক (Subject Teacher)' : 'Subject Teacher'}
+                              </label>
+                              <select
+                                value={academicNewSubjectForm.teacher}
+                                onChange={(e) => setAcademicNewSubjectForm(prev => ({ ...prev, teacher: e.target.value }))}
+                                className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 font-semibold text-gray-700 cursor-pointer shadow-3xs"
+                              >
+                                <option value="">{lang === 'bn' ? 'শিক্ষক নির্বাচন করুন' : 'Select Teacher'}</option>
+                                {availableTeachers.filter(t => t !== 'Teacher').map(t => (
+                                  <option key={t} value={t}>{t}</option>
+                                ))}
+                              </select>
+                            </div>
+
+                            {/* Submit Button in beautiful Emerald Green accent */}
+                            <button
+                              type="submit"
+                              className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-extrabold rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer mt-4"
+                            >
                               <PlusCircle className="h-4 w-4" />
-                              <span>Add Subject To Catalog</span>
+                              <span>
+                                {editingSubjectCode 
+                                  ? (lang === 'bn' ? 'হালনাগাদ করুন' : 'Save Subject')
+                                  : (lang === 'bn' ? 'বিষয় সংরক্ষণ করুন' : 'Save Subject')
+                                }
+                              </span>
                             </button>
                           </form>
                         </div>
 
-                        {/* Table Panel */}
-                        <div className="lg:col-span-2 border border-gray-200 rounded-2xl overflow-hidden">
-                          <table className="w-full text-left border-collapse text-xs">
-                            <thead className="bg-gray-50 border-b border-gray-150 text-gray-500 font-bold uppercase tracking-wider">
-                              <tr>
-                                <th className="p-4">Subject Code</th>
-                                <th className="p-4">Subject Name</th>
-                                <th className="p-4">Target Class</th>
-                                <th className="p-4">Assigned Mentor</th>
-                                <th className="p-4 text-center">Action</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-150 text-gray-700 font-bold">
-                              {academicSubjects.map((sub) => (
-                                <tr key={sub.code} className="hover:bg-gray-50/50">
-                                  <td className="p-4 text-gray-500 font-mono font-black">{sub.code}</td>
-                                  <td className="p-4 text-[#005c53] font-black">{sub.name}</td>
-                                  <td className="p-4">{sub.class}</td>
-                                  <td className="p-4 text-gray-500">{sub.teacher || 'Not Assigned'}</td>
-                                  <td className="p-4 text-center">
-                                    <button
-                                      onClick={() => {
-                                        setAcademicSubjects(prev => prev.filter(s => s.code !== sub.code));
-                                        setAdminSuccessMsg(`Subject code ${sub.code} deleted!`);
-                                        setTimeout(() => setAdminSuccessMsg(''), 3000);
-                                      }}
-                                      className="p-1.5 hover:bg-rose-50 text-gray-400 hover:text-rose-600 rounded-lg transition-all cursor-pointer"
-                                      title="Delete Subject"
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </button>
-                                  </td>
+                        {/* Table Panel: Subject list with filters */}
+                        <div className="lg:col-span-2 border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-3xs">
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse text-xs">
+                              <thead className="bg-gray-50 border-b border-gray-150 text-gray-500 font-bold uppercase tracking-wider">
+                                <tr>
+                                  <th className="p-4 w-12 text-center">SL</th>
+                                  <th className="p-4">{lang === 'bn' ? 'বিষয়ের নাম' : 'Subject Name'}</th>
+                                  <th className="p-4">{lang === 'bn' ? 'বিষয় কোড' : 'Subject Code'}</th>
+                                  <th className="p-4">{lang === 'bn' ? 'শ্রেণী' : 'Class'}</th>
+                                  <th className="p-4">{lang === 'bn' ? 'ধরন' : 'Type'}</th>
+                                  <th className="p-4">{lang === 'bn' ? 'শিক্ষক' : 'Assigned Teacher'}</th>
+                                  <th className="p-4 text-center">{lang === 'bn' ? 'অ্যাকশন' : 'Action'}</th>
                                 </tr>
-                              ))}
-                            </tbody>
-                          </table>
+                              </thead>
+                              <tbody className="divide-y divide-gray-150 text-gray-700 font-bold">
+                                {(() => {
+                                  const filtered = academicSubjects.filter(sub => 
+                                    subjectFilterClass === 'All' || sub.class === subjectFilterClass
+                                  );
+
+                                  if (filtered.length === 0) {
+                                    return (
+                                      <tr>
+                                        <td colSpan={7} className="p-8 text-center text-gray-400 font-medium">
+                                          {lang === 'bn' ? 'এই ক্লাসের জন্য কোনো বিষয় খুঁজে পাওয়া যায়নি।' : 'No subjects found for this class filter.'}
+                                        </td>
+                                      </tr>
+                                    );
+                                  }
+
+                                  return filtered.map((sub, idx) => {
+                                    const typeVal = sub.type || 'Theory';
+                                    let typeBadgeColor = 'bg-blue-50 text-blue-700 border-blue-100';
+                                    if (typeVal === 'Practical') {
+                                      typeBadgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-100';
+                                    } else if (typeVal === 'Optional') {
+                                      typeBadgeColor = 'bg-amber-50 text-amber-700 border-amber-100';
+                                    }
+
+                                    return (
+                                      <tr key={sub.code} className="hover:bg-gray-50/50 transition-colors">
+                                        <td className="p-4 text-center text-gray-400 font-mono">{idx + 1}</td>
+                                        <td className="p-4 text-emerald-950 font-black">
+                                          {sub.name}
+                                        </td>
+                                        <td className="p-4 text-gray-500 font-mono font-black">{sub.code}</td>
+                                        <td className="p-4">
+                                          <span className="bg-gray-100 text-gray-800 px-2.5 py-1 rounded-md text-[10px]">
+                                            {sub.class}
+                                          </span>
+                                        </td>
+                                        <td className="p-4">
+                                          <span className={`px-2.5 py-1 rounded-md border text-[10px] font-extrabold tracking-wide ${typeBadgeColor}`}>
+                                            {typeVal}
+                                          </span>
+                                        </td>
+                                        <td className="p-4 text-gray-500 font-semibold">{sub.teacher || (lang === 'bn' ? 'বরাদ্দ করা হয়নি' : 'Not Assigned')}</td>
+                                        <td className="p-4 text-center">
+                                          <div className="flex items-center justify-center gap-2">
+                                            {/* Edit Button */}
+                                            <button
+                                              onClick={() => {
+                                                setEditingSubjectCode(sub.code);
+                                                setAcademicNewSubjectForm({
+                                                  code: sub.code,
+                                                  name: sub.name,
+                                                  class: sub.class,
+                                                  teacher: sub.teacher || '',
+                                                  type: sub.type || 'Theory'
+                                                });
+                                              }}
+                                              className="p-1.5 hover:bg-emerald-50 text-gray-400 hover:text-emerald-600 rounded-lg transition-all cursor-pointer"
+                                              title="Edit Subject"
+                                            >
+                                              <Edit3 className="h-4 w-4" />
+                                            </button>
+                                            
+                                            {/* Delete Button */}
+                                            <button
+                                              onClick={() => {
+                                                setAcademicSubjects(prev => prev.filter(s => s.code !== sub.code));
+                                                setAdminSuccessMsg(lang === 'bn' ? `বিষয় কোড ${sub.code} মুছে ফেলা হয়েছে!` : `Subject code ${sub.code} deleted!`);
+                                                setTimeout(() => setAdminSuccessMsg(''), 3000);
+                                              }}
+                                              className="p-1.5 hover:bg-rose-50 text-gray-400 hover:text-rose-600 rounded-lg transition-all cursor-pointer"
+                                              title="Delete Subject"
+                                            >
+                                              <Trash2 className="h-4 w-4" />
+                                            </button>
+                                          </div>
+                                        </td>
+                                      </tr>
+                                    );
+                                  });
+                                })()}
+                              </tbody>
+                            </table>
+                          </div>
                         </div>
                       </div>
                     </div>
