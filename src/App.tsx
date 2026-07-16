@@ -80,6 +80,7 @@ import {
   events
 } from './data/schoolData';
 import { translations } from './data/translations';
+import { getMergedFrontendData } from './data/defaultFrontendData';
 
 export default function App() {
   const [lang, setLang] = useState<'bn' | 'en'>('bn');
@@ -119,15 +120,8 @@ export default function App() {
 
   React.useEffect(() => {
     const loadFrontendData = async () => {
-      let currentData: any = null;
       const saved = localStorage.getItem('school_frontend_data');
-      if (saved) {
-        try {
-          currentData = JSON.parse(saved);
-        } catch (e) {
-          console.error(e);
-        }
-      }
+      let merged = getMergedFrontendData(saved);
 
       try {
         const res = await fetch('/public/php_backend/get_banner.php');
@@ -140,37 +134,21 @@ export default function App() {
         
         const data = JSON.parse(text);
         if (data && data.frontend_data) {
-          if (!currentData) {
-            currentData = data.frontend_data;
-          } else {
-            currentData = { ...currentData, ...data.frontend_data };
-          }
+          merged = { ...merged, ...data.frontend_data };
         }
         if (data && data.settings) {
-          setSettings(data.settings);
-          if (!currentData) {
-            currentData = { settings: data.settings };
-          } else {
-            currentData.settings = { ...currentData.settings, ...data.settings };
-          }
+          merged.settings = { ...merged.settings, ...data.settings };
         }
         if (data && data.slider) {
-          if (!currentData) {
-            currentData = { slider: data.slider };
-          } else {
-            currentData.slider = data.slider;
-          }
+          merged.slider = data.slider;
         }
       } catch (err: any) {
         console.warn('PHP get_banner.php fetch bypassed/failed (expected in development):', err.message);
-        // Apply localStorage settings as a fallback if present
-        if (currentData && currentData.settings) {
-          setSettings(currentData.settings);
-        }
       }
 
-      if (currentData) {
-        setFrontendData(currentData);
+      setFrontendData(merged);
+      if (merged && merged.settings) {
+        setSettings(merged.settings);
       }
     };
 
