@@ -608,6 +608,61 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
   const [attendanceSheetClassFilter, setAttendanceSheetClassFilter] = useState('Class 9');
   const [attendanceSheetSubjectFilter, setAttendanceSheetSubjectFilter] = useState('Chemistry');
 
+  // Dedicated states for Exam Setup Tab
+  const [examSetups, setExamSetups] = useState<Array<{
+    id: string;
+    termId: string;
+    class: string;
+    subject: string;
+    writtenMarks: number;
+    writtenPassMarks: number;
+    mcqMarks: number;
+    mcqPassMarks: number;
+    practicalMarks: number;
+    practicalPassMarks: number;
+    totalMarks: number;
+    passMarks: number;
+  }>>(() => {
+    const saved = localStorage.getItem('school_exam_setups');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return [
+      { id: 'ES-1', termId: 'T-2', class: 'Class 9-A', subject: 'Chemistry', writtenMarks: 50, writtenPassMarks: 17, mcqMarks: 25, mcqPassMarks: 8, practicalMarks: 25, practicalPassMarks: 8, totalMarks: 100, passMarks: 33 },
+      { id: 'ES-2', termId: 'T-2', class: 'Class 9-A', subject: 'Physics', writtenMarks: 50, writtenPassMarks: 17, mcqMarks: 25, mcqPassMarks: 8, practicalMarks: 25, practicalPassMarks: 8, totalMarks: 100, passMarks: 33 },
+      { id: 'ES-3', termId: 'T-2', class: 'Class 8-A', subject: 'English', writtenMarks: 80, writtenPassMarks: 26, mcqMarks: 20, mcqPassMarks: 7, practicalMarks: 0, practicalPassMarks: 0, totalMarks: 100, passMarks: 33 },
+      { id: 'ES-4', termId: 'T-1', class: 'Class 9-A', subject: 'Bengali', writtenMarks: 70, writtenPassMarks: 23, mcqMarks: 30, mcqPassMarks: 10, practicalMarks: 0, practicalPassMarks: 0, totalMarks: 100, passMarks: 33 },
+    ];
+  });
+
+  const [setupFormTermId, setSetupFormTermId] = useState<string>('T-2');
+  const [setupFormClass, setSetupFormClass] = useState<string>('Class 9-A');
+  const [setupFormSubject, setSetupFormSubject] = useState<string>('Chemistry');
+  const [setupFormWritten, setSetupFormWritten] = useState<number>(50);
+  const [setupFormWrittenPass, setSetupFormWrittenPass] = useState<number>(17);
+  const [setupFormMCQ, setSetupFormMCQ] = useState<number>(25);
+  const [setupFormMCQPass, setSetupFormMCQPass] = useState<number>(8);
+  const [setupFormPractical, setSetupFormPractical] = useState<number>(25);
+  const [setupFormPracticalPass, setSetupFormPracticalPass] = useState<number>(8);
+  const [setupFormPassMarks, setSetupFormPassMarks] = useState<number>(33);
+  const [editingSetupId, setEditingSetupId] = useState<string | null>(null);
+
+  const [setupFilterTermId, setSetupFilterTermId] = useState<string>('All');
+  const [setupFilterClass, setSetupFilterClass] = useState<string>('All');
+
+  // Dedicated states for Exam Schedule Tab
+  const [scheduleFormTermId, setScheduleFormTermId] = useState<string>('T-2');
+  const [scheduleFormClass, setScheduleFormClass] = useState<string>('Class 9-A');
+  const [scheduleFormSubject, setScheduleFormSubject] = useState<string>('Chemistry');
+  const [scheduleFormDate, setScheduleFormDate] = useState<string>('2026-07-12');
+  const [scheduleFormStartTime, setScheduleFormStartTime] = useState<string>('10:00 AM');
+  const [scheduleFormEndTime, setScheduleFormEndTime] = useState<string>('01:00 PM');
+  const [scheduleFormRoom, setScheduleFormRoom] = useState<string>('Room 201');
+  const [editingScheduleId, setEditingScheduleId] = useState<{ termId: string; id: string } | null>(null);
+
+  const [scheduleFilterTermId, setScheduleFilterTermId] = useState<string>('All');
+  const [scheduleFilterClass, setScheduleFilterClass] = useState<string>('All');
+
   // New forms for routine and duty additions
   const [newRoutineForm, setNewRoutineForm] = useState({
     subject: '',
@@ -635,6 +690,74 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
   useEffect(() => {
     localStorage.setItem('school_teacher_duties', JSON.stringify(teacherDuties));
   }, [teacherDuties]);
+
+  useEffect(() => {
+    localStorage.setItem('school_exam_setups', JSON.stringify(examSetups));
+  }, [examSetups]);
+
+  // Dedicated states for Exam Marks Tab
+  const [examStudentMarks, setExamStudentMarks] = useState<Array<{
+    id: string;
+    termId: string;
+    class: string;
+    subject: string;
+    studentId: string;
+    written: number;
+    mcq: number;
+    practical: number;
+    total: number;
+    isAbsent: boolean;
+  }>>(() => {
+    const saved = localStorage.getItem('school_exam_student_marks');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return [
+      { id: 'M-1', termId: 'T-2', class: 'Class 9-A', subject: 'Chemistry', studentId: 'STD-1026', written: 42, mcq: 20, practical: 22, total: 84, isAbsent: false },
+      { id: 'M-2', termId: 'T-2', class: 'Class 9-A', subject: 'Physics', studentId: 'STD-1026', written: 40, mcq: 18, practical: 24, total: 82, isAbsent: false },
+      { id: 'M-3', termId: 'T-2', class: 'Class 9-A', subject: 'Chemistry', studentId: 'STD-1031', written: 0, mcq: 0, practical: 0, total: 0, isAbsent: true },
+    ];
+  });
+
+  const [marksFormTermId, setMarksFormTermId] = useState<string>('T-2');
+  const [marksFormClass, setMarksFormClass] = useState<string>('Class 9-A');
+  const [marksFormSubject, setMarksFormSubject] = useState<string>('Chemistry');
+  const [marksFormSession, setMarksFormSession] = useState<string>('2026');
+  const [isMarksSearchActive, setIsMarksSearchActive] = useState<boolean>(false);
+  const [tempMarksInput, setTempMarksInput] = useState<Record<string, { written: number; mcq: number; practical: number; isAbsent: boolean }>>({});
+
+  useEffect(() => {
+    localStorage.setItem('school_exam_student_marks', JSON.stringify(examStudentMarks));
+  }, [examStudentMarks]);
+
+  // Dedicated states for Exam Hall Management
+  const [examHalls, setExamHalls] = useState<Array<{
+    id: string;
+    roomName: string;
+    capacity: number;
+    location: string;
+    status: 'Available' | 'Booked';
+  }>>(() => {
+    const saved = localStorage.getItem('school_exam_halls');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return [
+      { id: 'H-1', roomName: 'Room 101', capacity: 40, location: 'Building A, 1st Floor', status: 'Booked' },
+      { id: 'H-2', roomName: 'Room 202', capacity: 35, location: 'Building A, 2nd Floor', status: 'Booked' },
+      { id: 'H-3', roomName: 'Main Hall', capacity: 120, location: 'Building B, Ground Floor', status: 'Available' },
+    ];
+  });
+
+  const [hallFormName, setHallFormName] = useState('');
+  const [hallFormCapacity, setHallFormCapacity] = useState<number | ''>('');
+  const [hallFormLocation, setHallFormLocation] = useState('');
+  const [hallFormStatus, setHallFormStatus] = useState<'Available' | 'Booked'>('Available');
+  const [editingHallId, setEditingHallId] = useState<string | null>(null);
+
+  useEffect(() => {
+    localStorage.setItem('school_exam_halls', JSON.stringify(examHalls));
+  }, [examHalls]);
 
   // Settings State and Sub Tabs
   const [settingsSubTab, setSettingsSubTab] = useState<string>('login_banner');
@@ -10881,30 +11004,320 @@ def approve_admission_application(request, pk):
                   </div>
                 )}
 
-                {examSubTab === 'exam_hall' && (
-                  <div className="bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs text-left space-y-4">
-                    <div>
-                      <h3 className="font-extrabold text-gray-900 text-lg">{lang === 'bn' ? 'পরীক্ষা হল আসন বিন্যাস' : 'Exam Hall Center Capacity Matrix'}</h3>
-                      <p className="text-xs text-gray-400 font-bold">{lang === 'bn' ? 'আসন সংখ্যা ও সক্ষমতা' : 'Configure layout dimensions and student volume for exam halls'}</p>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
-                      {[
-                        { hall: 'Room 101', cap: '40 Seats', class: 'Class 9', status: 'Booked' },
-                        { hall: 'Room 201', cap: '35 Seats', class: 'Class 9', status: 'Booked' },
-                        { hall: 'Room 301', cap: '50 Seats', class: 'Class 10', status: 'Available' }
-                      ].map((item, idx) => (
-                        <div key={idx} className="bg-gray-50 border border-gray-150 p-4 rounded-2xl text-xs space-y-2">
-                          <div className="flex justify-between items-center font-extrabold text-gray-800">
-                            <span>{item.hall}</span>
-                            <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-full font-black text-[10px]">{item.status}</span>
+                {examSubTab === 'exam_hall' && (() => {
+                  const handleSaveHall = (e: React.FormEvent) => {
+                    e.preventDefault();
+                    if (!hallFormName.trim()) return;
+
+                    if (editingHallId) {
+                      setExamHalls(prev => prev.map(h => h.id === editingHallId ? {
+                        ...h,
+                        roomName: hallFormName,
+                        capacity: Number(hallFormCapacity || 0),
+                        location: hallFormLocation,
+                        status: hallFormStatus
+                      } : h));
+                      addAuditLog(`Updated Exam Hall "${hallFormName}"`);
+                      setAdminSuccessMsg(lang === 'bn' ? 'পরীক্ষার হল সফলভাবে আপডেট করা হয়েছে!' : 'Exam Hall successfully updated!');
+                    } else {
+                      const newHall = {
+                        id: `H-${Date.now()}`,
+                        roomName: hallFormName,
+                        capacity: Number(hallFormCapacity || 0),
+                        location: hallFormLocation,
+                        status: hallFormStatus
+                      };
+                      setExamHalls(prev => [...prev, newHall]);
+                      addAuditLog(`Added Exam Hall "${hallFormName}"`);
+                      setAdminSuccessMsg(lang === 'bn' ? 'পরীক্ষার হল সফলভাবে সংরক্ষণ করা হয়েছে!' : 'Exam Hall successfully saved!');
+                    }
+
+                    // Reset Form
+                    setHallFormName('');
+                    setHallFormCapacity('');
+                    setHallFormLocation('');
+                    setHallFormStatus('Available');
+                    setEditingHallId(null);
+
+                    setTimeout(() => {
+                      setAdminSuccessMsg('');
+                    }, 4000);
+                  };
+
+                  const handleEditHall = (hall: typeof examHalls[0]) => {
+                    setEditingHallId(hall.id);
+                    setHallFormName(hall.roomName);
+                    setHallFormCapacity(hall.capacity);
+                    setHallFormLocation(hall.location);
+                    setHallFormStatus(hall.status);
+                  };
+
+                  const handleDeleteHall = (id: string, name: string) => {
+                    if (confirm(lang === 'bn' ? `আপনি কি নিশ্চিতভাবে "${name}" মুছে ফেলতে চান?` : `Are you sure you want to delete "${name}"?`)) {
+                      setExamHalls(prev => prev.filter(h => h.id !== id));
+                      addAuditLog(`Deleted Exam Hall "${name}"`);
+                      setAdminSuccessMsg(lang === 'bn' ? 'পরীক্ষার হল মুছে ফেলা হয়েছে!' : 'Exam Hall deleted successfully!');
+                      
+                      if (editingHallId === id) {
+                        setHallFormName('');
+                        setHallFormCapacity('');
+                        setHallFormLocation('');
+                        setHallFormStatus('Available');
+                        setEditingHallId(null);
+                      }
+
+                      setTimeout(() => {
+                        setAdminSuccessMsg('');
+                      }, 4000);
+                    }
+                  };
+
+                  const handleCancelEdit = () => {
+                    setHallFormName('');
+                    setHallFormCapacity('');
+                    setHallFormLocation('');
+                    setHallFormStatus('Available');
+                    setEditingHallId(null);
+                  };
+
+                  return (
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 text-left">
+                      {/* Left Side: Add/Edit Form */}
+                      <div className="lg:col-span-4 bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs space-y-5">
+                        <div className="border-b border-gray-100 pb-3 flex items-center gap-2">
+                          <div className="p-2 bg-emerald-50 text-[#025644] rounded-xl">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
                           </div>
-                          <p className="font-bold text-gray-500">{lang === 'bn' ? `ধারণক্ষমতা: ${item.cap}` : `Capacity: ${item.cap}`}</p>
-                          <p className="text-[10px] text-gray-400">{lang === 'bn' ? `বরাদ্দ শ্রেণী: ${item.class}` : `Assigned: ${item.class}`}</p>
+                          <div>
+                            <h3 className="font-extrabold text-gray-950 text-base">
+                              {editingHallId 
+                                ? (lang === 'bn' ? 'পরীক্ষার হল সংশোধন' : 'Edit Exam Hall') 
+                                : (lang === 'bn' ? 'নতুন পরীক্ষার হল যোগ করুন' : 'Add Exam Hall')}
+                            </h3>
+                            <p className="text-[11px] text-gray-400 font-bold">
+                              {lang === 'bn' ? 'পরীক্ষা হলের বিবরণ এবং আসন সেটআপ করুন' : 'Setup exam hall details and capacity limits'}
+                            </p>
+                          </div>
                         </div>
-                      ))}
+
+                        <form onSubmit={handleSaveHall} className="space-y-4 text-xs">
+                          {/* 1. Hall / Room Name or Number */}
+                          <div className="space-y-1.5">
+                            <label className="block font-black text-gray-500 uppercase tracking-wider text-[10px]">
+                              {lang === 'bn' ? 'হল / রুমের নাম অথবা নাম্বার *' : 'Hall / Room Name or Number *'}
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              value={hallFormName}
+                              onChange={e => setHallFormName(e.target.value)}
+                              placeholder={lang === 'bn' ? 'যেমন: Room 202, Main Hall' : 'e.g., Room 202, Main Hall'}
+                              className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold text-xs"
+                            />
+                          </div>
+
+                          {/* 2. Seat Capacity */}
+                          <div className="space-y-1.5">
+                            <label className="block font-black text-gray-500 uppercase tracking-wider text-[10px]">
+                              {lang === 'bn' ? 'আসন ক্ষমতা (Seat Capacity) *' : 'Seat Capacity *'}
+                            </label>
+                            <input
+                              type="number"
+                              required
+                              min="1"
+                              value={hallFormCapacity}
+                              onChange={e => setHallFormCapacity(e.target.value === '' ? '' : Number(e.target.value))}
+                              placeholder={lang === 'bn' ? 'যেমন: ৪০' : 'e.g., 40'}
+                              className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold text-xs"
+                            />
+                          </div>
+
+                          {/* 3. Description / Location */}
+                          <div className="space-y-1.5">
+                            <label className="block font-black text-gray-500 uppercase tracking-wider text-[10px]">
+                              {lang === 'bn' ? 'অবস্থান / বিবরণ (Description / Location) *' : 'Description / Location *'}
+                            </label>
+                            <textarea
+                              required
+                              rows={3}
+                              value={hallFormLocation}
+                              onChange={e => setHallFormLocation(e.target.value)}
+                              placeholder={lang === 'bn' ? 'যেমন: Building A, 2nd Floor' : 'e.g., Building A, 2nd Floor'}
+                              className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold text-xs resize-none"
+                            />
+                          </div>
+
+                          {/* 4. Status Dropdown */}
+                          <div className="space-y-1.5">
+                            <label className="block font-black text-gray-500 uppercase tracking-wider text-[10px]">
+                              {lang === 'bn' ? 'স্ট্যাটাস (Status)' : 'Status'}
+                            </label>
+                            <select
+                              value={hallFormStatus}
+                              onChange={e => setHallFormStatus(e.target.value as 'Available' | 'Booked')}
+                              className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold text-xs cursor-pointer"
+                            >
+                              <option value="Available">{lang === 'bn' ? 'ফ্রি / উপলব্ধ (Available)' : 'Available'}</option>
+                              <option value="Booked">{lang === 'bn' ? 'বুকড / ব্যস্ত (Booked)' : 'Booked'}</option>
+                            </select>
+                          </div>
+
+                          {/* Action buttons */}
+                          <div className="flex gap-2.5 pt-2">
+                            <button
+                              type="submit"
+                              className="flex-1 py-2.5 bg-[#025644] hover:bg-[#013f31] text-white font-extrabold rounded-xl shadow-xs text-xs transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer hover:translate-y-[-0.5px]"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                              </svg>
+                              {editingHallId 
+                                ? (lang === 'bn' ? 'হালনাগাদ করুন' : 'Update Hall') 
+                                : (lang === 'bn' ? 'সংরক্ষণ করুন' : 'Save Hall')}
+                            </button>
+
+                            {editingHallId && (
+                              <button
+                                type="button"
+                                onClick={handleCancelEdit}
+                                className="px-3.5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl text-xs transition-all cursor-pointer"
+                              >
+                                {lang === 'bn' ? 'বাতিল' : 'Cancel'}
+                              </button>
+                            )}
+                          </div>
+                        </form>
+                      </div>
+
+                      {/* Right Side: List Table */}
+                      <div className="lg:col-span-8 bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs space-y-4">
+                        <div className="flex flex-wrap justify-between items-center gap-4 border-b border-gray-100 pb-4">
+                          <div>
+                            <h3 className="font-extrabold text-gray-950 text-base">
+                              {lang === 'bn' ? 'পরীক্ষার হল তালিকা' : 'Exam Hall List'}
+                            </h3>
+                            <p className="text-[11px] text-gray-400 font-bold">
+                              {lang === 'bn' ? 'সকল তালিকাভুক্ত পরীক্ষা হল রুম ও সিট ক্ষমতা বিবরণী' : 'Current registry of active exam chambers and allocated seats'}
+                            </p>
+                          </div>
+                          <div className="px-3.5 py-1.5 bg-slate-50 border border-gray-100 rounded-xl text-center">
+                            <span className="text-[11px] font-bold text-gray-500">
+                              {lang === 'bn' ? 'মোট হল রুম: ' : 'Total Halls: '}
+                              <strong className="text-gray-900 font-black text-xs">{examHalls.length}</strong>
+                            </span>
+                          </div>
+                        </div>
+
+                        {examHalls.length > 0 ? (
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-xs text-left text-gray-700 whitespace-nowrap">
+                              <thead className="bg-slate-50/70 border-b border-gray-150 uppercase text-[10px] font-black text-gray-500 tracking-wider text-center">
+                                <tr>
+                                  <th className="py-3 px-3 text-center w-12">#</th>
+                                  <th className="py-3 px-4 text-left">{lang === 'bn' ? 'রুমের নাম / নাম্বার' : 'Hall/Room Name'}</th>
+                                  <th className="py-3 px-3 w-32">{lang === 'bn' ? 'আসন ক্ষমতা' : 'Seat Capacity'}</th>
+                                  <th className="py-3 px-4 text-left">{lang === 'bn' ? 'অবস্থান ও বিবরণ' : 'Location/Description'}</th>
+                                  <th className="py-3 px-3 w-28">{lang === 'bn' ? 'অবস্থা' : 'Status'}</th>
+                                  <th className="py-3 px-4 text-center w-24">{lang === 'bn' ? 'অ্যাকশন' : 'Action'}</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-gray-100">
+                                {examHalls.map((hall, idx) => (
+                                  <tr 
+                                    key={hall.id} 
+                                    className={`hover:bg-gray-50/40 transition-colors ${editingHallId === hall.id ? 'bg-amber-50/40 hover:bg-amber-50/60' : ''}`}
+                                  >
+                                    {/* SL */}
+                                    <td className="py-3.5 px-3 text-center font-mono font-black text-gray-400">
+                                      {(idx + 1).toString().padStart(2, '0')}
+                                    </td>
+
+                                    {/* Room Name */}
+                                    <td className="py-3.5 px-4 text-left font-black text-gray-900">
+                                      {hall.roomName}
+                                    </td>
+
+                                    {/* Seat Capacity */}
+                                    <td className="py-3.5 px-3 text-center font-mono">
+                                      <span className="px-2.5 py-1 bg-[#025644]/5 text-[#025644] rounded-lg font-black text-[11px] border border-[#025644]/10">
+                                        {hall.capacity} {lang === 'bn' ? 'আসন' : 'Seats'}
+                                      </span>
+                                    </td>
+
+                                    {/* Location */}
+                                    <td className="py-3.5 px-4 text-left font-bold text-gray-500 max-w-xs truncate" title={hall.location}>
+                                      {hall.location}
+                                    </td>
+
+                                    {/* Status Badge */}
+                                    <td className="py-3.5 px-3 text-center">
+                                      {hall.status === 'Available' ? (
+                                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-100 rounded-full font-black text-[10px] tracking-wide">
+                                          <span className="w-1.5 h-1.5 bg-emerald-600 rounded-full animate-pulse"></span>
+                                          {lang === 'bn' ? 'উপলব্ধ (Available)' : 'Available'}
+                                        </span>
+                                      ) : (
+                                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-amber-50 text-amber-800 border border-amber-100 rounded-full font-black text-[10px] tracking-wide">
+                                          <span className="w-1.5 h-1.5 bg-amber-600 rounded-full"></span>
+                                          {lang === 'bn' ? 'ব্যস্ত (Booked)' : 'Booked'}
+                                        </span>
+                                      )}
+                                    </td>
+
+                                    {/* Action Buttons */}
+                                    <td className="py-3.5 px-4 text-center">
+                                      <div className="flex items-center justify-center gap-2">
+                                        {/* Edit Button */}
+                                        <button
+                                          type="button"
+                                          onClick={() => handleEditHall(hall)}
+                                          title={lang === 'bn' ? 'সম্পাদনা করুন' : 'Edit'}
+                                          className="p-1.5 hover:bg-slate-100 text-slate-600 hover:text-slate-900 rounded-lg transition-all cursor-pointer"
+                                        >
+                                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                          </svg>
+                                        </button>
+
+                                        {/* Delete Button */}
+                                        <button
+                                          type="button"
+                                          onClick={() => handleDeleteHall(hall.id, hall.roomName)}
+                                          title={lang === 'bn' ? 'মুছে ফেলুন' : 'Delete'}
+                                          className="p-1.5 hover:bg-rose-50 text-rose-500 hover:text-rose-700 rounded-lg transition-all cursor-pointer"
+                                        >
+                                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                          </svg>
+                                        </button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        ) : (
+                          <div className="p-12 text-center space-y-3">
+                            <div className="inline-flex p-4 bg-gray-50 text-gray-400 rounded-full border border-dashed border-gray-200">
+                              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                              </svg>
+                            </div>
+                            <h4 className="text-sm font-extrabold text-gray-950">
+                              {lang === 'bn' ? 'কোনো পরীক্ষা হল পাওয়া যায়নি!' : 'No Exam Halls Registered!'}
+                            </h4>
+                            <p className="text-xs text-gray-400 max-w-sm mx-auto leading-relaxed">
+                              {lang === 'bn' ? 'দয়া করে বাম পাশের ফর্মটি ব্যবহার করে একটি নতুন পরীক্ষা হল বা রুম যোগ করুন।' : 'Please use the left form to add your very first exam hall or class chamber registration.'}
+                            </p>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {examSubTab === 'exam_distribution' && (
                   <div className="bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs text-left space-y-4">
@@ -10929,28 +11342,601 @@ def approve_admission_application(request, pk):
                   </div>
                 )}
 
-                {examSubTab === 'exam_setup' && (
-                  <div className="bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs text-left space-y-4">
-                    <div>
-                      <h3 className="font-extrabold text-gray-900 text-lg">{lang === 'bn' ? 'পরীক্ষা নিয়মকানুন সেটআপ' : 'General Grading Scheme Settings'}</h3>
-                      <p className="text-xs text-gray-400 font-bold">{lang === 'bn' ? 'গ্রেড পরিবর্তনের নীতিমালা' : 'Configure global grade point thresholds and calculation formulas'}</p>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
-                      {[
-                        { grade: 'A+', range: '80 - 100', gpa: '5.00' },
-                        { grade: 'A', range: '70 - 79', gpa: '4.00' },
-                        { grade: 'A-', range: '60 - 69', gpa: '3.50' },
-                        { grade: 'B', range: '50 - 59', gpa: '3.00' }
-                      ].map((g, i) => (
-                        <div key={i} className="bg-gray-50 border border-gray-150 p-4 rounded-2xl text-center space-y-1 text-xs">
-                          <span className="font-black text-emerald-800 text-base block">{g.grade}</span>
-                          <span className="text-[10px] text-gray-400 font-bold block">{g.range} Marks</span>
-                          <span className="font-bold text-gray-600 block">GPA {g.gpa}</span>
+                {examSubTab === 'exam_setup' && (() => {
+                  // Fallback/Common subjects in case none are configured
+                  const commonSubjectsList = ['Physics', 'Chemistry', 'Higher Math', 'Biology', 'English', 'Bengali', 'General Math', 'Social Science', 'Religion', 'ICT'];
+                  
+                  // Unique list of subjects for selected class, merged with common ones
+                  const classSubjects = academicSubjects.filter(s => s.class === setupFormClass).map(s => s.name);
+                  const mergedSubjects = Array.from(new Set([...classSubjects, ...commonSubjectsList]));
+
+                  // Filter setups
+                  const filteredSetups = examSetups.filter(s => {
+                    const matchesTerm = setupFilterTermId === 'All' || s.termId === setupFilterTermId;
+                    const matchesClass = setupFilterClass === 'All' || s.class === setupFilterClass;
+                    return matchesTerm && matchesClass;
+                  });
+
+                  // Calculate total marks dynamically
+                  const calculatedTotalMarks = Number(setupFormWritten || 0) + Number(setupFormMCQ || 0) + Number(setupFormPractical || 0);
+
+                  // Handle save/update
+                  const handleSaveSetupSubmit = (e: React.FormEvent) => {
+                    e.preventDefault();
+
+                    const combinedPass = Number(setupFormWrittenPass || 0) + Number(setupFormMCQPass || 0) + Number(setupFormPracticalPass || 0);
+
+                    const setupData = {
+                      termId: setupFormTermId,
+                      class: setupFormClass,
+                      subject: setupFormSubject,
+                      writtenMarks: Number(setupFormWritten || 0),
+                      writtenPassMarks: Number(setupFormWrittenPass || 0),
+                      mcqMarks: Number(setupFormMCQ || 0),
+                      mcqPassMarks: Number(setupFormMCQPass || 0),
+                      practicalMarks: Number(setupFormPractical || 0),
+                      practicalPassMarks: Number(setupFormPracticalPass || 0),
+                      totalMarks: calculatedTotalMarks,
+                      passMarks: combinedPass,
+                    };
+
+                    if (editingSetupId) {
+                      setExamSetups(prev => prev.map(item => {
+                        if (item.id === editingSetupId) {
+                          return { ...item, ...setupData };
+                        }
+                        return item;
+                      }));
+                      setAdminSuccessMsg(lang === 'bn' ? 'পরীক্ষা সেটআপ সফলভাবে আপডেট করা হয়েছে!' : 'Exam setup successfully updated!');
+                      addAuditLog(`Admin updated exam setup for ${setupFormClass} - ${setupFormSubject}`);
+                      setEditingSetupId(null);
+                    } else {
+                      const newId = `ES-${Date.now()}`;
+                      setExamSetups(prev => [...prev, { id: newId, ...setupData }]);
+                      setAdminSuccessMsg(lang === 'bn' ? 'পরীক্ষা সেটআপ সফলভাবে যোগ করা হয়েছে!' : 'Exam setup successfully added!');
+                      addAuditLog(`Admin created exam setup for ${setupFormClass} - ${setupFormSubject}`);
+                    }
+
+                    // Reset form defaults but keep term and class
+                    setSetupFormWritten(50);
+                    setSetupFormWrittenPass(17);
+                    setSetupFormMCQ(25);
+                    setSetupFormMCQPass(8);
+                    setSetupFormPractical(25);
+                    setSetupFormPracticalPass(8);
+                    setSetupFormPassMarks(33);
+
+                    // Clear message after timeout
+                    setTimeout(() => setAdminSuccessMsg(''), 4000);
+                  };
+
+                  const handleEditSetupClick = (item: any) => {
+                    setEditingSetupId(item.id);
+                    setSetupFormTermId(item.termId);
+                    setSetupFormClass(item.class);
+                    setSetupFormSubject(item.subject);
+                    setSetupFormWritten(item.writtenMarks);
+                    setSetupFormWrittenPass(item.writtenPassMarks || 0);
+                    setSetupFormMCQ(item.mcqMarks);
+                    setSetupFormMCQPass(item.mcqPassMarks || 0);
+                    setSetupFormPractical(item.practicalMarks);
+                    setSetupFormPracticalPass(item.practicalPassMarks || 0);
+                    setSetupFormPassMarks(item.passMarks);
+                  };
+
+                  const handleDeleteSetupClick = (id: string, subject: string) => {
+                    if (confirm(lang === 'bn' ? `আপনি কি নিশ্চিতভাবে এই সেটআপটি মুছে ফেলতে চান? (${subject})` : `Are you sure you want to delete this setup? (${subject})`)) {
+                      setExamSetups(prev => prev.filter(item => item.id !== id));
+                      setAdminSuccessMsg(lang === 'bn' ? 'পরীক্ষা সেটআপ সফলভাবে মুছে ফেলা হয়েছে!' : 'Exam setup successfully deleted!');
+                      addAuditLog(`Admin deleted exam setup for ${subject}`);
+                      setTimeout(() => setAdminSuccessMsg(''), 4000);
+
+                      if (editingSetupId === id) {
+                        setEditingSetupId(null);
+                      }
+                    }
+                  };
+
+                  const handleCancelEdit = () => {
+                    setEditingSetupId(null);
+                    setSetupFormWritten(50);
+                    setSetupFormWrittenPass(17);
+                    setSetupFormMCQ(25);
+                    setSetupFormMCQPass(8);
+                    setSetupFormPractical(25);
+                    setSetupFormPracticalPass(8);
+                    setSetupFormPassMarks(33);
+                  };
+
+                  return (
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start text-left">
+                      
+                      {/* Left Column: Exam Setup Form */}
+                      <div className="lg:col-span-5 bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs space-y-5 text-left">
+                        <div>
+                          <h4 className="font-extrabold text-gray-900 text-base flex items-center gap-2">
+                            <span className="p-1.5 bg-emerald-50 text-[#025644] rounded-lg">⚙️</span>
+                            <span>
+                              {editingSetupId 
+                                ? (lang === 'bn' ? 'পরীক্ষা সেটআপ সংশোধন করুন' : 'Edit Exam Setup') 
+                                : (lang === 'bn' ? 'পরীক্ষা সেটআপ তৈরি করুন' : 'Create Exam Setup')
+                              }
+                            </span>
+                          </h4>
+                          <p className="text-xs text-gray-400 font-bold mt-1 leading-relaxed">
+                            {lang === 'bn' 
+                              ? 'পরীক্ষার বিভিন্ন অংশের মান (লিখিত, MCQ, প্র্যাকটিক্যাল) ও পাস মার্কস নির্ধারণ করুন।' 
+                              : 'Configure specific marks (Written, MCQ, Practical) and pass criteria per course.'
+                            }
+                          </p>
                         </div>
-                      ))}
+
+                        <form onSubmit={handleSaveSetupSubmit} className="space-y-4">
+                          
+                          {/* Exam Term */}
+                          <div className="space-y-1">
+                            <label className="block text-xs font-black text-gray-700 uppercase tracking-wide">
+                              {lang === 'bn' ? 'পরীক্ষা টার্ম (Exam Term) *' : 'Exam Term *'}
+                            </label>
+                            <select
+                              required
+                              value={setupFormTermId}
+                              onChange={e => setSetupFormTermId(e.target.value)}
+                              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 focus:border-[#025644] focus:bg-white text-gray-900 rounded-xl text-xs font-bold transition-all outline-none cursor-pointer"
+                            >
+                              {examTerms.map(t => (
+                                <option key={t.id} value={t.id}>
+                                  {t.name} ({t.year})
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          {/* Class & Section */}
+                          <div className="space-y-1">
+                            <label className="block text-xs font-black text-gray-700 uppercase tracking-wide">
+                              {lang === 'bn' ? 'শ্রেণী ও শাখা (Class & Section) *' : 'Class & Section *'}
+                            </label>
+                            <select
+                              required
+                              value={setupFormClass}
+                              onChange={e => {
+                                const newClass = e.target.value;
+                                setSetupFormClass(newClass);
+                                const firstSub = academicSubjects.find(s => s.class === newClass);
+                                if (firstSub) {
+                                  setSetupFormSubject(firstSub.name);
+                                }
+                              }}
+                              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 focus:border-[#025644] focus:bg-white text-gray-900 rounded-xl text-xs font-bold transition-all outline-none cursor-pointer"
+                            >
+                              {academicClasses.length > 0 ? (
+                                academicClasses.map(c => (
+                                  <option key={c.id} value={c.name}>{c.name}</option>
+                                ))
+                              ) : (
+                                <>
+                                  <option value="Class 9-A">Class 9-A</option>
+                                  <option value="Class 8-A">Class 8-A</option>
+                                  <option value="Class 7-A">Class 7-A</option>
+                                  <option value="Class 10-A">Class 10-A</option>
+                                </>
+                              )}
+                            </select>
+                          </div>
+
+                          {/* Subject */}
+                          <div className="space-y-1">
+                            <label className="block text-xs font-black text-gray-700 uppercase tracking-wide">
+                              {lang === 'bn' ? 'বিষয় (Subject) *' : 'Subject *'}
+                            </label>
+                            <select
+                              required
+                              value={setupFormSubject}
+                              onChange={e => setSetupFormSubject(e.target.value)}
+                              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 focus:border-[#025644] focus:bg-white text-gray-900 rounded-xl text-xs font-bold transition-all outline-none cursor-pointer"
+                            >
+                              {mergedSubjects.map(subName => (
+                                <option key={subName} value={subName}>{subName}</option>
+                              ))}
+                            </select>
+                          </div>
+
+                          {/* Marks Distribution Group */}
+                          <div className="p-4 bg-slate-50/50 border border-gray-150 rounded-2xl space-y-4">
+                            <span className="block text-[11px] font-black text-[#025644] uppercase tracking-wider">
+                              {lang === 'bn' ? 'নম্বর ও পাস মার্ক বন্টন (Marks & Pass Distribution)' : 'Marks & Pass Distribution'}
+                            </span>
+
+                            <div className="grid grid-cols-3 gap-3 divide-x divide-gray-200">
+                              
+                              {/* Written Group */}
+                              <div className="space-y-2.5 pr-0.5">
+                                <span className="block text-[10px] font-black text-gray-700 border-b border-gray-100 pb-1">
+                                  {lang === 'bn' ? 'লিখিত (Written)' : 'Written'}
+                                </span>
+                                <div className="space-y-1.5">
+                                  <div>
+                                    <label className="block text-[9px] font-black text-gray-400 uppercase">
+                                      {lang === 'bn' ? 'মোট (Total)' : 'Total'}
+                                    </label>
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      required
+                                      value={setupFormWritten}
+                                      onChange={e => {
+                                        const val = Number(e.target.value);
+                                        setSetupFormWritten(val);
+                                        setSetupFormWrittenPass(Math.ceil(val * 0.33));
+                                      }}
+                                      className="w-full px-2.5 py-1.5 bg-white border border-gray-200 focus:border-[#025644] text-gray-900 rounded-xl text-xs font-bold outline-none"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[9px] font-black text-gray-400 uppercase">
+                                      {lang === 'bn' ? 'পাস (Pass)' : 'Pass'}
+                                    </label>
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      required
+                                      value={setupFormWrittenPass}
+                                      onChange={e => setSetupFormWrittenPass(Number(e.target.value))}
+                                      className="w-full px-2.5 py-1.5 bg-white border border-gray-200 focus:border-[#025644] text-[#025644] rounded-xl text-xs font-bold outline-none"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* MCQ Group */}
+                              <div className="space-y-2.5 pl-2.5 pr-0.5">
+                                <span className="block text-[10px] font-black text-gray-700 border-b border-gray-100 pb-1">
+                                  {lang === 'bn' ? 'এমসিকিউ (MCQ)' : 'MCQ'}
+                                </span>
+                                <div className="space-y-1.5">
+                                  <div>
+                                    <label className="block text-[9px] font-black text-gray-400 uppercase">
+                                      {lang === 'bn' ? 'মোট (Total)' : 'Total'}
+                                    </label>
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      required
+                                      value={setupFormMCQ}
+                                      onChange={e => {
+                                        const val = Number(e.target.value);
+                                        setSetupFormMCQ(val);
+                                        setSetupFormMCQPass(Math.ceil(val * 0.33));
+                                      }}
+                                      className="w-full px-2.5 py-1.5 bg-white border border-gray-200 focus:border-[#025644] text-gray-900 rounded-xl text-xs font-bold outline-none"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[9px] font-black text-gray-400 uppercase">
+                                      {lang === 'bn' ? 'পাস (Pass)' : 'Pass'}
+                                    </label>
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      required
+                                      value={setupFormMCQPass}
+                                      onChange={e => setSetupFormMCQPass(Number(e.target.value))}
+                                      className="w-full px-2.5 py-1.5 bg-white border border-gray-200 focus:border-[#025644] text-[#025644] rounded-xl text-xs font-bold outline-none"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Practical Group */}
+                              <div className="space-y-2.5 pl-2.5">
+                                <span className="block text-[10px] font-black text-gray-700 border-b border-gray-100 pb-1">
+                                  {lang === 'bn' ? 'ব্যবহারিক (Prac)' : 'Practical'}
+                                </span>
+                                <div className="space-y-1.5">
+                                  <div>
+                                    <label className="block text-[9px] font-black text-gray-400 uppercase">
+                                      {lang === 'bn' ? 'মোট (Total)' : 'Total'}
+                                    </label>
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      required
+                                      value={setupFormPractical}
+                                      onChange={e => {
+                                        const val = Number(e.target.value);
+                                        setSetupFormPractical(val);
+                                        setSetupFormPracticalPass(Math.ceil(val * 0.33));
+                                      }}
+                                      className="w-full px-2.5 py-1.5 bg-white border border-gray-200 focus:border-[#025644] text-gray-900 rounded-xl text-xs font-bold outline-none"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[9px] font-black text-gray-400 uppercase">
+                                      {lang === 'bn' ? 'পাস (Pass)' : 'Pass'}
+                                    </label>
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      required
+                                      value={setupFormPracticalPass}
+                                      onChange={e => setSetupFormPracticalPass(Number(e.target.value))}
+                                      className="w-full px-2.5 py-1.5 bg-white border border-gray-200 focus:border-[#025644] text-[#025644] rounded-xl text-xs font-bold outline-none"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+
+                            </div>
+                          </div>
+
+                          {/* Calculated Total and Pass Marks */}
+                          <div className="grid grid-cols-2 gap-4">
+                            {/* Total Marks (Calculated, Read-only) */}
+                            <div className="space-y-1">
+                              <label className="block text-xs font-black text-gray-400 uppercase tracking-wide">
+                                {lang === 'bn' ? 'মোট নম্বর (Total Marks)' : 'Total Marks (Calculated)'}
+                              </label>
+                              <input
+                                type="number"
+                                readOnly
+                                value={calculatedTotalMarks}
+                                className="w-full px-4 py-2.5 bg-gray-100 border border-gray-200 text-gray-500 rounded-xl text-xs font-extrabold outline-none cursor-not-allowed"
+                              />
+                            </div>
+
+                            {/* Pass Marks */}
+                            <div className="space-y-1">
+                              <label className="block text-xs font-black text-gray-400 uppercase tracking-wide">
+                                {lang === 'bn' ? 'মোট পাস নম্বর (Total Pass Marks)' : 'Total Pass Marks'}
+                              </label>
+                              <input
+                                type="number"
+                                readOnly
+                                value={Number(setupFormWrittenPass || 0) + Number(setupFormMCQPass || 0) + Number(setupFormPracticalPass || 0)}
+                                className="w-full px-4 py-2.5 bg-gray-100 border border-gray-200 text-[#025644] rounded-xl text-xs font-black outline-none cursor-not-allowed"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Submit Actions */}
+                          <div className="flex items-center gap-2 pt-2">
+                            <button
+                              type="submit"
+                              className="flex-1 py-3 bg-[#025644] hover:bg-[#013f31] text-white text-xs font-black rounded-xl transition-all cursor-pointer shadow-3xs flex items-center justify-center gap-2"
+                            >
+                              <span>💾</span>
+                              <span>
+                                {editingSetupId 
+                                  ? (lang === 'bn' ? 'সেটআপ আপডেট করুন' : 'Update Setup')
+                                  : (lang === 'bn' ? 'সেটআপ সংরক্ষণ করুন' : 'Save Setup')
+                                }
+                              </span>
+                            </button>
+
+                            {editingSetupId && (
+                              <button
+                                type="button"
+                                onClick={handleCancelEdit}
+                                className="px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-black rounded-xl transition-colors cursor-pointer"
+                              >
+                                {lang === 'bn' ? 'বাতিল' : 'Cancel'}
+                              </button>
+                            )}
+                          </div>
+                        </form>
+                      </div>
+
+                      {/* Right Column: Exam Setup List & Filters */}
+                      <div className="lg:col-span-7 bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs space-y-5 text-left">
+                        
+                        {/* Title and Badge */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-4">
+                          <div>
+                            <h4 className="font-extrabold text-gray-900 text-base">
+                              {lang === 'bn' ? 'পরীক্ষা সেটআপ তালিকা' : 'Exam Setup List'}
+                            </h4>
+                            <p className="text-xs text-gray-400 font-bold mt-1">
+                              {lang === 'bn' ? 'শ্রেণীভিত্তিক বিষয়ের লিখিত, MCQ এবং প্র্যাকটিক্যাল নম্বরের রূপরেখা।' : 'View full subject marks distribution models and pass configurations.'}
+                            </p>
+                          </div>
+                          <span className="text-[11px] font-black px-3 py-1 bg-emerald-50 text-[#025644] border border-emerald-100/50 rounded-full w-fit">
+                            {filteredSetups.length} {lang === 'bn' ? 'টি সেটআপ' : 'Setups'}
+                          </span>
+                        </div>
+
+                        {/* Filters Bar */}
+                        <div className="p-4 bg-gray-50 border border-gray-150 rounded-2xl grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          
+                          {/* Filter by Term */}
+                          <div className="space-y-1">
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider">
+                              {lang === 'bn' ? 'টার্ম ফিল্টার (Filter by Term)' : 'Filter by Term'}
+                            </label>
+                            <select
+                              value={setupFilterTermId}
+                              onChange={e => setSetupFilterTermId(e.target.value)}
+                              className="w-full px-3 py-2 bg-white border border-gray-200 text-gray-800 rounded-xl text-xs font-bold outline-none cursor-pointer"
+                            >
+                              <option value="All">{lang === 'bn' ? 'সকল টার্ম' : 'All Terms'}</option>
+                              {examTerms.map(t => (
+                                <option key={t.id} value={t.id}>{t.name}</option>
+                              ))}
+                            </select>
+                          </div>
+
+                          {/* Filter by Class */}
+                          <div className="space-y-1">
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider">
+                              {lang === 'bn' ? 'শ্রেণী ফিল্টার (Filter by Class)' : 'Filter by Class'}
+                            </label>
+                            <select
+                              value={setupFilterClass}
+                              onChange={e => setSetupFilterClass(e.target.value)}
+                              className="w-full px-3 py-2 bg-white border border-gray-200 text-gray-800 rounded-xl text-xs font-bold outline-none cursor-pointer"
+                            >
+                              <option value="All">{lang === 'bn' ? 'সকল শ্রেণী' : 'All Classes'}</option>
+                              {academicClasses.map(c => (
+                                <option key={c.id} value={c.name}>{c.name}</option>
+                              ))}
+                              {/* Extra fallback options */}
+                              <option value="Class 9-A">Class 9-A</option>
+                              <option value="Class 8-A">Class 8-A</option>
+                              <option value="Class 7-A">Class 7-A</option>
+                              <option value="Class 10-A">Class 10-A</option>
+                            </select>
+                          </div>
+
+                        </div>
+
+                        {/* Setup List Table */}
+                        <div className="overflow-x-auto">
+                          {filteredSetups.length > 0 ? (
+                            <table className="w-full text-left text-xs border-collapse">
+                              <thead>
+                                <tr className="border-b border-gray-100 font-black text-gray-400 uppercase tracking-wider text-[10px]">
+                                  <th className="py-3 px-2 text-center" style={{ width: '6%' }}>SL</th>
+                                  <th className="py-3 px-3" style={{ width: '32%' }}>{lang === 'bn' ? 'বিষয় ও শ্রেণী' : 'Subject & Class'}</th>
+                                  <th className="py-3 px-2 text-center" style={{ width: '10%' }}>{lang === 'bn' ? 'লিখিত' : 'Written'}</th>
+                                  <th className="py-3 px-2 text-center" style={{ width: '10%' }}>{lang === 'bn' ? 'MCQ' : 'MCQ'}</th>
+                                  <th className="py-3 px-2 text-center" style={{ width: '10%' }}>{lang === 'bn' ? 'ব্যবহারিক' : 'Prac'}</th>
+                                  <th className="py-3 px-2 text-center" style={{ width: '11%' }}>{lang === 'bn' ? 'মোট নম্বর' : 'Total'}</th>
+                                  <th className="py-3 px-2 text-center" style={{ width: '11%' }}>{lang === 'bn' ? 'পাস নম্বর' : 'Pass'}</th>
+                                  <th className="py-3 px-2 text-center" style={{ width: '10%' }}>{lang === 'bn' ? 'অ্যাকশন' : 'Action'}</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-gray-100 text-gray-700 font-bold">
+                                {filteredSetups.map((item, idx) => {
+                                  const term = examTerms.find(t => t.id === item.termId);
+                                  const termName = term ? term.name : (lang === 'bn' ? 'অজানা' : 'Unknown');
+                                  const isCurrentlyEditing = editingSetupId === item.id;
+                                  return (
+                                    <tr 
+                                      key={item.id} 
+                                      className={`group transition-colors ${
+                                        isCurrentlyEditing ? 'bg-[#025644]/5' : 'hover:bg-slate-50/50'
+                                      }`}
+                                    >
+                                      {/* Serial Number */}
+                                      <td className="py-3 px-2 text-center text-gray-400 font-mono font-black">
+                                        {idx + 1}
+                                      </td>
+
+                                      {/* Subject & Class Details */}
+                                      <td className="py-3 px-3">
+                                        <div className="text-left space-y-0.5">
+                                          <div className="text-[#025644] font-black text-xs">
+                                            {item.subject}
+                                          </div>
+                                          <div className="flex items-center gap-1.5 flex-wrap">
+                                            <span className="px-1.5 py-0.5 bg-gray-100 text-gray-600 font-extrabold text-[9px] rounded">
+                                              {item.class}
+                                            </span>
+                                            <span className="text-[9px] text-gray-400 font-semibold font-mono">
+                                              {termName}
+                                            </span>
+                                          </div>
+                                        </div>
+                                      </td>
+
+                                      {/* Written */}
+                                      <td className="py-3 px-2 text-center font-mono text-gray-800">
+                                        <div className="font-extrabold text-xs">{item.writtenMarks}</div>
+                                        {item.writtenMarks > 0 && (
+                                          <div className="text-[9px] text-gray-400 font-bold mt-0.5" title={lang === 'bn' ? 'পাস নম্বর' : 'Pass Marks'}>
+                                            {lang === 'bn' ? 'পাস' : 'Pass'}: <span className="text-[#025644] font-black">{item.writtenPassMarks || 0}</span>
+                                          </div>
+                                        )}
+                                      </td>
+
+                                      {/* MCQ */}
+                                      <td className="py-3 px-2 text-center font-mono text-gray-800">
+                                        <div className="font-extrabold text-xs">{item.mcqMarks}</div>
+                                        {item.mcqMarks > 0 && (
+                                          <div className="text-[9px] text-gray-400 font-bold mt-0.5" title={lang === 'bn' ? 'পাস নম্বর' : 'Pass Marks'}>
+                                            {lang === 'bn' ? 'পাস' : 'Pass'}: <span className="text-[#025644] font-black">{item.mcqPassMarks || 0}</span>
+                                          </div>
+                                        )}
+                                      </td>
+
+                                      {/* Practical */}
+                                      <td className="py-3 px-2 text-center font-mono text-gray-800">
+                                        <div className="font-extrabold text-xs">{item.practicalMarks}</div>
+                                        {item.practicalMarks > 0 && (
+                                          <div className="text-[9px] text-gray-400 font-bold mt-0.5" title={lang === 'bn' ? 'পাস নম্বর' : 'Pass Marks'}>
+                                            {lang === 'bn' ? 'পাস' : 'Pass'}: <span className="text-[#025644] font-black">{item.practicalPassMarks || 0}</span>
+                                          </div>
+                                        )}
+                                      </td>
+
+                                      {/* Total */}
+                                      <td className="py-3 px-2 text-center">
+                                        <span className="px-2.5 py-0.5 bg-emerald-50 text-[#025644] font-black text-[10px] rounded-md font-mono">
+                                          {item.totalMarks}
+                                        </span>
+                                      </td>
+
+                                      {/* Pass Marks */}
+                                      <td className="py-3 px-2 text-center">
+                                        <span className="px-2.5 py-0.5 bg-rose-50 text-rose-700 font-black text-[10px] rounded-md font-mono">
+                                          {item.passMarks}
+                                        </span>
+                                      </td>
+
+                                      {/* Action Buttons */}
+                                      <td className="py-3 px-2 text-center">
+                                        <div className="flex items-center justify-center gap-1.5">
+                                          {/* Edit Icon Button */}
+                                          <button
+                                            type="button"
+                                            onClick={() => handleEditSetupClick(item)}
+                                            title={lang === 'bn' ? 'সম্পাদনা করুন' : 'Edit Setup'}
+                                            className="p-1.5 bg-slate-50 hover:bg-sky-50 text-slate-400 hover:text-sky-600 border border-gray-200/50 hover:border-sky-100 rounded-lg transition-all cursor-pointer flex items-center justify-center"
+                                          >
+                                            <Edit3 className="h-3.5 w-3.5" />
+                                          </button>
+
+                                          {/* Delete Icon Button */}
+                                          <button
+                                            type="button"
+                                            onClick={() => handleDeleteSetupClick(item.id, item.subject)}
+                                            title={lang === 'bn' ? 'মুছে ফেলুন' : 'Delete Setup'}
+                                            className="p-1.5 bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-600 border border-gray-200/50 hover:border-rose-100 rounded-lg transition-all cursor-pointer flex items-center justify-center"
+                                          >
+                                            <Trash2 className="h-3.5 w-3.5" />
+                                          </button>
+                                        </div>
+                                      </td>
+
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          ) : (
+                            <div className="flex flex-col items-center justify-center py-12 border border-dashed border-gray-200 rounded-2xl bg-slate-50 text-gray-400 space-y-2 text-center px-4">
+                              <span className="text-3xl">📭</span>
+                              <p className="font-extrabold text-xs text-gray-500">
+                                {lang === 'bn' 
+                                  ? 'কোনো পরীক্ষা সেটআপ তথ্য খুঁজে পাওয়া যায়নি।' 
+                                  : 'No exam setups found matching the selected filters.'
+                                }
+                              </p>
+                              <p className="text-[10px] text-gray-400 max-w-xs leading-relaxed">
+                                {lang === 'bn' 
+                                  ? 'বাম পাশের ফর্মটি পূরণ করে নতুন বিষয়ভিত্তিক নম্বর বন্টন সেটআপ সংরক্ষণ করুন।' 
+                                  : 'Try adjusting your filters or use the left panel to save a new course setup.'
+                                }
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
+                      </div>
+
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {examSubTab === 'exam_marksheet_template' && (
                   <div className="bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs text-left space-y-4">
@@ -10972,85 +11958,1052 @@ def approve_admission_application(request, pk):
                   </div>
                 )}
 
-                {examSubTab === 'exam_schedule' && (
-                  <div className="bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs text-left space-y-4">
-                    <div>
-                      <h3 className="font-extrabold text-gray-900 text-lg">{lang === 'bn' ? 'পরীক্ষা ক্যালেন্ডার ও সময়সূচী' : 'School Exam Calendar Matrix'}</h3>
-                      <p className="text-xs text-gray-400 font-bold">{lang === 'bn' ? 'ক্যালেন্ডার ভিউ' : 'Complete list of testing slots assigned to this year'}</p>
-                    </div>
-                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-150 text-xs font-semibold text-gray-600 space-y-2">
-                      <p>🗓 Mid-Term Exams: <span className="text-emerald-700 font-black">July 12 - July 20, 2026</span></p>
-                      <p>🗓 Preparatory Test: <span className="text-amber-600 font-black">September 05 - September 15, 2026</span></p>
-                      <p>🗓 Final Term Exams: <span className="text-indigo-600 font-black">December 01 - December 20, 2026</span></p>
-                    </div>
-                  </div>
-                )}
+                {examSubTab === 'exam_schedule' && (() => {
+                  // Helper function to format 24h time to AM/PM
+                  const formatTimeToAMPM = (timeStr: string) => {
+                    if (!timeStr) return '';
+                    const [hourStr, minStr] = timeStr.split(':');
+                    let hour = parseInt(hourStr, 10);
+                    const ampm = hour >= 12 ? 'PM' : 'AM';
+                    hour = hour % 12;
+                    hour = hour ? hour : 12;
+                    const formattedHour = hour < 10 ? `0${hour}` : hour;
+                    return `${formattedHour}:${minStr} ${ampm}`;
+                  };
 
-                {examSubTab === 'exam_marks' && (
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 text-left">
-                    {/* Active exam list */}
-                    <div className="lg:col-span-7 bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs space-y-4">
-                      <div>
-                        <h3 className="font-extrabold text-gray-900 text-base">{lang === 'bn' ? 'অর্ধ-বার্ষিক পরীক্ষার নম্বরপত্র' : 'Half-Yearly Exam Timetables'}</h3>
-                        <p className="text-xs text-gray-400 font-bold">Official schedule released to notice board</p>
-                      </div>
-                      <div className="space-y-3">
-                        {[
-                          { subject: 'Chemistry (Theoretical)', date: 'July 12, 2026', time: '10:00 AM - 1:00 PM', class: 'Class 9' },
-                          { subject: 'Physics & Lab Practice', date: 'July 14, 2026', time: '10:00 AM - 1:00 PM', class: 'Class 9' },
-                          { subject: 'Higher Mathematics', date: 'July 16, 2026', time: '10:00 AM - 1:00 PM', class: 'Class 9' },
-                        ].map((ex, i) => (
-                          <div key={i} className="p-4 bg-gray-50 border border-gray-150 rounded-xl flex justify-between items-center text-xs">
-                            <div>
-                              <span className="font-extrabold text-[#025644] block">{ex.subject}</span>
-                              <span className="text-[10px] text-gray-400 font-bold mt-1 block">Timings: {ex.time}</span>
-                            </div>
-                            <div className="text-right">
-                              <span className="px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-100 rounded-md font-black block w-fit ml-auto">{ex.class}</span>
-                              <span className="text-[10px] text-gray-400 font-bold mt-1 block">{ex.date}</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                  // Helper function to parse AM/PM time back to 24h format
+                  const parseAMPMToTime = (ampmStr: string) => {
+                    if (!ampmStr) return '10:00';
+                    const match = ampmStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+                    if (!match) return '10:00';
+                    let [_, hourStr, minStr, ampm] = match;
+                    let hour = parseInt(hourStr, 10);
+                    if (ampm.toUpperCase() === 'PM' && hour < 12) hour += 12;
+                    if (ampm.toUpperCase() === 'AM' && hour === 12) hour = 0;
+                    const formattedHour = hour < 10 ? `0${hour}` : hour;
+                    return `${formattedHour}:${minStr}`;
+                  };
 
-                    {/* Submitting exam grades proxy */}
-                    <div className="lg:col-span-5 bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs space-y-4">
-                      <div>
-                        <h3 className="font-extrabold text-gray-900 text-base">{lang === 'bn' ? 'সরাসরি নম্বর ইনপুট প্যানেল' : 'Direct Student Grading Panel'}</h3>
-                        <p className="text-xs text-gray-400 font-bold">Input final course marks to update scholastic transcripts</p>
-                      </div>
-                      <form onSubmit={(e) => {
-                        e.preventDefault();
-                        setAdminSuccessMsg("Exam marks officially filed! Student GPA recalculated.");
-                        addAuditLog(`Admin filed chemistry marks for Student ID 2026102.`);
-                        setTimeout(() => setAdminSuccessMsg(''), 4000);
-                      }} className="space-y-4 text-xs">
-                        <div className="space-y-1">
-                          <label className="block font-bold text-gray-400">Student ID</label>
-                          <input type="text" placeholder="e.g. 2026105" required className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold" />
+                  // Fallback/Common subjects in case none are configured
+                  const commonSubjectsList = ['Physics', 'Chemistry', 'Higher Math', 'Biology', 'English', 'Bengali', 'General Math', 'Social Science', 'Religion', 'ICT'];
+                  
+                  // Unique list of subjects for selected class, merged with common ones
+                  const classSubjects = academicSubjects.filter(s => s.class === scheduleFormClass).map(s => s.name);
+                  const mergedSubjects = Array.from(new Set([...classSubjects, ...commonSubjectsList]));
+
+                  // List of predefined room options
+                  const roomOptions = ['Room 101', 'Room 102', 'Room 103', 'Room 104', 'Room 201', 'Room 202', 'Room 203', 'Room 204', 'Auditorium', 'Main Hall'];
+
+                  // All schedules filtered by right-side filters
+                  const filteredSchedules = Object.entries(examRoutines).flatMap(([termId, routines]) => {
+                    const term = examTerms.find(t => t.id === termId);
+                    return ((routines as any[]) || []).map((r: any) => ({
+                      ...r,
+                      termId,
+                      termName: term ? term.name : (lang === 'bn' ? 'অজানা টার্ম' : 'Unknown Term')
+                    }));
+                  }).filter(s => {
+                    const matchesTerm = scheduleFilterTermId === 'All' || s.termId === scheduleFilterTermId;
+                    const matchesClass = scheduleFilterClass === 'All' || s.class === scheduleFilterClass;
+                    return matchesTerm && matchesClass;
+                  });
+
+                  // Handle form submit
+                  const handleSaveSchedule = (e: React.FormEvent) => {
+                    e.preventDefault();
+                    const startTimeFormatted = formatTimeToAMPM(scheduleFormStartTime);
+                    const endTimeFormatted = formatTimeToAMPM(scheduleFormEndTime);
+                    const timeFormatted = `${startTimeFormatted} - ${endTimeFormatted}`;
+
+                    if (editingScheduleId) {
+                      const { termId, id } = editingScheduleId;
+
+                      // If term ID changed
+                      if (termId !== scheduleFormTermId) {
+                        setExamRoutines(prev => {
+                          const updatedOld = (prev[termId] || []).filter(item => item.id !== id);
+                          const updatedNew = [
+                            ...(prev[scheduleFormTermId] || []),
+                            {
+                              id,
+                              subject: scheduleFormSubject,
+                              date: scheduleFormDate,
+                              time: timeFormatted,
+                              class: scheduleFormClass,
+                              room: scheduleFormRoom
+                            }
+                          ];
+                          return {
+                            ...prev,
+                            [termId]: updatedOld,
+                            [scheduleFormTermId]: updatedNew
+                          };
+                        });
+                      } else {
+                        // Same term update
+                        setExamRoutines(prev => {
+                          const updated = (prev[termId] || []).map(item => {
+                            if (item.id === id) {
+                              return {
+                                ...item,
+                                subject: scheduleFormSubject,
+                                date: scheduleFormDate,
+                                time: timeFormatted,
+                                class: scheduleFormClass,
+                                room: scheduleFormRoom
+                              };
+                            }
+                            return item;
+                          });
+                          return {
+                            ...prev,
+                            [termId]: updated
+                          };
+                        });
+                      }
+
+                      setAdminSuccessMsg(lang === 'bn' ? 'পরীক্ষার সময়সূচী সফলভাবে আপডেট করা হয়েছে!' : 'Exam schedule successfully updated!');
+                      addAuditLog(`Admin updated exam schedule for ${scheduleFormClass} - ${scheduleFormSubject}`);
+                      setEditingScheduleId(null);
+                    } else {
+                      // Add new schedule
+                      const newId = `R-${Date.now()}`;
+                      const newSchedule = {
+                        id: newId,
+                        subject: scheduleFormSubject,
+                        date: scheduleFormDate,
+                        time: timeFormatted,
+                        class: scheduleFormClass,
+                        room: scheduleFormRoom
+                      };
+
+                      setExamRoutines(prev => {
+                        const existing = prev[scheduleFormTermId] || [];
+                        return {
+                          ...prev,
+                          [scheduleFormTermId]: [...existing, newSchedule]
+                        };
+                      });
+
+                      setAdminSuccessMsg(lang === 'bn' ? 'পরীক্ষার সময়সূচী সফলভাবে যোগ করা হয়েছে!' : 'Exam schedule successfully added!');
+                      addAuditLog(`Admin scheduled exam for ${scheduleFormClass} - ${scheduleFormSubject} on ${scheduleFormDate}`);
+                    }
+
+                    // Clear success message
+                    setTimeout(() => setAdminSuccessMsg(''), 4000);
+                  };
+
+                  const handleEditScheduleClick = (item: { id: string; subject: string; date: string; time: string; class: string; room: string; termId: string }) => {
+                    setEditingScheduleId({ termId: item.termId, id: item.id });
+                    setScheduleFormTermId(item.termId);
+                    setScheduleFormClass(item.class);
+                    setScheduleFormSubject(item.subject);
+                    setScheduleFormDate(item.date);
+
+                    if (item.time && item.time.includes('-')) {
+                      const [startPart, endPart] = item.time.split('-').map(t => t.trim());
+                      setScheduleFormStartTime(parseAMPMToTime(startPart));
+                      setScheduleFormEndTime(parseAMPMToTime(endPart));
+                    } else {
+                      setScheduleFormStartTime('10:00');
+                      setScheduleFormEndTime('13:00');
+                    }
+
+                    setScheduleFormRoom(item.room);
+                  };
+
+                  const handleDeleteScheduleClick = (termId: string, id: string, subject: string) => {
+                    if (confirm(lang === 'bn' ? `আপনি কি নিশ্চিতভাবে এই সময়সূচীটি মুছে ফেলতে চান? (${subject})` : `Are you sure you want to delete this schedule? (${subject})`)) {
+                      setExamRoutines(prev => {
+                        const updated = (prev[termId] || []).filter(item => item.id !== id);
+                        return {
+                          ...prev,
+                          [termId]: updated
+                        };
+                      });
+                      setAdminSuccessMsg(lang === 'bn' ? 'সময়সূচী সফলভাবে মুছে ফেলা হয়েছে!' : 'Schedule successfully deleted!');
+                      addAuditLog(`Admin deleted exam schedule for ${subject}`);
+                      setTimeout(() => setAdminSuccessMsg(''), 4000);
+
+                      if (editingScheduleId && editingScheduleId.id === id) {
+                        setEditingScheduleId(null);
+                      }
+                    }
+                  };
+
+                  const handleCancelEdit = () => {
+                    setEditingScheduleId(null);
+                    setScheduleFormTermId('T-2');
+                    setScheduleFormClass('Class 9-A');
+                    setScheduleFormSubject('Chemistry');
+                    setScheduleFormDate('2026-07-12');
+                    setScheduleFormStartTime('10:00');
+                    setScheduleFormEndTime('13:00');
+                    setScheduleFormRoom('Room 201');
+                  };
+
+                  return (
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start text-left">
+                      
+                      {/* Left Column: Create / Edit Exam Schedule Form */}
+                      <div className="lg:col-span-5 bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs space-y-5 text-left">
+                        <div>
+                          <h4 className="font-extrabold text-gray-900 text-base flex items-center gap-2">
+                            <span className="p-1.5 bg-emerald-50 text-[#025644] rounded-lg">🗓</span>
+                            <span>
+                              {editingScheduleId 
+                                ? (lang === 'bn' ? 'পরীক্ষার সময়সূচী সংশোধন করুন' : 'Edit Exam Schedule') 
+                                : (lang === 'bn' ? 'পরীক্ষার সময়সূচী তৈরি করুন' : 'Create Exam Schedule')
+                              }
+                            </span>
+                          </h4>
+                          <p className="text-xs text-gray-400 font-bold mt-1 leading-relaxed">
+                            {lang === 'bn' 
+                              ? 'একটি পরীক্ষা সেশনের বিষয়ভিত্তিক তারিখ ও কক্ষ নির্ধারণ করুন।' 
+                              : 'Set the official dates, specific times, courses, and exam halls for a terminal session.'
+                            }
+                          </p>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+
+                        <form onSubmit={handleSaveSchedule} className="space-y-4">
+                          
+                          {/* Exam Term */}
                           <div className="space-y-1">
-                            <label className="block font-bold text-gray-400">Subject Course</label>
-                            <select className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:bg-white text-gray-700 font-bold cursor-pointer">
-                              <option>Chemistry</option>
-                              <option>Physics</option>
-                              <option>Higher Math</option>
+                            <label className="block text-xs font-black text-gray-700 uppercase tracking-wide">
+                              {lang === 'bn' ? 'পরীক্ষা টার্ম (Exam Term) *' : 'Exam Term *'}
+                            </label>
+                            <select
+                              required
+                              value={scheduleFormTermId}
+                              onChange={e => setScheduleFormTermId(e.target.value)}
+                              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 focus:border-[#025644] focus:bg-white text-gray-900 rounded-xl text-xs font-bold transition-all outline-none cursor-pointer"
+                            >
+                              {examTerms.map(t => (
+                                <option key={t.id} value={t.id}>
+                                  {t.name} ({t.year})
+                                </option>
+                              ))}
                             </select>
                           </div>
+
+                          {/* Class & Section */}
                           <div className="space-y-1">
-                            <label className="block font-bold text-gray-400">Marks (out of 100)</label>
-                            <input type="number" min="0" max="100" placeholder="e.g. 95" required className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold" />
+                            <label className="block text-xs font-black text-gray-700 uppercase tracking-wide">
+                              {lang === 'bn' ? 'শ্রেণী ও শাখা (Class & Section) *' : 'Class & Section *'}
+                            </label>
+                            <select
+                              required
+                              value={scheduleFormClass}
+                              onChange={e => {
+                                const newClass = e.target.value;
+                                setScheduleFormClass(newClass);
+                                // Try to auto-select the first subject of the class if available
+                                const firstSub = academicSubjects.find(s => s.class === newClass);
+                                if (firstSub) {
+                                  setScheduleFormSubject(firstSub.name);
+                                }
+                              }}
+                              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 focus:border-[#025644] focus:bg-white text-gray-900 rounded-xl text-xs font-bold transition-all outline-none cursor-pointer"
+                            >
+                              {academicClasses.length > 0 ? (
+                                academicClasses.map(c => (
+                                  <option key={c.id} value={c.name}>{c.name}</option>
+                                ))
+                              ) : (
+                                <>
+                                  <option value="Class 9-A">Class 9-A</option>
+                                  <option value="Class 8-A">Class 8-A</option>
+                                  <option value="Class 7-A">Class 7-A</option>
+                                  <option value="Class 10-A">Class 10-A</option>
+                                </>
+                              )}
+                            </select>
+                          </div>
+
+                          {/* Subject */}
+                          <div className="space-y-1">
+                            <label className="block text-xs font-black text-gray-700 uppercase tracking-wide">
+                              {lang === 'bn' ? 'বিষয় (Subject) *' : 'Subject *'}
+                            </label>
+                            <div className="relative">
+                              <select
+                                required
+                                value={scheduleFormSubject}
+                                onChange={e => setScheduleFormSubject(e.target.value)}
+                                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 focus:border-[#025644] focus:bg-white text-gray-900 rounded-xl text-xs font-bold transition-all outline-none cursor-pointer"
+                              >
+                                {mergedSubjects.map(subName => (
+                                  <option key={subName} value={subName}>{subName}</option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+
+                          {/* Exam Date */}
+                          <div className="space-y-1">
+                            <label className="block text-xs font-black text-gray-700 uppercase tracking-wide">
+                              {lang === 'bn' ? 'পরীক্ষার তারিখ (Exam Date) *' : 'Exam Date *'}
+                            </label>
+                            <input
+                              type="date"
+                              required
+                              value={scheduleFormDate}
+                              onChange={e => setScheduleFormDate(e.target.value)}
+                              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 focus:border-[#025644] focus:bg-white text-gray-900 rounded-xl text-xs font-bold transition-all outline-none"
+                            />
+                          </div>
+
+                          {/* Start Time & End Time */}
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                              <label className="block text-xs font-black text-gray-700 uppercase tracking-wide">
+                                {lang === 'bn' ? 'শুরুর সময় (Start Time) *' : 'Start Time *'}
+                              </label>
+                              <input
+                                type="time"
+                                required
+                                value={scheduleFormStartTime}
+                                onChange={e => setScheduleFormStartTime(e.target.value)}
+                                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 focus:border-[#025644] focus:bg-white text-gray-900 rounded-xl text-xs font-bold transition-all outline-none"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="block text-xs font-black text-gray-700 uppercase tracking-wide">
+                                {lang === 'bn' ? 'শেষের সময় (End Time) *' : 'End Time *'}
+                              </label>
+                              <input
+                                type="time"
+                                required
+                                value={scheduleFormEndTime}
+                                onChange={e => setScheduleFormEndTime(e.target.value)}
+                                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 focus:border-[#025644] focus:bg-white text-gray-900 rounded-xl text-xs font-bold transition-all outline-none"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Room Number / Hall */}
+                          <div className="space-y-1">
+                            <label className="block text-xs font-black text-gray-700 uppercase tracking-wide">
+                              {lang === 'bn' ? 'রুম নম্বর / হল (Room / Hall) *' : 'Room Number / Hall *'}
+                            </label>
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                required
+                                value={scheduleFormRoom}
+                                onChange={e => setScheduleFormRoom(e.target.value)}
+                                placeholder={lang === 'bn' ? 'যেমন: রুম ১০২' : 'e.g., Room 101'}
+                                className="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-200 focus:border-[#025644] focus:bg-white text-gray-900 rounded-xl text-xs font-bold transition-all outline-none"
+                              />
+                              <select
+                                onChange={e => {
+                                  if (e.target.value) setScheduleFormRoom(e.target.value);
+                                }}
+                                className="px-2 py-2.5 bg-gray-50 border border-gray-200 text-gray-600 rounded-xl text-xs font-bold outline-none cursor-pointer"
+                                defaultValue=""
+                              >
+                                <option value="" disabled>{lang === 'bn' ? 'বাছুন' : 'Select'}</option>
+                                {roomOptions.map(room => (
+                                  <option key={room} value={room}>{room}</option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+
+                          {/* Submit Actions */}
+                          <div className="flex items-center gap-2 pt-2">
+                            <button
+                              type="submit"
+                              className="flex-1 py-3 bg-[#025644] hover:bg-[#013f31] text-white text-xs font-black rounded-xl transition-all cursor-pointer shadow-3xs flex items-center justify-center gap-2"
+                            >
+                              <span>💾</span>
+                              <span>
+                                {editingScheduleId 
+                                  ? (lang === 'bn' ? 'সময়সূচী আপডেট করুন' : 'Update Schedule')
+                                  : (lang === 'bn' ? 'সময়সূচী যোগ করুন' : 'Add Schedule')
+                                }
+                              </span>
+                            </button>
+
+                            {editingScheduleId && (
+                              <button
+                                type="button"
+                                onClick={handleCancelEdit}
+                                className="px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-black rounded-xl transition-colors cursor-pointer"
+                              >
+                                {lang === 'bn' ? 'বাতিল' : 'Cancel'}
+                              </button>
+                            )}
+                          </div>
+                        </form>
+                      </div>
+
+                      {/* Right Column: Exam Schedule List & Filters */}
+                      <div className="lg:col-span-7 bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs space-y-5 text-left">
+                        
+                        {/* Title and Badge */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-4">
+                          <div>
+                            <h4 className="font-extrabold text-gray-900 text-base">
+                              {lang === 'bn' ? 'পরীক্ষার সময়সূচী তালিকা' : 'Exam Schedule List'}
+                            </h4>
+                            <p className="text-xs text-gray-400 font-bold mt-1">
+                              {lang === 'bn' ? 'প্রকাশিত ও নির্ধারিত পরীক্ষার সময় ও হলের তালিকা।' : 'Review dates, times, courses, and exam halls scheduled.'}
+                            </p>
+                          </div>
+                          <span className="text-[11px] font-black px-3 py-1 bg-emerald-50 text-[#025644] border border-emerald-100/50 rounded-full w-fit">
+                            {filteredSchedules.length} {lang === 'bn' ? 'টি সময়সূচী' : 'Schedules'}
+                          </span>
+                        </div>
+
+                        {/* Filters Bar */}
+                        <div className="p-4 bg-gray-50 border border-gray-150 rounded-2xl grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          
+                          {/* Filter by Term */}
+                          <div className="space-y-1">
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider">
+                              {lang === 'bn' ? 'টার্ম ফিল্টার (Filter by Term)' : 'Filter by Term'}
+                            </label>
+                            <select
+                              value={scheduleFilterTermId}
+                              onChange={e => setScheduleFilterTermId(e.target.value)}
+                              className="w-full px-3 py-2 bg-white border border-gray-200 text-gray-800 rounded-xl text-xs font-bold outline-none cursor-pointer"
+                            >
+                              <option value="All">{lang === 'bn' ? 'সকল টার্ম' : 'All Terms'}</option>
+                              {examTerms.map(t => (
+                                <option key={t.id} value={t.id}>{t.name}</option>
+                              ))}
+                            </select>
+                          </div>
+
+                          {/* Filter by Class */}
+                          <div className="space-y-1">
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider">
+                              {lang === 'bn' ? 'শ্রেণী ফিল্টার (Filter by Class)' : 'Filter by Class'}
+                            </label>
+                            <select
+                              value={scheduleFilterClass}
+                              onChange={e => setScheduleFilterClass(e.target.value)}
+                              className="w-full px-3 py-2 bg-white border border-gray-200 text-gray-800 rounded-xl text-xs font-bold outline-none cursor-pointer"
+                            >
+                              <option value="All">{lang === 'bn' ? 'সকল শ্রেণী' : 'All Classes'}</option>
+                              {academicClasses.map(c => (
+                                <option key={c.id} value={c.name}>{c.name}</option>
+                              ))}
+                              {/* Extra fallback options if not in academicClasses */}
+                              <option value="Class 9-A">Class 9-A</option>
+                              <option value="Class 8-A">Class 8-A</option>
+                              <option value="Class 7-A">Class 7-A</option>
+                              <option value="Class 10-A">Class 10-A</option>
+                            </select>
+                          </div>
+
+                        </div>
+
+                        {/* Schedule List Table */}
+                        <div className="overflow-x-auto">
+                          {filteredSchedules.length > 0 ? (
+                            <table className="w-full text-left text-xs border-collapse">
+                              <thead>
+                                <tr className="border-b border-gray-100 font-black text-gray-400 uppercase tracking-wider text-[10px]">
+                                  <th className="py-3 px-3 text-center" style={{ width: '8%' }}>SL</th>
+                                  <th className="py-3 px-3" style={{ width: '22%' }}>{lang === 'bn' ? 'তারিখ ও টার্ম' : 'Date & Term'}</th>
+                                  <th className="py-3 px-3" style={{ width: '28%' }}>{lang === 'bn' ? 'শ্রেণী ও বিষয়' : 'Class & Subject'}</th>
+                                  <th className="py-3 px-3" style={{ width: '24%' }}>{lang === 'bn' ? 'সময় ও কক্ষ' : 'Time & Room'}</th>
+                                  <th className="py-3 px-3 text-center" style={{ width: '18%' }}>{lang === 'bn' ? 'অ্যাকশন' : 'Action'}</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-gray-100 text-gray-700 font-bold">
+                                {filteredSchedules.map((item, idx) => {
+                                  const isCurrentlyEditing = editingScheduleId && editingScheduleId.id === item.id;
+                                  return (
+                                    <tr 
+                                      key={item.id} 
+                                      className={`group transition-colors ${
+                                        isCurrentlyEditing ? 'bg-[#025644]/5' : 'hover:bg-slate-50/50'
+                                      }`}
+                                    >
+                                      {/* Serial Number */}
+                                      <td className="py-3.5 px-3 text-center text-gray-400 font-mono font-black">
+                                        {idx + 1}
+                                      </td>
+
+                                      {/* Date & Term Name */}
+                                      <td className="py-3.5 px-3">
+                                        <div className="text-left space-y-0.5">
+                                          <div className="text-gray-950 font-extrabold flex items-center gap-1">
+                                            <span>📅</span>
+                                            <span className="font-mono text-[11px]">{item.date}</span>
+                                          </div>
+                                          <div className="text-[10px] text-gray-400 font-bold tracking-tight">
+                                            {item.termName}
+                                          </div>
+                                        </div>
+                                      </td>
+
+                                      {/* Class & Subject */}
+                                      <td className="py-3.5 px-3">
+                                        <div className="text-left space-y-0.5">
+                                          <div className="text-[#025644] font-black text-xs">
+                                            {item.subject}
+                                          </div>
+                                          <div className="text-[10px] text-gray-400 font-bold flex items-center gap-1">
+                                            <span className="px-1.5 py-0.5 bg-gray-100 rounded text-gray-600 font-extrabold text-[9px]">
+                                              {item.class}
+                                            </span>
+                                          </div>
+                                        </div>
+                                      </td>
+
+                                      {/* Time & Room Number */}
+                                      <td className="py-3.5 px-3">
+                                        <div className="text-left space-y-0.5">
+                                          <div className="text-gray-700 font-semibold text-[10px] flex items-center gap-1 font-mono">
+                                            <span>🕒</span>
+                                            <span>{item.time}</span>
+                                          </div>
+                                          <div className="text-xs text-slate-800 font-extrabold flex items-center gap-1">
+                                            <span>🏢</span>
+                                            <span>{item.room}</span>
+                                          </div>
+                                        </div>
+                                      </td>
+
+                                      {/* Actions */}
+                                      <td className="py-3.5 px-3 text-center">
+                                        <div className="flex items-center justify-center gap-2">
+                                          
+                                          {/* Edit Icon Button */}
+                                          <button
+                                            type="button"
+                                            onClick={() => handleEditScheduleClick(item)}
+                                            title={lang === 'bn' ? 'সম্পাদনা করুন' : 'Edit Schedule'}
+                                            className="p-1.5 bg-slate-50 hover:bg-sky-50 text-slate-400 hover:text-sky-600 border border-gray-200/50 hover:border-sky-100 rounded-lg transition-all cursor-pointer flex items-center justify-center"
+                                          >
+                                            <Edit3 className="h-3.5 w-3.5" />
+                                          </button>
+
+                                          {/* Delete Icon Button */}
+                                          <button
+                                            type="button"
+                                            onClick={() => handleDeleteScheduleClick(item.termId, item.id, item.subject)}
+                                            title={lang === 'bn' ? 'মুছে ফেলুন' : 'Delete Schedule'}
+                                            className="p-1.5 bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-600 border border-gray-200/50 hover:border-rose-100 rounded-lg transition-all cursor-pointer flex items-center justify-center"
+                                          >
+                                            <Trash2 className="h-3.5 w-3.5" />
+                                          </button>
+
+                                        </div>
+                                      </td>
+
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          ) : (
+                            <div className="flex flex-col items-center justify-center py-12 border border-dashed border-gray-200 rounded-2xl bg-slate-50 text-gray-400 space-y-2 text-center px-4">
+                              <span className="text-3xl">📭</span>
+                              <p className="font-extrabold text-xs text-gray-500">
+                                {lang === 'bn' 
+                                  ? 'কোনো পরীক্ষার সময়সূচী খুঁজে পাওয়া যায়নি।' 
+                                  : 'No exam schedules found matching the selected filters.'
+                                }
+                              </p>
+                              <p className="text-[10px] text-gray-400 max-w-xs leading-relaxed">
+                                {lang === 'bn' 
+                                  ? 'বাম পাশের ফর্মটি পূরণ করে একটি নতুন সময়সূচী তৈরি করুন।' 
+                                  : 'Try adjusting your filters or use the left panel to register a new schedule slot.'
+                                }
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
+                      </div>
+
+                    </div>
+                  );
+                })()}
+
+                {examSubTab === 'exam_marks' && (() => {
+                  const matchingSetup = examSetups.find(setup => 
+                    setup.termId === marksFormTermId && 
+                    setup.class === marksFormClass && 
+                    setup.subject === marksFormSubject
+                  );
+
+                  const maxWrittenMarks = matchingSetup ? matchingSetup.writtenMarks : 50;
+                  const maxMCQMarks = matchingSetup ? matchingSetup.mcqMarks : 25;
+                  const maxPracticalMarks = matchingSetup ? matchingSetup.practicalMarks : 25;
+                  const maxTotalMarks = matchingSetup ? matchingSetup.totalMarks : 100;
+
+                  const termOptions = examTerms && examTerms.length > 0 ? examTerms : [
+                    { id: 'T-1', nameBn: 'প্রথম সাময়িক পরীক্ষা', nameEn: 'First Term Exam' },
+                    { id: 'T-2', nameBn: 'অর্ধ-বার্ষিক পরীক্ষা', nameEn: 'Half-Yearly Exam' },
+                    { id: 'T-3', nameBn: 'বার্ষিক পরীক্ষা', nameEn: 'Annual Exam' }
+                  ];
+
+                  const classOptions = academicClasses && academicClasses.length > 0 ? academicClasses : [
+                    { id: 'C-1', name: 'Class 9-A' },
+                    { id: 'C-2', name: 'Class 8-A' },
+                    { id: 'C-3', name: 'Class 7-A' },
+                    { id: 'C-4', name: 'Class 6-A' },
+                    { id: 'C-5', name: 'Class 5-A' },
+                  ];
+
+                  const subjectOptions = academicSubjects && academicSubjects.length > 0 ? academicSubjects : [
+                    { id: 'S-1', name: 'Chemistry' },
+                    { id: 'S-2', name: 'Physics' },
+                    { id: 'S-3', name: 'Higher Math' },
+                    { id: 'S-4', name: 'English' },
+                    { id: 'S-5', name: 'Bengali' },
+                  ];
+
+                  const matchedStudents = students.filter(student => {
+                    const formClassLower = marksFormClass.toLowerCase();
+                    const studentClassNormalized = student.class.replace('Class ', '').trim();
+                    const studentSectionNormalized = student.section ? student.section.trim() : '';
+                    const studentFullClass = `class ${studentClassNormalized}-${studentSectionNormalized}`.toLowerCase();
+                    const studentFullClassAlt = `class ${studentClassNormalized}`.toLowerCase();
+                    
+                    return studentFullClass === formClassLower || 
+                           studentFullClassAlt === formClassLower ||
+                           studentClassNormalized === formClassLower ||
+                           student.class.toLowerCase() === formClassLower;
+                  });
+
+                  // Handle search action
+                  const handleSearchStudents = () => {
+                    const newTempInput: Record<string, { written: number; mcq: number; practical: number; isAbsent: boolean }> = {};
+                    
+                    matchedStudents.forEach(student => {
+                      const existing = examStudentMarks.find(m => 
+                        m.termId === marksFormTermId && 
+                        m.class === marksFormClass && 
+                        m.subject === marksFormSubject && 
+                        m.studentId === student.id
+                      );
+
+                      if (existing) {
+                        newTempInput[student.id] = {
+                          written: existing.written,
+                          mcq: existing.mcq,
+                          practical: existing.practical,
+                          isAbsent: existing.isAbsent
+                        };
+                      } else {
+                        newTempInput[student.id] = {
+                          written: 0,
+                          mcq: 0,
+                          practical: 0,
+                          isAbsent: false
+                        };
+                      }
+                    });
+
+                    setTempMarksInput(newTempInput);
+                    setIsMarksSearchActive(true);
+                  };
+
+                  // Handle single value change with boundary validations
+                  const handleValChange = (studentId: string, field: 'written' | 'mcq' | 'practical', value: number) => {
+                    let maxLimit = 100;
+                    if (field === 'written') maxLimit = maxWrittenMarks;
+                    else if (field === 'mcq') maxLimit = maxMCQMarks;
+                    else if (field === 'practical') maxLimit = maxPracticalMarks;
+
+                    const validatedVal = Math.max(0, Math.min(maxLimit, value));
+
+                    setTempMarksInput(prev => ({
+                      ...prev,
+                      [studentId]: {
+                        ...prev[studentId],
+                        [field]: validatedVal
+                      }
+                    }));
+                  };
+
+                  // Handle student absent checkbox state
+                  const handleAbsentChange = (studentId: string, checked: boolean) => {
+                    setTempMarksInput(prev => ({
+                      ...prev,
+                      [studentId]: {
+                        ...prev[studentId],
+                        isAbsent: checked,
+                        written: checked ? 0 : (prev[studentId]?.written || 0),
+                        mcq: checked ? 0 : (prev[studentId]?.mcq || 0),
+                        practical: checked ? 0 : (prev[studentId]?.practical || 0),
+                      }
+                    }));
+                  };
+
+                  // Handle save and submit Action
+                  const handleSaveAllMarks = (e: React.FormEvent) => {
+                    e.preventDefault();
+                    const updatedMarksList = [...examStudentMarks];
+
+                    matchedStudents.forEach(student => {
+                      const studentInput = tempMarksInput[student.id] || { written: 0, mcq: 0, practical: 0, isAbsent: false };
+                      const totalScore = studentInput.isAbsent ? 0 : (Number(studentInput.written || 0) + Number(studentInput.mcq || 0) + Number(studentInput.practical || 0));
+
+                      const existingIndex = updatedMarksList.findIndex(m => 
+                        m.termId === marksFormTermId && 
+                        m.class === marksFormClass && 
+                        m.subject === marksFormSubject && 
+                        m.studentId === student.id
+                      );
+
+                      const markRecord = {
+                        id: existingIndex >= 0 ? updatedMarksList[existingIndex].id : `M-${Date.now()}-${student.id}`,
+                        termId: marksFormTermId,
+                        class: marksFormClass,
+                        subject: marksFormSubject,
+                        studentId: student.id,
+                        written: studentInput.isAbsent ? 0 : Number(studentInput.written || 0),
+                        mcq: studentInput.isAbsent ? 0 : Number(studentInput.mcq || 0),
+                        practical: studentInput.isAbsent ? 0 : Number(studentInput.practical || 0),
+                        total: totalScore,
+                        isAbsent: studentInput.isAbsent
+                      };
+
+                      if (existingIndex >= 0) {
+                        updatedMarksList[existingIndex] = markRecord;
+                      } else {
+                        updatedMarksList.push(markRecord);
+                      }
+                    });
+
+                    setExamStudentMarks(updatedMarksList);
+                    setAdminSuccessMsg(lang === 'bn' ? 'সকল শিক্ষার্থীর নম্বর সফলভাবে সংরক্ষণ ও সাবমিট করা হয়েছে!' : 'All student marks saved and submitted successfully!');
+                    addAuditLog(`Saved marks for ${marksFormSubject} (${marksFormClass}, ${marksFormTermId}) - ${matchedStudents.length} students updated.`);
+                    
+                    setTimeout(() => {
+                      setAdminSuccessMsg('');
+                    }, 4000);
+                  };
+
+                  return (
+                    <div className="space-y-8 text-left">
+                      
+                      {/* Criteria Selection Card */}
+                      <div className="bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs space-y-5 transition-all">
+                        <div className="flex items-center gap-3 border-b border-gray-100 pb-4">
+                          <div className="p-2 bg-emerald-50 text-[#025644] rounded-xl">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <h3 className="font-extrabold text-gray-900 text-base">
+                              {lang === 'bn' ? 'ক্রাইটেরিয়া নির্বাচন করুন' : 'Select Criteria'}
+                            </h3>
+                            <p className="text-xs text-gray-400 font-bold">
+                              {lang === 'bn' ? 'পরীক্ষা এবং ক্লাস অনুযায়ী শিক্ষার্থী ফিল্টার করুন' : 'Filter students according to exam term, class, and subject'}
+                            </p>
                           </div>
                         </div>
-                        <button type="submit" className="w-full py-2.5 bg-[#025644] hover:bg-[#01352a] text-white font-black rounded-xl shadow-sm cursor-pointer">
-                          File and Save Marks
-                        </button>
-                      </form>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                          {/* 1. Exam Term Dropdown */}
+                          <div className="space-y-1.5">
+                            <label className="block text-[11px] font-black text-gray-500 uppercase tracking-wider">
+                              {lang === 'bn' ? 'পরীক্ষার টার্ম (Exam Term)' : 'Exam Term'}
+                            </label>
+                            <select 
+                              value={marksFormTermId}
+                              onChange={(e) => {
+                                setMarksFormTermId(e.target.value);
+                                setIsMarksSearchActive(false);
+                              }}
+                              className="w-full px-3.5 py-3 bg-gray-50 border border-gray-200 focus:bg-white text-gray-800 rounded-xl font-bold text-xs outline-none focus:border-[#025644] transition-all cursor-pointer"
+                            >
+                              {termOptions.map(t => (
+                                <option key={t.id} value={t.id}>
+                                  {lang === 'bn' ? t.nameBn : t.nameEn}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          {/* 2. Class & Section Dropdown */}
+                          <div className="space-y-1.5">
+                            <label className="block text-[11px] font-black text-gray-500 uppercase tracking-wider">
+                              {lang === 'bn' ? 'ক্লাস ও শাখা (Class & Section)' : 'Class & Section'}
+                            </label>
+                            <select 
+                              value={marksFormClass}
+                              onChange={(e) => {
+                                setMarksFormClass(e.target.value);
+                                setIsMarksSearchActive(false);
+                              }}
+                              className="w-full px-3.5 py-3 bg-gray-50 border border-gray-200 focus:bg-white text-gray-800 rounded-xl font-bold text-xs outline-none focus:border-[#025644] transition-all cursor-pointer"
+                            >
+                              {classOptions.map(c => (
+                                <option key={c.id} value={c.name}>
+                                  {c.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          {/* 3. Subject Dropdown */}
+                          <div className="space-y-1.5">
+                            <label className="block text-[11px] font-black text-gray-500 uppercase tracking-wider">
+                              {lang === 'bn' ? 'বিষয় (Subject)' : 'Subject'}
+                            </label>
+                            <select 
+                              value={marksFormSubject}
+                              onChange={(e) => {
+                                setMarksFormSubject(e.target.value);
+                                setIsMarksSearchActive(false);
+                              }}
+                              className="w-full px-3.5 py-3 bg-gray-50 border border-gray-200 focus:bg-white text-gray-800 rounded-xl font-bold text-xs outline-none focus:border-[#025644] transition-all cursor-pointer"
+                            >
+                              {subjectOptions.map(s => (
+                                <option key={s.id} value={s.name}>
+                                  {s.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          {/* 4. Academic Session Dropdown */}
+                          <div className="space-y-1.5">
+                            <label className="block text-[11px] font-black text-gray-500 uppercase tracking-wider">
+                              {lang === 'bn' ? 'শিক্ষাবর্ষ (Academic Session)' : 'Academic Session'}
+                            </label>
+                            <select 
+                              value={marksFormSession}
+                              onChange={(e) => {
+                                setMarksFormSession(e.target.value);
+                                setIsMarksSearchActive(false);
+                              }}
+                              className="w-full px-3.5 py-3 bg-gray-50 border border-gray-200 focus:bg-white text-gray-800 rounded-xl font-bold text-xs outline-none focus:border-[#025644] transition-all cursor-pointer"
+                            >
+                              <option value="2026">Session 2026</option>
+                              <option value="2025">Session 2025</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* Search students button */}
+                        <div className="flex justify-start pt-2">
+                          <button
+                            type="button"
+                            onClick={handleSearchStudents}
+                            className="px-6 py-3 bg-[#025644] hover:bg-[#013f31] text-white font-extrabold rounded-xl shadow-sm text-xs transition-all duration-200 flex items-center gap-2 hover:translate-y-[-1px] cursor-pointer"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                            {lang === 'bn' ? 'শিক্ষার্থী খুঁজুন (Search Students)' : 'Search Students'}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Search Results & Marks Table */}
+                      {isMarksSearchActive && (
+                        <div className="bg-white border border-gray-150 rounded-2xl shadow-2xs overflow-hidden transition-all duration-300">
+                          
+                          {/* Info bar of current session */}
+                          <div className="px-6 py-4 bg-slate-50 border-b border-gray-100 flex flex-wrap justify-between items-center gap-4">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <span className="px-2 py-0.5 bg-[#025644]/10 text-[#025644] font-black text-[10px] rounded">
+                                  {lang === 'bn' ? 'টার্ম' : 'Term'}: {termOptions.find(t => t.id === marksFormTermId)?.[lang === 'bn' ? 'nameBn' : 'nameEn'] || marksFormTermId}
+                                </span>
+                                <span className="px-2 py-0.5 bg-sky-50 text-sky-800 font-black text-[10px] rounded">
+                                  {lang === 'bn' ? 'ক্লাস' : 'Class'}: {marksFormClass}
+                                </span>
+                                <span className="px-2 py-0.5 bg-amber-50 text-amber-800 font-black text-[10px] rounded">
+                                  {lang === 'bn' ? 'বিষয়' : 'Subject'}: {marksFormSubject}
+                                </span>
+                              </div>
+                              {matchingSetup ? (
+                                <p className="text-[11px] text-emerald-800 font-black flex items-center gap-1 mt-1">
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                                  </svg>
+                                  {lang === 'bn' 
+                                    ? `নম্বর বন্টন কনফিগারেশন পাওয়া গেছে! (লিখিত: ${maxWrittenMarks}, এমসিকিউ: ${maxMCQMarks}, ব্যবহারিক: ${maxPracticalMarks}, মোট: ${maxTotalMarks})`
+                                    : `Marks setup found! (Written: ${maxWrittenMarks}, MCQ: ${maxMCQMarks}, Practical: ${maxPracticalMarks}, Total: ${maxTotalMarks})`}
+                                </p>
+                              ) : (
+                                <p className="text-[11px] text-amber-600 font-bold flex items-center gap-1 mt-1">
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                  </svg>
+                                  {lang === 'bn' 
+                                    ? `কোনো কাস্টম নম্বর বন্টন পাওয়া যায়নি, তাই ডিফল্ট নম্বর (৫০/২৫/২৫) ব্যবহার করা হচ্ছে।`
+                                    : `No custom marks configuration setup found, using default limit parameters (50/25/25).`}
+                                </p>
+                              )}
+                            </div>
+                            <div className="text-right">
+                              <span className="text-xs font-bold text-gray-500">
+                                {lang === 'bn' ? `মোট শিক্ষার্থী: ` : `Total Students: `}
+                                <strong className="text-gray-900 font-extrabold text-sm">{matchedStudents.length}</strong>
+                              </span>
+                            </div>
+                          </div>
+
+                          {matchedStudents.length > 0 ? (
+                            <form onSubmit={handleSaveAllMarks} className="space-y-6">
+                              {/* Responsive Wrapper */}
+                              <div className="overflow-x-auto">
+                                <table className="w-full text-xs text-left text-gray-700 whitespace-nowrap">
+                                  <thead className="bg-slate-50/70 border-b border-gray-150 uppercase text-[10px] font-black text-gray-500 tracking-wider text-center">
+                                    <tr>
+                                      <th className="py-4.5 px-4 text-left">{lang === 'bn' ? 'রোল' : 'Roll'}</th>
+                                      <th className="py-4.5 px-4 text-left">{lang === 'bn' ? 'শিক্ষার্থীর নাম' : 'Student Name'}</th>
+                                      <th className="py-4.5 px-3 w-40">{lang === 'bn' ? `লিখিত (Written) /${maxWrittenMarks}` : `Written Marks (/${maxWrittenMarks})`}</th>
+                                      <th className="py-4.5 px-3 w-40">{lang === 'bn' ? `এমসিকিউ (MCQ) /${maxMCQMarks}` : `MCQ Marks (/${maxMCQMarks})`}</th>
+                                      <th className="py-4.5 px-3 w-40">{lang === 'bn' ? `ব্যবহারিক (Practical) /${maxPracticalMarks}` : `Practical Marks (/${maxPracticalMarks})`}</th>
+                                      <th className="py-4.5 px-3 w-28">{lang === 'bn' ? `মোট নম্বর (Total)` : `Total Marks`}</th>
+                                      <th className="py-4.5 px-4 w-28">{lang === 'bn' ? 'অনুপস্থিত (Absent)' : 'Absent'}</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="divide-y divide-gray-100">
+                                    {matchedStudents.map((student) => {
+                                      const studentInput = tempMarksInput[student.id] || { written: 0, mcq: 0, practical: 0, isAbsent: false };
+                                      const totalCalculated = studentInput.isAbsent ? 0 : (Number(studentInput.written || 0) + Number(studentInput.mcq || 0) + Number(studentInput.practical || 0));
+
+                                      return (
+                                        <tr 
+                                          key={student.id} 
+                                          className={`hover:bg-gray-50/50 transition-colors ${studentInput.isAbsent ? 'bg-rose-50/30' : ''}`}
+                                        >
+                                          {/* Roll No */}
+                                          <td className="py-4.5 px-4 font-mono font-black text-[#025644] text-left">
+                                            {student.roll.padStart(2, '0')}
+                                          </td>
+
+                                          {/* Student Name */}
+                                          <td className="py-4.5 px-4 text-left">
+                                            <div className="font-extrabold text-gray-900">{student.name}</div>
+                                            <div className="text-[10px] text-gray-400 font-bold mt-0.5">ID: {student.id}</div>
+                                          </td>
+
+                                          {/* Written Marks input */}
+                                          <td className="py-3 px-3">
+                                            <div className="relative flex items-center">
+                                              <input
+                                                type="number"
+                                                min="0"
+                                                max={maxWrittenMarks}
+                                                disabled={studentInput.isAbsent}
+                                                value={studentInput.isAbsent ? '' : studentInput.written}
+                                                onChange={(e) => handleValChange(student.id, 'written', Number(e.target.value))}
+                                                className={`w-full pl-3.5 pr-12 py-2 bg-white border ${studentInput.isAbsent ? 'border-gray-100 bg-gray-50 text-gray-400 cursor-not-allowed line-through' : 'border-gray-200 focus:border-[#025644] text-gray-900'} rounded-xl text-center text-xs font-black outline-none transition-all`}
+                                                placeholder="0"
+                                              />
+                                              <span className="absolute right-3.5 text-[9px] font-extrabold text-gray-400 select-none">
+                                                /{maxWrittenMarks}
+                                              </span>
+                                            </div>
+                                          </td>
+
+                                          {/* MCQ Marks input */}
+                                          <td className="py-3 px-3">
+                                            <div className="relative flex items-center">
+                                              <input
+                                                type="number"
+                                                min="0"
+                                                max={maxMCQMarks}
+                                                disabled={studentInput.isAbsent}
+                                                value={studentInput.isAbsent ? '' : studentInput.mcq}
+                                                onChange={(e) => handleValChange(student.id, 'mcq', Number(e.target.value))}
+                                                className={`w-full pl-3.5 pr-12 py-2 bg-white border ${studentInput.isAbsent ? 'border-gray-100 bg-gray-50 text-gray-400 cursor-not-allowed line-through' : 'border-gray-200 focus:border-[#025644] text-gray-900'} rounded-xl text-center text-xs font-black outline-none transition-all`}
+                                                placeholder="0"
+                                              />
+                                              <span className="absolute right-3.5 text-[9px] font-extrabold text-gray-400 select-none">
+                                                /{maxMCQMarks}
+                                              </span>
+                                            </div>
+                                          </td>
+
+                                          {/* Practical Marks input */}
+                                          <td className="py-3 px-3">
+                                            <div className="relative flex items-center">
+                                              <input
+                                                type="number"
+                                                min="0"
+                                                max={maxPracticalMarks}
+                                                disabled={studentInput.isAbsent}
+                                                value={studentInput.isAbsent ? '' : studentInput.practical}
+                                                onChange={(e) => handleValChange(student.id, 'practical', Number(e.target.value))}
+                                                className={`w-full pl-3.5 pr-12 py-2 bg-white border ${studentInput.isAbsent ? 'border-gray-100 bg-gray-50 text-gray-400 cursor-not-allowed line-through' : 'border-gray-200 focus:border-[#025644] text-gray-900'} rounded-xl text-center text-xs font-black outline-none transition-all`}
+                                                placeholder="0"
+                                              />
+                                              <span className="absolute right-3.5 text-[9px] font-extrabold text-gray-400 select-none">
+                                                /{maxPracticalMarks}
+                                              </span>
+                                            </div>
+                                          </td>
+
+                                          {/* Total calculated marks */}
+                                          <td className="py-3 px-3 text-center">
+                                            <span className={`inline-block min-w-16 px-3 py-1.5 ${studentInput.isAbsent ? 'bg-rose-50 text-rose-600 border border-rose-100 font-extrabold' : 'bg-emerald-50 text-[#025644] border border-emerald-100 font-black'} rounded-lg text-xs font-mono tracking-wide`}>
+                                              {studentInput.isAbsent ? (lang === 'bn' ? 'অনুপস্থিত' : 'Absent') : `${totalCalculated} / ${maxTotalMarks}`}
+                                            </span>
+                                          </td>
+
+                                          {/* Absent Checkbox */}
+                                          <td className="py-3 px-4 text-center">
+                                            <label className="relative inline-flex items-center justify-center cursor-pointer select-none">
+                                              <input
+                                                type="checkbox"
+                                                checked={studentInput.isAbsent}
+                                                onChange={(e) => handleAbsentChange(student.id, e.target.checked)}
+                                                className="w-5 h-5 rounded-md border-gray-300 text-rose-600 focus:ring-rose-500 cursor-pointer accent-rose-600"
+                                              />
+                                            </label>
+                                          </td>
+                                        </tr>
+                                      );
+                                    })}
+                                  </tbody>
+                                </table>
+                              </div>
+
+                              {/* Save and submit footer button */}
+                              <div className="p-6 bg-slate-50 border-t border-gray-100 flex justify-end">
+                                <button
+                                  type="submit"
+                                  className="w-full md:w-auto px-8 py-3.5 bg-[#025644] hover:bg-[#013f31] text-white font-extrabold rounded-xl shadow-md text-sm transition-all duration-200 flex items-center justify-center gap-2 hover:translate-y-[-1.5px] cursor-pointer"
+                                >
+                                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                                  </svg>
+                                  {lang === 'bn' ? 'নম্বর সংরক্ষণ ও সাবমিট করুন (Save & Submit Marks)' : 'Save & Submit Marks'}
+                                </button>
+                              </div>
+                            </form>
+                          ) : (
+                            <div className="p-12 text-center space-y-3">
+                              <div className="inline-flex p-4 bg-amber-50 text-amber-600 rounded-full">
+                                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                              </div>
+                              <h4 className="text-sm font-extrabold text-gray-950">
+                                {lang === 'bn' ? 'কোনো শিক্ষার্থী পাওয়া যায়নি!' : 'No Students Found!'}
+                              </h4>
+                              <p className="text-xs text-gray-400 max-w-sm mx-auto leading-relaxed">
+                                {lang === 'bn' 
+                                  ? `${marksFormClass} শ্রেনীটির সাথে মিলে যাওয়া কোনো শিক্ষার্থী ডেটাবেজে তালিকাভুক্ত নেই। অনুগ্রহ করে অন্য শ্রেনী নির্বাচন করুন।`
+                                  : `There are currently no student listings matching ${marksFormClass} in our registers. Please adjust your criteria configuration above.`}
+                              </p>
+                            </div>
+                          )}
+
+                        </div>
+                      )}
+
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
               </div>
             )}
 
