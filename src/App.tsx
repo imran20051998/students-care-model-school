@@ -207,16 +207,22 @@ export default function App() {
   ];
 
   const sliderSlides = frontendData?.slider && frontendData.slider.length > 0
-    ? frontendData.slider.map((slide: any, idx: number) => {
-        const defaultImages = [bannerImage, campusImage, labImage];
-        return {
-          image: slide.image || defaultImages[idx % defaultImages.length],
-          titleBn: slide.titleBn || slide.title || "নতুন ক্লাসরুম ব্যানার",
-          titleEn: slide.titleEn || slide.title || "New Classroom Banner",
-          subtitleBn: slide.descBn || slide.subtitleBn || "স্টুডেন্টস কেয়ার মডেল স্কুলে প্রতিটি দিনই নতুন কিছু শেখার এবং উদযাপনের।",
-          subtitleEn: slide.descEn || slide.subtitleEn || "Every day at Students Care Model School is a new journey of learning and celebration."
-        };
-      })
+    ? frontendData.slider
+        .filter((slide: any) => slide.status !== 'inactive' && slide.status !== false)
+        .sort((a: any, b: any) => (Number(a.order) || 99) - (Number(b.order) || 99))
+        .map((slide: any, idx: number) => {
+          const defaultImages = [bannerImage, campusImage, labImage];
+          return {
+            image: slide.image || defaultImages[idx % defaultImages.length],
+            titleBn: slide.titleBn || slide.title || "নতুন ক্লাসরুম ব্যানার",
+            titleEn: slide.titleEn || slide.title || "New Classroom Banner",
+            subtitleBn: slide.descBn || slide.subtitleBn || "স্টুডেন্টস কেয়ার মডেল স্কুলে প্রতিটি দিনই নতুন কিছু শেখার এবং উদযাপনের।",
+            subtitleEn: slide.descEn || slide.subtitleEn || "Every day at Students Care Model School is a new journey of learning and celebration.",
+            btnTextBn: slide.btnTextBn || '',
+            btnTextEn: slide.btnTextEn || '',
+            btnLink: slide.btnLink || ''
+          };
+        })
     : defaultSlides;
 
   // Auto play the slider
@@ -801,7 +807,7 @@ export default function App() {
                       initial={{ opacity: 0, y: 15 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.5, delay: 0.1 }}
-                      className="max-w-2xl space-y-1.5 sm:space-y-2"
+                      className="max-w-2xl space-y-1.5 sm:space-y-2 pointer-events-auto"
                     >
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-500/90 text-white text-[9px] xs:text-[10px] sm:text-xs font-black uppercase tracking-wider shadow-sm backdrop-blur-xs">
                         <Sparkles className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-amber-300 animate-pulse" />
@@ -813,6 +819,30 @@ export default function App() {
                       <p className="text-[11px] xs:text-xs sm:text-sm md:text-base text-gray-200/90 font-medium max-w-xl leading-relaxed drop-shadow-xs hidden xs:block">
                         {lang === 'bn' ? sliderSlides[currentSlide].subtitleBn : sliderSlides[currentSlide].subtitleEn}
                       </p>
+                      {sliderSlides[currentSlide].btnLink && (
+                        <div className="pt-2">
+                          <a
+                            href={sliderSlides[currentSlide].btnLink}
+                            target={sliderSlides[currentSlide].btnLink.startsWith('http') ? '_blank' : '_self'}
+                            rel="noopener noreferrer"
+                            onClick={(e) => {
+                              // If it is an internal tab link, click inside the app instead of default anchor jump
+                              if (!sliderSlides[currentSlide].btnLink.startsWith('http')) {
+                                e.preventDefault();
+                                setActiveTab(sliderSlides[currentSlide].btnLink);
+                              }
+                            }}
+                            className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-[10px] sm:text-xs font-black rounded-xl shadow-md transition-all cursor-pointer hover:scale-[1.03] active:scale-[0.98]"
+                          >
+                            <span>
+                              {lang === 'bn' 
+                                ? (sliderSlides[currentSlide].btnTextBn || 'বিস্তারিত দেখুন') 
+                                : (sliderSlides[currentSlide].btnTextEn || 'Learn More')}
+                            </span>
+                            <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                          </a>
+                        </div>
+                      )}
                     </motion.div>
                   </div>
 
@@ -926,278 +956,312 @@ export default function App() {
                   
                   {/* Left Column (Main Content - lg:col-span-8) */}
                   <div className="lg:col-span-8 space-y-6">
-                    
-                    {/* Institutions History Section */}
-                    <div id="school-history-section" className="bg-white rounded-2xl overflow-hidden border border-gray-200/90 shadow-xs">
-                      <div className="bg-[#0f172a] text-white font-extrabold text-sm sm:text-base px-6 py-4 flex items-center gap-2">
-                        <BookOpen className="h-4.5 w-4.5 text-emerald-400 animate-pulse" />
-                        <span>{lang === 'bn' ? 'প্রতিষ্ঠানের ইতিহাস' : 'Institutions History'}</span>
-                      </div>
-                      
-                      <div className="p-6 space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-                          {/* Student Image on Left */}
-                          <div className="md:col-span-4 relative overflow-hidden rounded-xl border border-gray-100 shadow-xs group">
-                            <img
-                              src={bannerImage}
-                              alt="Students at Students Care Model School"
-                              className="w-full h-auto aspect-[4/3] object-cover rounded-xl transition-transform duration-500 group-hover:scale-105"
-                              referrerPolicy="no-referrer"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/20 to-transparent" />
-                          </div>
+                    {(() => {
+                      const blocks = [
+                        {
+                          id: 'about',
+                          node: (
+                            <div id="school-history-section" className="bg-white rounded-2xl overflow-hidden border border-gray-200/90 shadow-xs">
+                              <div className="bg-[#0f172a] text-white font-extrabold text-sm sm:text-base px-6 py-4 flex items-center gap-2 text-left">
+                                <BookOpen className="h-4.5 w-4.5 text-emerald-400 animate-pulse" />
+                                <span>{lang === 'bn' ? 'প্রতিষ্ঠানের ইতিহাস' : 'Institutions History'}</span>
+                              </div>
+                              
+                              <div className="p-6 space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+                                  {/* Student Image on Left */}
+                                  <div className="md:col-span-4 relative overflow-hidden rounded-xl border border-gray-100 shadow-xs group">
+                                    <img
+                                      src={bannerImage}
+                                      alt="Students at Students Care Model School"
+                                      className="w-full h-auto aspect-[4/3] object-cover rounded-xl transition-transform duration-500 group-hover:scale-105"
+                                      referrerPolicy="no-referrer"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/20 to-transparent" />
+                                  </div>
 
-                          {/* Historical text on the Right */}
-                          <div className="md:col-span-8 space-y-3 text-left">
-                            <p className="text-gray-700 text-sm sm:text-base leading-relaxed font-semibold">
-                              {lang === 'bn' 
-                                ? 'চট্টগ্রাম জেলার কর্ণফুলী উপজেলার চরলক্ষ্যা ইউনিয়নের বুকে শিক্ষার আলো ছড়িয়ে দেওয়ার এক মহান ব্রত নিয়ে ২০১৮ সালে প্রতিষ্ঠিত হয় স্টুডেন্টস কেয়ার মডেল স্কুল। চরলক্ষ্যা ও এর আশেপাশের অঞ্চলের শিক্ষার্থীদের জন্য একটি আধুনিক, নৈতিক এবং মানসম্মত শিক্ষার পরিবেশ নিশ্চিত করার লক্ষ্যেই এই শিক্ষাপ্রতিষ্ঠানটির যাত্রা শুরু হয়েছিল। এলাকার সন্তানদের সুশিক্ষায় শিক্ষিত করে আদর্শ নাগরিক...'
-                                : 'With a noble mission to spread the light of education in Charlakshya Union under Karnaphuli Upazila of Chattogram District, Students Care Model School was established in 2018. It is dedicated to securing a modern and moral standard of education for young minds...'
-                              }
-                            </p>
-                            <button
-                              onClick={() => setIsHistoryExpanded(true)}
-                              className="text-[#0593dd] hover:text-blue-750 font-extrabold text-sm sm:text-base transition-colors cursor-pointer inline-flex items-center gap-1 hover:underline"
-                            >
-                              {lang === 'bn' ? 'বিস্তারিত »' : 'Read More »'}
-                            </button>
-                          </div>
-                        </div>
+                                  {/* Historical text on the Right */}
+                                  <div className="md:col-span-8 space-y-3 text-left">
+                                    <p className="text-gray-700 text-sm sm:text-base leading-relaxed font-semibold">
+                                      {lang === 'bn' 
+                                        ? 'চট্টগ্রাম জেলার কর্ণফুলী উপজেলার চরলক্ষ্যা ইউনিয়নের বুকে শিক্ষার আলো ছড়িয়ে দেওয়ার এক মহান ব্রত নিয়ে ২০১৮ সালে প্রতিষ্ঠিত হয় স্টুডেন্টস কেয়ার মডেল স্কুল। চরলক্ষ্যা ও এর আশেপাশের অঞ্চলের শিক্ষার্থীদের জন্য একটি আধুনিক, নৈতিক এবং মানসম্মত শিক্ষার পরিবেশ নিশ্চিত করার লক্ষ্যেই এই শিক্ষাপ্রতিষ্ঠানটির যাত্রা শুরু হয়েছিল। এলাকার সন্তানদের সুশিক্ষায় শিক্ষিত করে আদর্শ নাগরিক...'
+                                        : 'With a noble mission to spread the light of education in Charlakshya Union under Karnaphuli Upazila of Chattogram District, Students Care Model School was established in 2018. It is dedicated to securing a modern and moral standard of education for young minds...'
+                                      }
+                                    </p>
+                                    <button
+                                      onClick={() => setIsHistoryExpanded(true)}
+                                      className="text-[#0593dd] hover:text-blue-750 font-extrabold text-sm sm:text-base transition-colors cursor-pointer inline-flex items-center gap-1 hover:underline"
+                                    >
+                                      {lang === 'bn' ? 'বিস্তারিত »' : 'Read More »'}
+                                    </button>
+                                  </div>
+                                </div>
 
-                        {/* Precise Statistics Cards row inside/below history card */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-gray-100">
-                          {/* Stat 1 */}
-                          <div className="bg-[#f8fafc] border border-gray-200 rounded-xl p-4 text-center">
-                            <p className="text-xl sm:text-2xl font-black text-[#0f172a]">2018</p>
-                            <p className="text-[9px] sm:text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-wider">FOUNDED</p>
-                          </div>
-                          {/* Stat 2 */}
-                          <div className="bg-[#f8fafc] border border-gray-200 rounded-xl p-4 text-center">
-                            <p className="text-xl sm:text-2xl font-black text-[#0f172a]">1,000+</p>
-                            <p className="text-[9px] sm:text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-wider">STUDENTS</p>
-                          </div>
-                          {/* Stat 3 */}
-                          <div className="bg-[#f8fafc] border border-gray-200 rounded-xl p-4 text-center">
-                            <p className="text-xl sm:text-2xl font-black text-[#0f172a]">40+</p>
-                            <p className="text-[9px] sm:text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-wider">TEACHERS</p>
-                          </div>
-                          {/* Stat 4 */}
-                          <div className="bg-[#f8fafc] border border-gray-200 rounded-xl p-4 text-center">
-                            <p className="text-xl sm:text-2xl font-black text-[#0f172a]">100%</p>
-                            <p className="text-[9px] sm:text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-wider">PASS RATE</p>
-                          </div>
-                        </div>
-
-                      </div>
-                    </div>
-
-                    {/* Principal Speech & Assistant Principal Speech Row */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      
-                      {/* Principal Speech Card */}
-                      <div className="bg-white rounded-2xl overflow-hidden border border-gray-200/90 shadow-xs flex flex-col justify-between">
-                        <div className="bg-[#0f172a] text-white font-extrabold text-sm sm:text-base px-5 py-3.5 flex items-center gap-2">
-                          <span>{lang === 'bn' ? 'প্রধান শিক্ষকের বাণী' : 'Message from Headmaster'}</span>
-                        </div>
-                        
-                        <div className="p-5 flex flex-col justify-between grow text-left space-y-4">
-                          <div className="flex items-center gap-4">
-                            <div className="h-14 w-14 bg-[#dbeafe] text-[#2563eb] rounded-xl flex items-center justify-center shrink-0 border border-blue-150 shadow-xs">
-                              <User className="h-6 w-6" />
+                                {/* Precise Statistics Cards row inside/below history card */}
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-gray-100">
+                                  {/* Stat 1 */}
+                                  <div className="bg-[#f8fafc] border border-gray-200 rounded-xl p-4 text-center">
+                                    <p className="text-xl sm:text-2xl font-black text-[#0f172a]">2018</p>
+                                    <p className="text-[9px] sm:text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-wider">FOUNDED</p>
+                                  </div>
+                                  {/* Stat 2 */}
+                                  <div className="bg-[#f8fafc] border border-gray-200 rounded-xl p-4 text-center">
+                                    <p className="text-xl sm:text-2xl font-black text-[#0f172a]">1,000+</p>
+                                    <p className="text-[9px] sm:text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-wider">STUDENTS</p>
+                                  </div>
+                                  {/* Stat 3 */}
+                                  <div className="bg-[#f8fafc] border border-gray-200 rounded-xl p-4 text-center">
+                                    <p className="text-xl sm:text-2xl font-black text-[#0f172a]">40+</p>
+                                    <p className="text-[9px] sm:text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-wider">TEACHERS</p>
+                                  </div>
+                                  {/* Stat 4 */}
+                                  <div className="bg-[#f8fafc] border border-gray-200 rounded-xl p-4 text-center">
+                                    <p className="text-xl sm:text-2xl font-black text-[#0f172a]">100%</p>
+                                    <p className="text-[9px] sm:text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-wider">PASS RATE</p>
+                                  </div>
+                                </div>
+                              </div>
                             </div>
-                            <div>
-                              <h4 className="font-extrabold text-[#0f172a] text-sm sm:text-base">
-                                {lang === 'bn' ? t.headmasterName : 'Morshed Nur'}
-                              </h4>
-                              <p className="text-xs text-gray-400 font-bold">
-                                {lang === 'bn' ? 'প্রধান শিক্ষক' : 'Headmaster'}
-                              </p>
+                          )
+                        },
+                        {
+                          id: 'speech',
+                          node: (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              {/* Principal Speech Card */}
+                              <div className="bg-white rounded-2xl overflow-hidden border border-gray-200/90 shadow-xs flex flex-col justify-between">
+                                <div className="bg-[#0f172a] text-white font-extrabold text-sm sm:text-base px-5 py-3.5 flex items-center gap-2 text-left">
+                                  <User className="h-4 w-4 text-emerald-400" />
+                                  <span>{lang === 'bn' ? (frontendData?.sectionsList?.find((s: any) => s.id === 'speech')?.nameBn || 'প্রধান শিক্ষকের বাণী') : (frontendData?.sectionsList?.find((s: any) => s.id === 'speech')?.nameEn || 'Message from Headmaster')}</span>
+                                </div>
+                                
+                                <div className="p-5 flex flex-col justify-between grow text-left space-y-4">
+                                  <div className="flex items-center gap-4">
+                                    <div className="h-14 w-14 bg-[#dbeafe] text-[#2563eb] rounded-xl flex items-center justify-center shrink-0 border border-blue-150 shadow-xs">
+                                      <User className="h-6 w-6" />
+                                    </div>
+                                    <div>
+                                      <h4 className="font-extrabold text-[#0f172a] text-sm sm:text-base">
+                                        {lang === 'bn' ? t.headmasterName : 'Morshed Nur'}
+                                      </h4>
+                                      <p className="text-xs text-gray-400 font-bold">
+                                        {lang === 'bn' ? 'প্রধান শিক্ষক' : 'Headmaster'}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  
+                                  <p className="text-gray-600 text-xs sm:text-sm leading-relaxed font-semibold text-left">
+                                    {lang === 'bn'
+                                      ? (frontendData?.sectionsList?.find((s: any) => s.id === 'speech')?.descriptionBn || 'আসসালামু আলাইকুম ওয়া রাহমাতুল্লাহ। চট্টগ্রাম জেলার কর্ণফুলী উপজেলার ঐতিহ্যবাহী চরলক্ষ্যা ইউনিয়নে ২০১৮ সালে প্রতিষ্ঠিত ‘স্টুডেন্টস কেয়ার মডেল স্কুল’ আজ এলাকার শিক্ষার উন্নয়নে অনন্য অবদান রেখে যাচ্ছে...')
+                                      : (frontendData?.sectionsList?.find((s: any) => s.id === 'speech')?.descriptionEn || 'Assalamu Alaikum. Established in 2018 in the traditional Charlakshya Union under Karnaphuli, Students Care Model School is making unique contributions to local educational advancements...')
+                                    }
+                                  </p>
+                                  
+                                  <div className="text-left">
+                                    <button
+                                      onClick={() => {
+                                        alert(lang === 'bn' ? `${t.headmasterName}\n${t.headmasterDesig}\n\n${t.headmasterText}` : `${t.headmasterName}\n${t.headmasterDesig}\n\n${t.headmasterText}`);
+                                      }}
+                                      className="text-[#0593dd] hover:text-blue-700 font-extrabold text-xs sm:text-sm cursor-pointer transition-colors hover:underline flex items-center gap-0.5"
+                                    >
+                                      {lang === 'bn' ? 'বিস্তারিত »' : 'Read More »'}
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Assistant Principal Speech Card */}
+                              <div className="bg-white rounded-2xl overflow-hidden border border-gray-200/90 shadow-xs flex flex-col justify-between">
+                                <div className="bg-[#0f172a] text-white font-extrabold text-sm sm:text-base px-5 py-3.5 flex items-center gap-2 text-left">
+                                  <User className="h-4 w-4 text-emerald-400" />
+                                  <span>{lang === 'bn' ? 'সহকারী প্রধান শিক্ষকের বাণী' : 'Message from Assistant Headmaster'}</span>
+                                </div>
+                                
+                                <div className="p-5 flex flex-col justify-between grow text-left space-y-4">
+                                  <div className="flex items-center gap-4">
+                                    <div className="h-14 w-14 bg-[#dbeafe] text-[#2563eb] rounded-xl flex items-center justify-center shrink-0 border border-blue-150 shadow-xs">
+                                      <User className="h-6 w-6" />
+                                    </div>
+                                    <div>
+                                      <h4 className="font-extrabold text-[#0f172a] text-sm sm:text-base">
+                                        {lang === 'bn' ? t.asstHeadmasterName : 'Md. Toyub Hosen'}
+                                      </h4>
+                                      <p className="text-xs text-gray-400 font-bold">
+                                        {lang === 'bn' ? 'সহকারী প্রধান শিক্ষক' : 'Asst. Headmaster'}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  
+                                  <p className="text-gray-600 text-xs sm:text-sm leading-relaxed font-semibold text-left">
+                                    {lang === 'bn'
+                                      ? 'একটি আদর্শ ও আধুনিক শিক্ষাপ্রতিষ্ঠান হিসেবে স্টুডেন্টস কেয়ার মডেল স্কুল দীর্ঘ দিন ধরে এই অঞ্চলে শিক্ষার আলো ছড়িয়ে আসছে। বিদ্যালয়ে উন্নত পরিবেশ ও নিয়মশৃঙ্খলা বজায় রাখতে আমরা বদ্ধপরিকর...'
+                                      : 'As an ideal and modern educational institution, Students Care Model School has been spreading the light of education. We are strictly committed to premium discipline...'
+                                    }
+                                  </p>
+                                  
+                                  <div className="text-left">
+                                    <button
+                                      onClick={() => {
+                                        alert(lang === 'bn' ? `${t.asstHeadmasterName}\n${t.asstHeadmasterDesig}\n\n${t.asstHeadmasterText}` : `${t.asstHeadmasterName}\n${t.asstHeadmasterDesig}\n\n${t.asstHeadmasterText}`);
+                                      }}
+                                      className="text-[#0593dd] hover:text-blue-700 font-extrabold text-xs sm:text-sm cursor-pointer transition-colors hover:underline flex items-center gap-0.5"
+                                    >
+                                      {lang === 'bn' ? 'বিস্তারিত »' : 'Read More »'}
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                          
-                          <p className="text-gray-600 text-xs sm:text-sm leading-relaxed font-semibold text-left">
-                            {lang === 'bn'
-                              ? 'আসসালামু আলাইকুম ওয়া রাহমাতুল্লাহ। চট্টগ্রাম জেলার কর্ণফুলী উপজেলার ঐতিহ্যবাহী চরলক্ষ্যা ইউনিয়নে ২০১৮ সালে প্রতিষ্ঠিত ‘স্টুডেন্টস কেয়ার মডেল স্কুল’ আজ...'
-                              : 'Assalamu Alaikum. Established in 2018 in the traditional Charlakshya Union under Karnaphuli, Students Care Model School...'
-                            }
-                          </p>
-                          
-                          <div className="text-left">
-                            <button
-                              onClick={() => {
-                                alert(lang === 'bn' ? `${t.headmasterName}\n${t.headmasterDesig}\n\n${t.headmasterText}` : `${t.headmasterName}\n${t.headmasterDesig}\n\n${t.headmasterText}`);
-                              }}
-                              className="text-[#0593dd] hover:text-blue-700 font-extrabold text-xs sm:text-sm cursor-pointer transition-colors hover:underline flex items-center gap-0.5"
-                            >
-                              {lang === 'bn' ? 'বিস্তারিত »' : 'Read More »'}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
+                          )
+                        },
+                        {
+                          id: 'features',
+                          node: (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              {/* Card 1: শিক্ষার্থীদের কর্নার (Pink Header) */}
+                              <div id="students-corner-card" className="bg-white rounded-2xl overflow-hidden border border-gray-200/90 shadow-xs flex flex-col">
+                                <div className="bg-[#e11d48] text-white font-extrabold text-sm sm:text-base px-5 py-3 flex items-center gap-2 text-left">
+                                  <Users className="h-4 w-4" />
+                                  <span>{lang === 'bn' ? (frontendData?.sectionsList?.find((s: any) => s.id === 'features')?.nameBn || 'শিক্ষার্থীদের কর্নার') : (frontendData?.sectionsList?.find((s: any) => s.id === 'features')?.nameEn || 'Students Corner')}</span>
+                                </div>
+                                <div className="p-5 text-left bg-[#fffefd] space-y-2.5">
+                                  {[
+                                    { bn: "৬ষ্ঠ শ্রেণী", en: "Class 6" },
+                                    { bn: "৭ম শ্রেণী", en: "Class 7" },
+                                    { bn: "৮ম শ্রেণী", en: "Class 8" },
+                                    { bn: "৯ম শ্রেণী", en: "Class 9" },
+                                    { bn: "১০ম শ্রেণী", en: "Class 10" }
+                                  ].map((item, idx) => (
+                                    <div 
+                                      key={idx} 
+                                      onClick={() => setActiveTab('portal')}
+                                      className="flex items-center gap-2.5 text-xs sm:text-sm text-gray-700 font-extrabold hover:text-[#e11d48] cursor-pointer transition-colors pb-2 border-b border-rose-100/30 last:border-b-0"
+                                    >
+                                      <span className="w-1.5 h-1.5 rounded-full bg-[#e11d48]" />
+                                      <span>{lang === 'bn' ? item.bn : item.en}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
 
-                      {/* Assistant Principal Speech Card */}
-                      <div className="bg-white rounded-2xl overflow-hidden border border-gray-200/90 shadow-xs flex flex-col justify-between">
-                        <div className="bg-[#0f172a] text-white font-extrabold text-sm sm:text-base px-5 py-3.5 flex items-center gap-2">
-                          <span>{lang === 'bn' ? 'সহকারী প্রধান শিক্ষকের বাণী' : 'Message from Assistant Headmaster'}</span>
-                        </div>
-                        
-                        <div className="p-5 flex flex-col justify-between grow text-left space-y-4">
-                          <div className="flex items-center gap-4">
-                            <div className="h-14 w-14 bg-[#dbeafe] text-[#2563eb] rounded-xl flex items-center justify-center shrink-0 border border-blue-150 shadow-xs">
-                              <User className="h-6 w-6" />
+                              {/* Card 2: শিক্ষকমণ্ডলীর কর্নার (Green Header) */}
+                              <div id="teachers-corner-card" className="bg-white rounded-2xl overflow-hidden border border-gray-200/90 shadow-xs flex flex-col">
+                                <div className="bg-[#009a68] text-white font-extrabold text-sm sm:text-base px-5 py-3 flex items-center gap-2 text-left">
+                                  <Users className="h-4 w-4" />
+                                  <span>{lang === 'bn' ? 'শিক্ষকমণ্ডলীর কর্নার' : 'Respected Teachers'}</span>
+                                </div>
+                                <div className="p-5 text-left bg-[#fafdfb] space-y-2.5">
+                                  {[
+                                    { bn: "বাংলা ডিপার্টমেন্ট", en: "Bangla Department" },
+                                    { bn: "ইংলিশ ডিপার্টমেন্ট", en: "English Department" },
+                                    { bn: "বিজ্ঞান ডিপার্টমেন্ট", en: "Science Department" },
+                                    { bn: "স্টাফ", en: "Office Staff" }
+                                  ].map((item, idx) => (
+                                    <div 
+                                      key={idx}
+                                      onClick={() => {
+                                        const el = document.getElementById('academic-staff-divider');
+                                        if (el) el.scrollIntoView({ behavior: 'smooth' });
+                                      }}
+                                      className="flex items-center gap-2.5 text-xs sm:text-sm text-gray-700 font-extrabold hover:text-[#009a68] cursor-pointer transition-colors pb-2 border-b border-emerald-100/30 last:border-b-0"
+                                    >
+                                      <span className="w-1.5 h-1.5 rounded-full bg-[#009a68]" />
+                                      <span>{lang === 'bn' ? item.bn : item.en}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
                             </div>
-                            <div>
-                              <h4 className="font-extrabold text-[#0f172a] text-sm sm:text-base">
-                                {lang === 'bn' ? t.asstHeadmasterName : 'Md. Toyub Hosen'}
-                              </h4>
-                              <p className="text-xs text-gray-400 font-bold">
-                                {lang === 'bn' ? 'সহকারী প্রধান শিক্ষক' : 'Asst. Headmaster'}
-                              </p>
+                          )
+                        },
+                        {
+                          id: 'service',
+                          node: (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              {/* Card 3: সকল ডাউনলোড (Orange Header) */}
+                              <div className="bg-white rounded-2xl overflow-hidden border border-gray-200/90 shadow-xs flex flex-col">
+                                <div className="bg-[#e27103] text-white font-extrabold text-sm sm:text-base px-5 py-3 flex items-center gap-2 text-left">
+                                  <Download className="h-4 w-4" />
+                                  <span>{lang === 'bn' ? (frontendData?.sectionsList?.find((s: any) => s.id === 'service')?.nameBn || 'সকল ডাউনলোড') : (frontendData?.sectionsList?.find((s: any) => s.id === 'service')?.nameEn || 'All Downloads')}</span>
+                                </div>
+                                <div className="p-5 text-left bg-[#fffefc] space-y-2.5">
+                                  {[
+                                    { bn: "ডাউনলোড", en: "Downloads" },
+                                    { bn: "পরীক্ষার রুটিন", en: "Exam Routine" },
+                                    { bn: "ভর্তি ফরম", en: "Admission Form" },
+                                    { bn: "সিলেবাস", en: "Academic Syllabus" }
+                                  ].map((item, idx) => (
+                                    <div 
+                                      key={idx}
+                                      onClick={() => {
+                                        if (item.bn === "ভর্তি ফরম") setActiveTab('admissions');
+                                        else setActiveTab('portal');
+                                      }}
+                                      className="flex items-center gap-2.5 text-xs sm:text-sm text-gray-700 font-extrabold hover:text-[#e27103] cursor-pointer transition-colors pb-2 border-b border-amber-100/30 last:border-b-0"
+                                    >
+                                      <span className="w-1.5 h-1.5 rounded-full bg-[#e27103]" />
+                                      <span>{lang === 'bn' ? item.bn : item.en}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Card 4: একাডেমিক তথ্য (Purple Header) */}
+                              <div className="bg-white rounded-2xl overflow-hidden border border-gray-200/90 shadow-xs flex flex-col">
+                                <div className="bg-[#8b5cf6] text-white font-extrabold text-sm sm:text-base px-5 py-3 flex items-center gap-2 text-left">
+                                  <BookOpen className="h-4 w-4" />
+                                  <span>{lang === 'bn' ? 'একাডেমিক তথ্য' : 'Academic Info'}</span>
+                                </div>
+                                <div className="p-5 text-left bg-[#faf9ff] space-y-2.5">
+                                  {[
+                                    { bn: "নোটিশ", en: "Latest Notices" },
+                                    { bn: "ছুটির দিন", en: "Holidays Calendar" },
+                                    { bn: "একাডেমিক ক্যালেন্ডার", en: "Academic Calendar" },
+                                    { bn: "ক্লাস রুটিন", en: "Weekly Class Routine" }
+                                  ].map((item, idx) => (
+                                    <div 
+                                      key={idx}
+                                      onClick={() => {
+                                        if (item.bn === "নোটিশ") setActiveTab('notices');
+                                        else setActiveTab('portal');
+                                      }}
+                                      className="flex items-center gap-2.5 text-xs sm:text-sm text-gray-700 font-extrabold hover:text-[#8b5cf6] cursor-pointer transition-colors pb-2 border-b border-purple-100/30 last:border-b-0"
+                                    >
+                                      <span className="w-1.5 h-1.5 rounded-full bg-[#8b5cf6]" />
+                                      <span>{lang === 'bn' ? item.bn : item.en}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                          
-                          <p className="text-gray-600 text-xs sm:text-sm leading-relaxed font-semibold text-left">
-                            {lang === 'bn'
-                              ? 'কটি আদর্শ ও আধুনিক শিক্ষাপ্রতিষ্ঠান হিসেবে [স্টুডেন্টস কেয়ার মডেল স্কুল] দীর্ঘ দিন ধরে এই অঞ্চলে শিক্ষার আলো ছড়িয়ে আসছে। বিদ্যালয়ে...'
-                              : 'As an ideal and modern educational institution, Students Care Model School has been spreading the light of education...'
-                            }
-                          </p>
-                          
-                          <div className="text-left">
-                            <button
-                              onClick={() => {
-                                alert(lang === 'bn' ? `${t.asstHeadmasterName}\n${t.asstHeadmasterDesig}\n\n${t.asstHeadmasterText}` : `${t.asstHeadmasterName}\n${t.asstHeadmasterDesig}\n\n${t.asstHeadmasterText}`);
-                              }}
-                              className="text-[#0593dd] hover:text-blue-700 font-extrabold text-xs sm:text-sm cursor-pointer transition-colors hover:underline flex items-center gap-0.5"
-                            >
-                              {lang === 'bn' ? 'বিস্তারিত »' : 'Read More »'}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
+                          )
+                        }
+                      ];
 
-                    </div>
+                      // Define orders and active statuses mapping safely
+                      const orders = (frontendData?.sectionsList || []).reduce((acc: any, s: any) => {
+                        acc[s.id] = { order: Number(s.order), status: s.status };
+                        return acc;
+                      }, {});
 
-                    {/* Students Corner & Teachers Corner */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      
-                      {/* Card 1: শিক্ষার্থীদের কর্নার (Pink Header) */}
-                      <div id="students-corner-card" className="bg-white rounded-2xl overflow-hidden border border-gray-200/90 shadow-xs flex flex-col">
-                        <div className="bg-[#e11d48] text-white font-extrabold text-sm sm:text-base px-5 py-3 flex items-center gap-2">
-                          <Users className="h-4 w-4" />
-                          <span>{lang === 'bn' ? 'শিক্ষার্থীদের কর্নার' : 'Students Corner'}</span>
-                        </div>
-                        <div className="p-5 text-left bg-[#fffefd] space-y-2.5">
-                          {[
-                            { bn: "৬ষ্ঠ শ্রেণী", en: "Class 6" },
-                            { bn: "৭ম শ্রেণী", en: "Class 7" },
-                            { bn: "৮ম শ্রেণী", en: "Class 8" },
-                            { bn: "৯ম শ্রেণী", en: "Class 9" },
-                            { bn: "১০ম শ্রেণী", en: "Class 10" }
-                          ].map((item, idx) => (
-                            <div 
-                              key={idx} 
-                              onClick={() => setActiveTab('portal')}
-                              className="flex items-center gap-2.5 text-xs sm:text-sm text-gray-700 font-extrabold hover:text-[#e11d48] cursor-pointer transition-colors pb-2 border-b border-rose-100/30 last:border-b-0"
-                            >
-                              <span className="w-1.5 h-1.5 rounded-full bg-[#e11d48]" />
-                              <span>{lang === 'bn' ? item.bn : item.en}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
+                      const sortedAndFiltered = blocks
+                        .filter(b => {
+                          const conf = orders[b.id];
+                          // By default, if configuration hasn't loaded yet, show everything
+                          return conf ? conf.status : true;
+                        })
+                        .sort((a, b) => {
+                          const orderA = orders[a.id]?.order ?? 99;
+                          const orderB = orders[b.id]?.order ?? 99;
+                          return orderA - orderB;
+                        });
 
-                      {/* Card 2: শিক্ষকমণ্ডলীর কর্নার (Green Header) */}
-                      <div id="teachers-corner-card" className="bg-white rounded-2xl overflow-hidden border border-gray-200/90 shadow-xs flex flex-col">
-                        <div className="bg-[#009a68] text-white font-extrabold text-sm sm:text-base px-5 py-3 flex items-center gap-2">
-                          <Users className="h-4 w-4" />
-                          <span>{lang === 'bn' ? 'শিক্ষকমণ্ডলীর কর্নার' : 'Respected Teachers'}</span>
+                      return sortedAndFiltered.map(b => (
+                        <div key={b.id} className="w-full">
+                          {b.node}
                         </div>
-                        <div className="p-5 text-left bg-[#fafdfb] space-y-2.5">
-                          {[
-                            { bn: "বাংলা ডিপার্টমেন্ট", en: "Bangla Department" },
-                            { bn: "ইংলিশ ডিপার্টমেন্ট", en: "English Department" },
-                            { bn: "বিজ্ঞান ডিপার্টমেন্ট", en: "Science Department" },
-                            { bn: "স্টাফ", en: "Office Staff" }
-                          ].map((item, idx) => (
-                            <div 
-                              key={idx}
-                              onClick={() => {
-                                const el = document.getElementById('academic-staff-divider');
-                                if (el) el.scrollIntoView({ behavior: 'smooth' });
-                              }}
-                              className="flex items-center gap-2.5 text-xs sm:text-sm text-gray-700 font-extrabold hover:text-[#009a68] cursor-pointer transition-colors pb-2 border-b border-emerald-100/30 last:border-b-0"
-                            >
-                              <span className="w-1.5 h-1.5 rounded-full bg-[#009a68]" />
-                              <span>{lang === 'bn' ? item.bn : item.en}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                    </div>
-
-                    {/* Downloads & Academic Info */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      
-                      {/* Card 3: সকল ডাউনলোড (Orange Header) */}
-                      <div className="bg-white rounded-2xl overflow-hidden border border-gray-200/90 shadow-xs flex flex-col">
-                        <div className="bg-[#e27103] text-white font-extrabold text-sm sm:text-base px-5 py-3 flex items-center gap-2">
-                          <Download className="h-4 w-4" />
-                          <span>{lang === 'bn' ? 'সকল ডাউনলোড' : 'All Downloads'}</span>
-                        </div>
-                        <div className="p-5 text-left bg-[#fffefc] space-y-2.5">
-                          {[
-                            { bn: "ডাউনলোড", en: "Downloads" },
-                            { bn: "পরীক্ষার রুটিন", en: "Exam Routine" },
-                            { bn: "ভর্তি ফরম", en: "Admission Form" },
-                            { bn: "সিলেবাস", en: "Academic Syllabus" }
-                          ].map((item, idx) => (
-                            <div 
-                              key={idx}
-                              onClick={() => {
-                                if (item.bn === "ভর্তি ফরম") setActiveTab('admissions');
-                                else setActiveTab('portal');
-                              }}
-                              className="flex items-center gap-2.5 text-xs sm:text-sm text-gray-700 font-extrabold hover:text-[#e27103] cursor-pointer transition-colors pb-2 border-b border-amber-100/30 last:border-b-0"
-                            >
-                              <span className="w-1.5 h-1.5 rounded-full bg-[#e27103]" />
-                              <span>{lang === 'bn' ? item.bn : item.en}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Card 4: একাডেমিক তথ্য (Purple Header) */}
-                      <div className="bg-white rounded-2xl overflow-hidden border border-gray-200/90 shadow-xs flex flex-col">
-                        <div className="bg-[#8b5cf6] text-white font-extrabold text-sm sm:text-base px-5 py-3 flex items-center gap-2">
-                          <BookOpen className="h-4 w-4" />
-                          <span>{lang === 'bn' ? 'একাডেমিক তথ্য' : 'Academic Info'}</span>
-                        </div>
-                        <div className="p-5 text-left bg-[#faf9ff] space-y-2.5">
-                          {[
-                            { bn: "নোটিশ", en: "Latest Notices" },
-                            { bn: "ছুটির দিন", en: "Holidays Calendar" },
-                            { bn: "একাডেমিক ক্যালেন্ডার", en: "Academic Calendar" },
-                            { bn: "ক্লাস রুটিন", en: "Weekly Class Routine" }
-                          ].map((item, idx) => (
-                            <div 
-                              key={idx}
-                              onClick={() => {
-                                if (item.bn === "নোটিশ") setActiveTab('notices');
-                                else setActiveTab('portal');
-                              }}
-                              className="flex items-center gap-2.5 text-xs sm:text-sm text-gray-700 font-extrabold hover:text-[#8b5cf6] cursor-pointer transition-colors pb-2 border-b border-purple-100/30 last:border-b-0"
-                            >
-                              <span className="w-1.5 h-1.5 rounded-full bg-[#8b5cf6]" />
-                              <span>{lang === 'bn' ? item.bn : item.en}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                    </div>
-
+                      ));
+                    })()}
                   </div>
 
                   {/* Right Column (Sidebar - lg:col-span-4) */}
@@ -2722,6 +2786,58 @@ export default function App() {
                 </div>
               </div>
 
+            </motion.div>
+          )}
+
+          {/* ==================== DYNAMIC CUSTOM CONTENT VIEW ==================== */}
+          {!['home', 'academics', 'notices', 'admissions', 'gallery', 'contact', 'portal'].includes(activeTab) && (
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-left"
+            >
+              {(() => {
+                const customPages = frontendData?.customPages || [];
+                const currentPage = customPages.find((p: any) => p.slug === activeTab || p.id === activeTab);
+                if (!currentPage || currentPage.status !== 'active') {
+                  return (
+                    <div className="bg-white border border-gray-150 rounded-3xl p-12 text-center space-y-6 max-w-xl mx-auto shadow-xs">
+                      <span className="text-5xl">📄</span>
+                      <h2 className="text-2xl font-black text-gray-900 tracking-tight">
+                        {lang === 'bn' ? 'পেজটি খুঁজে পাওয়া যায়নি' : 'Page Not Found'}
+                      </h2>
+                      <p className="text-sm text-gray-500 font-semibold leading-relaxed">
+                        {lang === 'bn' 
+                          ? 'দুঃখিত, আপনি যে লিংকটি খুঁজছেন তা এই মুহূর্তে উপলব্ধ নয় অথবা নিষ্ক্রিয় করা আছে।' 
+                          : 'Sorry, the dynamic page you are looking for is currently unavailable or disabled by admin.'}
+                      </p>
+                      <button 
+                        onClick={() => setActiveTab('home')} 
+                        className="px-6 py-2.5 bg-[#025644] text-white rounded-xl font-bold hover:bg-[#014133] transition-colors cursor-pointer"
+                      >
+                        {lang === 'bn' ? 'প্রচ্ছদে ফিরে যান' : 'Back to Home'}
+                      </button>
+                    </div>
+                  );
+                }
+                return (
+                  <div className="bg-white border border-gray-100 rounded-3xl p-8 sm:p-12 shadow-xs space-y-8">
+                    <div>
+                      <span className="text-xs font-semibold text-emerald-700 uppercase tracking-widest bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
+                        {lang === 'bn' ? 'তথ্য ও বিবরণী' : 'Information & Details'}
+                      </span>
+                      <h2 className="text-3xl sm:text-5xl font-black text-gray-900 tracking-tight mt-4 pb-6 border-b border-gray-100">
+                        {lang === 'bn' ? currentPage.titleBn : currentPage.titleEn}
+                      </h2>
+                    </div>
+                    <div className="text-sm sm:text-base text-gray-750 leading-relaxed font-semibold whitespace-pre-wrap">
+                      {lang === 'bn' ? currentPage.contentBn : currentPage.contentEn}
+                    </div>
+                  </div>
+                );
+              })()}
             </motion.div>
           )}
 

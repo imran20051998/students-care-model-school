@@ -250,9 +250,20 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
   const [smsTargetClass, setSmsTargetClass] = useState('All');
   
   // Frontend settings and submenus state
-  const [frontendSubTab, setFrontendSubTab] = useState<string>('live_preview');
+  const [frontendSubTab, setFrontendSubTab] = useState<string>('banner');
   const [isFrontendMenuExpanded, setIsFrontendMenuExpanded] = useState<boolean>(true);
   const [isSettingsMenuExpanded, setIsSettingsMenuExpanded] = useState<boolean>(true);
+  
+  // Page section editing state helpers
+  const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
+  const [sectionEditLabelBn, setSectionEditLabelBn] = useState('');
+  const [sectionEditLabelEn, setSectionEditLabelEn] = useState('');
+  const [sectionEditDescBn, setSectionEditDescBn] = useState('');
+  const [sectionEditDescEn, setSectionEditDescEn] = useState('');
+  const [sectionEditOrder, setSectionEditOrder] = useState<number>(1);
+  const [activeDocTab, setActiveDocTab] = useState<string>('editor');
+  const [copiedText, setCopiedText] = useState<string | null>(null);
+  const [sectionSearchQuery, setSectionSearchQuery] = useState<string>('');
   
   // Custom printable ID card state
   const [idCardData, setIdCardData] = useState({
@@ -1223,10 +1234,41 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
   const [deactivateReasonText, setDeactivateReasonText] = useState('');
 
   const [frontendData, setFrontendData] = useState(() => {
+    const defaultLegacySections = {
+      aboutEnabled: true,
+      statsEnabled: true,
+      featuresEnabled: true,
+      committeeEnabled: true,
+      speechEnabled: true,
+      galleryEnabled: true,
+      faqEnabled: true,
+      noticeEnabled: true,
+      testimonialEnabled: true,
+      serviceEnabled: true,
+    };
+    const defaultSections = [
+      { id: 'banner', nameEn: 'Homepage Banner', nameBn: 'হোমপেজ ব্যানার', descriptionEn: 'Hero banner slider section with major headings and CTA button', descriptionBn: 'মূল শিরোনাম এবং ভর্তি বাটনসহ প্রধান ব্যানার স্লাইডার সেকশন', order: 1, status: true },
+      { id: 'notice', nameEn: 'Notice Board', nameBn: 'নোটিশ বোর্ড', descriptionEn: 'Latest notices and academic announcements', descriptionBn: 'সর্বশেষ নোটিশ এবং শিক্ষাগত ঘোষণা', order: 2, status: true },
+      { id: 'speech', nameEn: 'Principal Speech', nameBn: 'প্রধান শিক্ষকের বাণী', descriptionEn: 'Welcoming address and message from the school headmaster', descriptionBn: 'বিদ্যালয়ের প্রধান শিক্ষকের স্বাগত বক্তব্য ও বাণী', order: 3, status: true },
+      { id: 'about', nameEn: 'About School / History', nameBn: 'বিদ্যালয় পরিচিতি ও ইতিহাস', descriptionEn: 'Brief summary of the school history and background metrics', descriptionBn: 'বিদ্যালয়ের ইতিহাস এবং পরিসংখ্যানের সংক্ষিপ্ত বিবরণ', order: 4, status: true },
+      { id: 'features', nameEn: 'Core Features / Strengths', nameBn: 'মূল বৈশিষ্ট্যসমূহ', descriptionEn: 'Key academic facilities, security and modern amenities', descriptionBn: 'প্রধান শিক্ষাগত সুবিধা, নিরাপত্তা ও আধুনিক সুযোগ-সুবিধা', order: 5, status: true },
+      { id: 'committee', nameEn: 'Governing Body / Committee', nameBn: 'পরিচালনা পর্ষদ', descriptionEn: 'Governing body members and administrative panel', descriptionBn: 'কমিটি সদস্যবৃন্দ এবং প্রশাসনিক প্যানেল', order: 6, status: true },
+      { id: 'gallery', nameEn: 'Photo Gallery', nameBn: 'ফটো গ্যালারি', descriptionEn: 'Campus celebration and activities image gallery', descriptionBn: 'ক্যাম্পাস উৎসব এবং কার্যক্রমের ছবি গ্যালারি', order: 7, status: true },
+      { id: 'testimonial', nameEn: 'Testimonials / Success Stories', nameBn: 'কৃতী শিক্ষার্থী ও প্রশংসাপত্র', descriptionEn: 'Success statements from alumni, guardians and achievements', descriptionBn: 'প্রাক্তন শিক্ষার্থী এবং অভিভাবকদের প্রশংসা বাণী', order: 8, status: true },
+      { id: 'service', nameEn: 'Special Guidance / Services', nameBn: 'বিশেষ সেবা ও নির্দেশনা', descriptionEn: 'Transport facilities, special classes and guidance plans', descriptionBn: 'পরিবহন সুবিধা, বিশেষ ক্লাস এবং অন্যান্য সেবা', order: 9, status: true },
+      { id: 'faq', nameEn: 'FAQ Accordion', nameBn: 'সচরাচর জিজ্ঞাসা (FAQ)', descriptionEn: 'Frequently asked questions with brief helpful answers', descriptionBn: 'সাধারণ প্রশ্নাবলী এবং সহজ সমাধান', order: 10, status: true }
+    ];
+
     const saved = localStorage.getItem('school_frontend_data');
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        return {
+          customPages: [],
+          ...parsed,
+          sections: parsed.sections ? { ...defaultLegacySections, ...parsed.sections } : defaultLegacySections,
+          sectionsList: parsed.sectionsList && parsed.sectionsList.length > 0 ? parsed.sectionsList : defaultSections
+        };
       } catch (e) {
         console.error('Error parsing school_frontend_data from localStorage', e);
       }
@@ -1318,7 +1360,22 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
       ],
       blogPosts: [
         { id: '1', titleBn: 'স্মার্ট ক্লাসরুম কীভাবে শিক্ষাদানে বিপ্লব ঘটাচ্ছে', titleEn: 'How Smart Classrooms are revolutionizing pedagogy', date: '2026-07-02', author: 'Principal desk' }
-      ]
+      ],
+      customPages: [
+        {
+          id: "admission-criteria",
+          titleBn: "ভর্তির যোগ্যতা ও নীতিমালা",
+          titleEn: "Admission Criteria & Policy",
+          slug: "admission-criteria",
+          contentBn: "১. নার্সারি থেকে প্লে গ্রুপের জন্য সরাসরি সাক্ষাৎকার নেওয়া হবে।\n২. ১ম থেকে ৯ম শ্রেণীর জন্য লিখিত ও মৌখিক পরীক্ষার ভিত্তিতে মূল্যায়ন করা হবে।\n৩. প্রয়োজনীয় কাগজপত্র:\n- জন্মনিবন্ধন সনদের ডিজিটাল কপি\n- বিগত বছরের রিপোর্ট কার্ড\n- ২ কপি পাসপোর্ট সাইজ ছবি।",
+          contentEn: "1. Admissions for Play Group and Nursery will be based on simple verbal interaction.\n2. Classes I to IX will require passing a written admission test.\n3. Documents Required:\n- Digital Copy of Birth Certificate\n- Academic Transcript / Report Card of previous class\n- 2 passport-sized photographs.",
+          showInMenu: true,
+          menuOrder: 1,
+          status: "active"
+        }
+      ],
+      sections: defaultLegacySections,
+      sectionsList: defaultSections
     };
   });
 
@@ -1330,8 +1387,130 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
     }
   }, [frontendData]);
 
+  // States for Manage Custom Pages
+  const [pageTitleBn, setPageTitleBn] = useState('');
+  const [pageTitleEn, setPageTitleEn] = useState('');
+  const [pageSlug, setPageSlug] = useState('');
+  const [pageContentBn, setPageContentBn] = useState('');
+  const [pageContentEn, setPageContentEn] = useState('');
+  const [pageShowInMenu, setPageShowInMenu] = useState(true);
+  const [pageMenuOrder, setPageMenuOrder] = useState(1);
+  const [pageStatus, setPageStatus] = useState<'active' | 'inactive'>('active');
+  const [editingPageId, setEditingPageId] = useState<string | null>(null);
+
+  // Helper CRUD Functions for Custom Dynamic Pages
+  const handleSavePage = () => {
+    if (!pageTitleBn || !pageTitleEn || !pageSlug || !pageContentBn || !pageContentEn) {
+      alert("All fields are required! সব তথ্য পূরণ করা আবশ্যক।");
+      return;
+    }
+
+    const pages = frontendData?.customPages || [];
+    
+    if (editingPageId) {
+      // Editing an existing page
+      const updatedPages = pages.map((p: any) => {
+        if (p.id === editingPageId) {
+          return {
+            ...p,
+            titleBn: pageTitleBn,
+            titleEn: pageTitleEn,
+            slug: pageSlug,
+            contentBn: pageContentBn,
+            contentEn: pageContentEn,
+            showInMenu: pageShowInMenu,
+            menuOrder: pageMenuOrder,
+            status: pageStatus
+          };
+        }
+        return p;
+      });
+
+      setFrontendData((prev: any) => ({
+        ...prev,
+        customPages: updatedPages
+      }));
+      setAdminSuccessMsg("Page updated successfully! পেজ সফলভাবে আপডেট করা হয়েছে।");
+    } else {
+      // Creating a new page
+      const slugExists = pages.some((p: any) => p.slug === pageSlug);
+      if (slugExists) {
+        alert("This Page URL slug already exists! এই পেজ ইউআরএল স্ল্যাগ ইতিমধ্যে বিদ্যমান।");
+        return;
+      }
+
+      const newPage = {
+        id: 'page_' + Date.now(),
+        titleBn: pageTitleBn,
+        titleEn: pageTitleEn,
+        slug: pageSlug,
+        contentBn: pageContentBn,
+        contentEn: pageContentEn,
+        showInMenu: pageShowInMenu,
+        menuOrder: Number(pageMenuOrder) || 1,
+        status: pageStatus
+      };
+
+      setFrontendData((prev: any) => ({
+        ...prev,
+        customPages: [...(prev.customPages || []), newPage]
+      }));
+      setAdminSuccessMsg("New custom page published successfully! নতুন পেজ সফলভাবে তৈরি করা হয়েছে।");
+    }
+
+    // Reset fields
+    setPageTitleBn('');
+    setPageTitleEn('');
+    setPageSlug('');
+    setPageContentBn('');
+    setPageContentEn('');
+    setPageShowInMenu(true);
+    setPageMenuOrder(1);
+    setPageStatus('active');
+    setEditingPageId(null);
+    setTimeout(() => setAdminSuccessMsg(''), 4000);
+  };
+
+  const handleDeletePage = (pageId: string) => {
+    if (!confirm("Are you sure you want to delete this custom page? আপনি কি নিশ্চিতভাবে এই পেজটি মুছে ফেলতে চান?")) return;
+    
+    const pages = frontendData?.customPages || [];
+    const updatedPages = pages.filter((p: any) => p.id !== pageId);
+    
+    setFrontendData((prev: any) => ({
+      ...prev,
+      customPages: updatedPages
+    }));
+    setAdminSuccessMsg("Page deleted successfully! পেজ সফলভাবে মুছে ফেলা হয়েছে।");
+    setTimeout(() => setAdminSuccessMsg(''), 4000);
+  };
+
+  const handleEditPageClick = (page: any) => {
+    setEditingPageId(page.id);
+    setPageTitleBn(page.titleBn || '');
+    setPageTitleEn(page.titleEn || '');
+    setPageSlug(page.slug || '');
+    setPageContentBn(page.contentBn || '');
+    setPageContentEn(page.contentEn || '');
+    setPageShowInMenu(page.showInMenu !== false);
+    setPageMenuOrder(page.menuOrder || 1);
+    setPageStatus(page.status || 'active');
+  };
+
+  const handleTitleEnChange = (val: string) => {
+    setPageTitleEn(val);
+    if (!editingPageId) {
+      // Auto-generate slug
+      const generatedSlug = val
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .trim()
+        .replace(/\s+/g, '-');
+      setPageSlug(generatedSlug);
+    }
+  };
+
   const frontendSubMenus = [
-    { id: 'live_preview', labelBn: 'লাইভ হোমপেজ প্রিভিউ', labelEn: 'Live Homepage Preview' },
     { id: 'banner', labelBn: 'হোমপেজ ব্যানার', labelEn: 'Homepage Banner' },
     { id: 'setting', labelBn: 'সেটিংস', labelEn: 'Setting' },
     { id: 'menu', labelBn: 'মেনু', labelEn: 'Menu' },
@@ -11474,541 +11653,9 @@ async function buildAttendanceExcelSheet(monthName, className, section, students
                       </p>
                     </div>
                   )}
-                  {frontendSubTab !== 'banner' && (
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => setFrontendSubTab('live_preview')}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
-                          frontendSubTab === 'live_preview'
-                            ? 'bg-[#025644] text-white shadow-xs'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
-                      >
-                        <Eye className="h-3.5 w-3.5" /> {lang === 'bn' ? 'লাইভ প্রিভিউ' : 'Live Preview'}
-                      </button>
-                    </div>
-                  )}
                 </div>
 
                 {/* Sub tab contents */}
-                {frontendSubTab === 'live_preview' && (
-                  <div className="space-y-6">
-                    {/* Live Preview Header with Devices and Controls */}
-                    <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 bg-gray-50 border border-gray-150 p-4 rounded-2xl">
-                      <div>
-                        <h4 className="font-extrabold text-gray-900 text-base">
-                          {lang === 'bn' ? 'লাইভ হোমপেজ প্রিভিউ' : 'Live Homepage Preview'}
-                        </h4>
-                        <p className="text-xs text-gray-400 font-bold mt-0.5">
-                          {lang === 'bn' 
-                            ? 'ফ্রন্টএন্ড সেটিংসে আপনি যা পরিবর্তন করবেন তা এখানে সরাসরি দেখা যাবে।' 
-                            : 'Changes you save in Frontend/Settings apply here instantly.'}
-                        </p>
-                      </div>
-
-                      {/* Device Emulators & Control Buttons */}
-                      <div className="flex flex-wrap items-center gap-2 w-full xl:w-auto">
-                        {/* Device selector */}
-                        <div className="bg-white border border-gray-200 p-1 rounded-xl flex items-center gap-1 shadow-2xs shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => setPreviewMode('desktop')}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                              previewMode === 'desktop'
-                                ? 'bg-slate-900 text-white font-black'
-                                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
-                            }`}
-                          >
-                            <span className="shrink-0">🖥️</span>
-                            <span>{lang === 'bn' ? 'ডেস্কটপ' : 'Desktop'}</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setPreviewMode('tablet')}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                              previewMode === 'tablet'
-                                ? 'bg-slate-900 text-white font-black'
-                                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
-                            }`}
-                          >
-                            <span className="shrink-0">📁</span>
-                            <span>{lang === 'bn' ? 'ট্যাবলেট' : 'Tablet'}</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setPreviewMode('mobile')}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                              previewMode === 'mobile'
-                                ? 'bg-slate-900 text-white font-black'
-                                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
-                            }`}
-                          >
-                            <span className="shrink-0">📱</span>
-                            <span>{lang === 'bn' ? 'মোবাইল' : 'Mobile'}</span>
-                          </button>
-                        </div>
-
-                        {/* Actions */}
-                        <div className="flex items-center gap-1.5 ml-auto xl:ml-0">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setIsPreviewRefreshing(true);
-                              setTimeout(() => setIsPreviewRefreshing(false), 600);
-                            }}
-                            className="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer shrink-0"
-                          >
-                            <span className={`inline-block shrink-0 ${isPreviewRefreshing ? 'animate-spin' : ''}`}>🔄</span>
-                            <span>{lang === 'bn' ? 'রিফ্রেশ' : 'Refresh'}</span>
-                          </button>
-                          <a
-                            href="/"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer shrink-0"
-                          >
-                            <span className="shrink-0">🔗</span>
-                            <span>{lang === 'bn' ? 'ওপেন' : 'Open'}</span>
-                          </a>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setIsCapturing(true);
-                              setTimeout(() => {
-                                setIsCapturing(false);
-                                setCapturedScreenshot(new Date().toISOString());
-                                addAuditLog(`Generated live frontend homepage preview screenshot (${previewMode.toUpperCase()})`);
-                              }, 1200);
-                            }}
-                            disabled={isCapturing}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer shrink-0 disabled:opacity-50"
-                          >
-                            <span>📸</span>
-                            <span>{lang === 'bn' ? 'স্ক্রিনশট নিন' : 'Take Screenshot'}</span>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* SCREENSHOT DESIGN CATALOG CARD */}
-                    {capturedScreenshot && (
-                      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 text-white flex flex-col md:flex-row items-center justify-between gap-5 shadow-xl relative overflow-hidden transition-all duration-300">
-                        {/* Shimmer ambient lighting background */}
-                        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 via-emerald-600/10 to-transparent pointer-events-none" />
-                        
-                        <div className="flex items-center gap-4 relative z-10 w-full md:w-auto">
-                          {/* Mini simulated preview box */}
-                          <div className="h-16 w-24 bg-slate-800 border border-slate-700 rounded-xl overflow-hidden flex items-center justify-center shrink-0 shadow-inner relative group">
-                            <span className="text-xl">🖼️</span>
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end justify-center p-1">
-                              <span className="text-[7px] font-black uppercase text-emerald-400 bg-slate-950/80 px-1.5 py-0.5 rounded-full">
-                                {previewMode}
-                              </span>
-                            </div>
-                          </div>
-
-                          <div className="text-left space-y-1">
-                            <h4 className="font-extrabold text-sm text-slate-100 flex items-center gap-1.5">
-                              <span>📸</span>
-                              <span>{lang === 'bn' ? 'হোমপেজ লাইভ ক্যাপচার সফল!' : 'Homepage Live Capture Ready!'}</span>
-                              <span className="text-[9px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-black px-2 py-0.5 rounded-full uppercase tracking-wide">
-                                {lang === 'bn' ? 'সংরক্ষিত' : 'Rendered'}
-                              </span>
-                            </h4>
-                            <p className="text-[10px] text-slate-400 font-bold">
-                              {lang === 'bn' ? 'ক্যাপচারের সময়:' : 'Captured:'} {new Date(capturedScreenshot).toLocaleString(lang === 'bn' ? 'bn-BD' : 'en-US')}
-                            </p>
-                            <p className="text-[10px] text-slate-400 font-mono font-bold">
-                              Dimensions: {previewMode === 'desktop' ? '1920 × 1080 px' : previewMode === 'tablet' ? '1024 × 768 px' : '390 × 844 px'} • Format: PNG
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 relative z-10 shrink-0 w-full md:w-auto md:justify-end">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const link = document.createElement('a');
-                              link.href = '#';
-                              link.setAttribute('download', `scms-homepage-${previewMode}.png`);
-                              alert(lang === 'bn' 
-                                ? `পিক্সেল-পারফেক্ট হোমপেজ স্ক্রিনশট (${previewMode.toUpperCase()}) ডাউনলোড শুরু হয়েছে!` 
-                                : `High-resolution pixel-perfect screenshot for ${previewMode.toUpperCase()} viewport downloaded successfully!`
-                              );
-                            }}
-                            className="flex-1 md:flex-none px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-black rounded-xl shadow-md transition-all cursor-pointer text-center"
-                          >
-                            📥 {lang === 'bn' ? 'ডাউনলোড করুন' : 'Download High-Res'}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setCapturedScreenshot(null)}
-                            className="p-2.5 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-800 hover:border-slate-700 rounded-xl transition-all cursor-pointer shrink-0"
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Simulated Browser Frame with device scale container */}
-                    <div 
-                      className="border border-gray-200 rounded-3xl overflow-hidden shadow-xl bg-gray-50 transition-all duration-300 ease-in-out relative"
-                      style={{
-                        width: previewMode === 'desktop' ? '100%' : undefined,
-                        maxWidth: previewMode === 'tablet' ? '768px' : previewMode === 'mobile' ? '390px' : undefined,
-                        margin: '0 auto',
-                        borderWidth: previewMode === 'mobile' ? '10px' : '1px',
-                        borderColor: previewMode === 'mobile' ? '#0f172a' : '#e2e8f0',
-                        borderRadius: previewMode === 'mobile' ? '36px' : '24px'
-                      }}
-                    >
-                      {/* Camera Flash shutter Overlay */}
-                      {isCapturing && (
-                        <div className="absolute inset-0 bg-white/95 z-50 flex flex-col items-center justify-center animate-pulse transition-opacity duration-300">
-                          <div className="text-center space-y-2">
-                            <span className="text-5xl animate-bounce inline-block">📸</span>
-                            <p className="text-slate-950 font-black text-sm tracking-wide uppercase">
-                              {lang === 'bn' ? 'ডিজাইন ক্যাপচার করা হচ্ছে...' : 'Capturing Device Viewport...'}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Browser Header Bar */}
-                      <div className="bg-slate-900 px-4 py-3 border-b border-slate-900 flex items-center justify-between gap-3 text-xs text-white/80 font-bold">
-                        <div className="flex gap-1.5 shrink-0">
-                          <span className="w-3 h-3 bg-rose-500 rounded-full inline-block shadow-sm" />
-                          <span className="w-3 h-3 bg-amber-500 rounded-full inline-block shadow-sm" />
-                          <span className="w-3 h-3 bg-emerald-500 rounded-full inline-block shadow-sm" />
-                        </div>
-                        <div className="bg-slate-800 border border-slate-700 px-4 py-1 rounded-full text-center grow max-w-md font-mono text-[10px] tracking-tight truncate flex items-center justify-center gap-1 text-slate-300">
-                          <Lock className="h-3 w-3 text-emerald-400 shrink-0" />
-                          <span>https://studentscaremodelschool.com/</span>
-                        </div>
-                        <span className="text-[9px] font-mono text-slate-400 bg-slate-800 px-2 py-0.5 rounded-md shrink-0 uppercase tracking-wider">Live Preview</span>
-                      </div>
-
-                      {/* Mock Website Scrollable Canvas */}
-
-                      {/* Mock Website Scrollable Canvas */}
-                      <div 
-                        className={`max-h-[650px] overflow-y-auto font-sans text-xs text-gray-800 scrollbar-none transition-opacity duration-350 ${
-                          isPreviewRefreshing ? 'opacity-30 pointer-events-none' : 'opacity-100'
-                        }`}
-                      >
-                        
-                        {/* 1. TOP PREMIUM HEADER HERO BANNER */}
-                        <div 
-                          style={{ 
-                            backgroundColor: (frontendData.settings as any).bannerColor || '#1E63D3',
-                            backgroundImage: (frontendData.settings as any).bannerGradient 
-                              ? 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(0,0,0,0.3) 100%)' 
-                              : 'none'
-                          }}
-                          className="text-white p-5 text-left relative overflow-hidden flex flex-col md:flex-row justify-between items-center gap-5 border-b-2 border-white/10"
-                        >
-                          {/* Dot Overlay Grid */}
-                          <div className="absolute inset-0 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px] opacity-10 pointer-events-none" />
-
-                          {/* Left: Branding Identity */}
-                          <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4 relative z-10">
-                            <div className="h-16 w-16 sm:h-20 sm:w-20 bg-white rounded-full flex items-center justify-center shadow-lg border-2 border-white/40 shrink-0 transform hover:scale-105 transition-transform duration-300 overflow-hidden">
-                              {(frontendData.settings as any).logoUrl ? (
-                                <img src={(frontendData.settings as any).logoUrl} alt="Logo" className="h-full w-full object-cover" />
-                              ) : (
-                                <span className="text-3xl sm:text-4xl">🏫</span>
-                              )}
-                            </div>
-                            <div className="space-y-1">
-                              <h1 
-                                style={{ fontSize: `${(frontendData.settings as any).bannerFontSize || 32}px` }}
-                                className="font-black tracking-wide leading-tight drop-shadow-md text-white font-sans"
-                              >
-                                {lang === 'bn' ? frontendData.settings.siteNameBn : frontendData.settings.siteNameEn}
-                              </h1>
-                              <h2 className="text-sm sm:text-base font-extrabold tracking-widest text-blue-100 uppercase drop-shadow-sm font-mono">
-                                {(frontendData.settings as any).siteNameEn || "STUDENTS CARE MODEL SCHOOL"}
-                              </h2>
-                              <p className="text-[10px] sm:text-[11px] text-white/90 font-bold flex flex-wrap items-center justify-center sm:justify-start gap-x-2 gap-y-1 mt-1">
-                                <span>📍 {lang === 'bn' ? frontendData.settings.addressBn : frontendData.settings.addressEn}</span>
-                                <span className="opacity-40">|</span>
-                                <span>EIIN: {(frontendData.settings as any).eiin || '471547'}</span>
-                                <span className="opacity-40">|</span>
-                                <span>School Code: {(frontendData.settings as any).eiin || '471547'}</span>
-                                <span className="opacity-40">|</span>
-                                <span>
-                                  {lang === 'bn' ? 'প্রতিষ্ঠিত:' : 'Estd:'} {lang === 'bn' 
-                                    ? ((frontendData.settings as any).foundedYear || "2018").toString().replace(/\d/g, (d: string) => "০১২৩৪৫৬৭৮৯"[parseInt(d)]) 
-                                    : ((frontendData.settings as any).foundedYear || "2018")}
-                                </span>
-                              </p>
-                            </div>
-                          </div>
-
-                          {/* Right: Contact Information Panel */}
-                          <div className="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-2xl text-white text-xs space-y-2 w-full md:w-auto md:min-w-[240px] relative z-10 shadow-inner">
-                            <div className="flex items-center gap-2.5 font-extrabold">
-                              <span className="text-sm shrink-0">📞</span>
-                              <span className="tracking-wide hover:text-blue-200 transition-colors">{frontendData.settings.helpline || '+880 1814913049'}</span>
-                            </div>
-                            <div className="flex items-center gap-2.5 font-extrabold">
-                              <span className="text-sm shrink-0">✉️</span>
-                              <span className="truncate hover:text-blue-200 transition-colors">{frontendData.settings.email || 'studentscare2006@gmail.com'}</span>
-                            </div>
-                            <div className="flex items-center gap-2.5 font-extrabold">
-                              <span className="text-sm shrink-0">🌐</span>
-                              <span className="hover:text-blue-200 transition-colors">{(frontendData.settings as any).website || 'studentscaremodelschool.com'}</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* 2. NAVIGATION BAR */}
-                        <div className="bg-[#0b132b] text-white px-4 py-2.5 flex flex-col md:flex-row justify-between items-center gap-3 border-b border-slate-900 sticky top-0 z-20">
-                          {/* Left Menu Link Items */}
-                          <div className="flex flex-wrap justify-center md:justify-start items-center gap-x-4 gap-y-1.5 font-extrabold text-[10px] sm:text-[11px] uppercase tracking-wide text-gray-300">
-                            <span className="text-white hover:text-blue-400 cursor-pointer flex items-center gap-1 bg-white/10 px-2 py-1 rounded-md">
-                              <span>🏠</span> {lang === 'bn' ? 'প্রচ্ছদ' : 'Home'}
-                            </span>
-                            <span className="hover:text-white cursor-pointer transition-colors">{lang === 'bn' ? 'প্রতিষ্ঠানের ইতিহাস' : 'History'}</span>
-                            <span className="hover:text-white cursor-pointer transition-colors">{lang === 'bn' ? 'শিক্ষকমণ্ডলী' : 'Teachers'}</span>
-                            <span className="hover:text-white cursor-pointer transition-colors">{lang === 'bn' ? 'শিক্ষার্থী' : 'Students'}</span>
-                            <span className="hover:text-white cursor-pointer transition-colors">{lang === 'bn' ? 'পরীক্ষার ফলাফল' : 'Exam Results'}</span>
-                            <span className="hover:text-white cursor-pointer transition-colors">{lang === 'bn' ? 'ফটো' : 'Photos'}</span>
-                            <span className="hover:text-white cursor-pointer transition-colors">{lang === 'bn' ? 'ভিডিও' : 'Videos'}</span>
-                            <span className="hover:text-white cursor-pointer transition-colors">{lang === 'bn' ? 'যোগাযোগ' : 'Contact'}</span>
-                          </div>
-
-                          {/* Right Controls: Login */}
-                          <div className="flex items-center gap-2 shrink-0">
-
-                            {/* Secure Login */}
-                            <button
-                              type="button"
-                              className="bg-[#00875a] hover:bg-[#006644] text-white font-black text-[10px] px-3.5 py-1.5 rounded-lg flex items-center gap-1 transition-all shadow-sm cursor-pointer"
-                            >
-                              <span>🔓</span>
-                              <span>{lang === 'bn' ? 'লগইন' : 'Login'}</span>
-                              <span className="text-[8px] opacity-75">▼</span>
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* 3. HERO IMAGE SLIDER / BANNER CAROUSEL */}
-                        <div className="relative h-[280px] sm:h-[380px] md:h-[450px] bg-slate-900 group overflow-hidden">
-                          {/* Real image representing Bengali school children celebrating */}
-                          <img 
-                            src="/src/assets/images/school_celebration_banner_1783279354681.jpg" 
-                            alt="Students Care Model School Celebration" 
-                            className="w-full h-full object-cover brightness-95 transform hover:scale-102 transition-transform duration-700"
-                            referrerPolicy="no-referrer"
-                          />
-
-                          {/* Dark Transparent Overlay Gradient */}
-                          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/30 to-transparent pointer-events-none" />
-
-                          {/* Slider Arrow Left */}
-                          <button
-                            type="button"
-                            className="absolute left-4 top-1/2 -translate-y-1/2 h-10 w-10 bg-slate-950/40 text-white rounded-full flex items-center justify-center hover:bg-slate-950/70 border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-lg cursor-pointer shadow-md"
-                          >
-                            ◀
-                          </button>
-
-                          {/* Slider Arrow Right */}
-                          <button
-                            type="button"
-                            className="absolute right-4 top-1/2 -translate-y-1/2 h-10 w-10 bg-slate-950/40 text-white rounded-full flex items-center justify-center hover:bg-slate-950/70 border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-lg cursor-pointer shadow-md"
-                          >
-                            ▶
-                          </button>
-
-                          {/* Bottom Content Floating Card */}
-                          <div className="absolute bottom-6 left-6 right-6 md:left-12 md:right-12 bg-slate-950/65 backdrop-blur-md border border-white/10 p-5 rounded-2xl text-left text-white max-w-2xl shadow-2xl">
-                            <span className="text-[9px] sm:text-[10px] uppercase tracking-widest bg-emerald-500/95 text-white font-black px-3 py-1 rounded-full inline-block mb-3 shadow-sm">
-                              📢 {lang === 'bn' ? 'ভর্তি চলছে ২০২৬ শিক্ষাবর্ষ' : 'ADMISSIONS OPEN FOR SESSION 2026'}
-                            </span>
-                            <h3 className="text-lg sm:text-2xl font-black tracking-tight leading-snug drop-shadow-md">
-                              {lang === 'bn' ? frontendData.banner.titleBn : frontendData.banner.titleEn}
-                            </h3>
-                            <p className="text-[11px] sm:text-xs text-slate-200 mt-1.5 leading-relaxed font-semibold">
-                              {lang === 'bn' ? frontendData.banner.subtitleBn : frontendData.banner.subtitleEn}
-                            </p>
-                            <div className="mt-4 flex flex-wrap gap-2.5">
-                              <button className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl shadow-md text-[10px] sm:text-xs transition-all uppercase tracking-wide cursor-pointer transform active:scale-95">
-                                {lang === 'bn' ? frontendData.banner.btnTextBn : frontendData.banner.btnTextEn}
-                              </button>
-                              <button className="px-5 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-black rounded-xl text-[10px] sm:text-xs transition-all cursor-pointer">
-                                {lang === 'bn' ? 'বিস্তারিত তথ্য জানুন' : 'Learn More'}
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Slider dot indicators */}
-                          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
-                            <span className="w-2.5 h-2.5 bg-white rounded-full cursor-pointer shadow-sm" />
-                            <span className="w-2.5 h-2.5 bg-white/40 rounded-full cursor-pointer shadow-sm" />
-                            <span className="w-2.5 h-2.5 bg-white/40 rounded-full cursor-pointer shadow-sm" />
-                          </div>
-                        </div>
-
-                        {/* 4. EMERGENCY NOTICE BANNER (SCROLLING ANNOUNCEMENT TICKER) */}
-                        <div className="bg-[#0b1228] text-white flex items-center overflow-hidden border-y border-slate-900 text-[11px]">
-                          <div className="bg-red-600 text-white font-black px-4 py-2.5 flex items-center gap-1.5 shrink-0 uppercase tracking-wider rounded-r-md shadow-md animate-pulse">
-                            <span>📢</span>
-                            <span>{lang === 'bn' ? 'জরুরী ঘোষণা :' : 'Urgently Announced :'}</span>
-                          </div>
-                          <div className="bg-amber-50 text-slate-900 px-4 py-2.5 font-black grow text-left overflow-hidden relative">
-                            <div className="whitespace-nowrap animate-marquee flex gap-10">
-                              <span>
-                                {lang === 'bn' 
-                                  ? 'অর্ধবার্ষিক পরীক্ষা ২৫শে জুন থেকে শুরু হবে। আগামী ১লা জুলাই থেকে অর্ধবার্ষিক পরীক্ষা শুরু হতে যাচ্ছে। বিস্তারিত নোটিস দেখতে নোটিশ বোর্ডে যান।' 
-                                  : 'Notice Update: Halfterm exam scheduled to begin from June 25th. View details syllabus from the Notice board tab.'}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* 5. INTERACTIVE FEATURE TILES / RESPONSIVE GRIDS */}
-                        <div className="p-6 bg-gray-50">
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                            {/* Emerald Grid Item */}
-                            <div className="bg-emerald-600 hover:bg-emerald-700 hover:shadow-lg hover:-translate-y-0.5 transform transition-all duration-300 p-5 rounded-2xl text-white text-left flex items-center justify-between cursor-pointer group shadow-sm">
-                              <div className="flex items-center gap-4">
-                                <div className="h-12 w-12 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center text-xl shrink-0 border border-white/20 group-hover:scale-105 transition-all">
-                                  👤
-                                </div>
-                                <div className="space-y-0.5">
-                                  <h4 className="font-extrabold text-sm sm:text-base tracking-tight leading-tight">{lang === 'bn' ? 'অনলাইন ভর্তি' : 'Online Admission'}</h4>
-                                  <p className="text-[10px] text-emerald-100 font-bold">{lang === 'bn' ? 'নতুন ভর্তির আবেদন' : 'Apply for Session 2026'}</p>
-                                </div>
-                              </div>
-                              <span className="text-lg bg-white/15 h-8 w-8 rounded-full flex items-center justify-center group-hover:translate-x-1.5 transition-transform duration-300 border border-white/10 font-bold">➔</span>
-                            </div>
-
-                            {/* Blue Grid Item */}
-                            <div className="bg-blue-600 hover:bg-blue-700 hover:shadow-lg hover:-translate-y-0.5 transform transition-all duration-300 p-5 rounded-2xl text-white text-left flex items-center justify-between cursor-pointer group shadow-sm">
-                              <div className="flex items-center gap-4">
-                                <div className="h-12 w-12 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center text-xl shrink-0 border border-white/20 group-hover:scale-105 transition-all">
-                                  💳
-                                </div>
-                                <div className="space-y-0.5">
-                                  <h4 className="font-extrabold text-sm sm:text-base tracking-tight leading-tight">{lang === 'bn' ? 'অনলাইন পেমেন্ট' : 'Pay Fees'}</h4>
-                                  <p className="text-[10px] text-blue-100 font-bold">{lang === 'bn' ? 'অনলাইনে ফি পরিশোধ' : 'Complete tuition ledger'}</p>
-                                </div>
-                              </div>
-                              <span className="text-lg bg-white/15 h-8 w-8 rounded-full flex items-center justify-center group-hover:translate-x-1.5 transition-transform duration-300 border border-white/10 font-bold">➔</span>
-                            </div>
-
-                            {/* Amber Grid Item */}
-                            <div className="bg-amber-600 hover:bg-amber-700 hover:shadow-lg hover:-translate-y-0.5 transform transition-all duration-300 p-5 rounded-2xl text-white text-left flex items-center justify-between cursor-pointer group shadow-sm">
-                              <div className="flex items-center gap-4">
-                                <div className="h-12 w-12 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center text-xl shrink-0 border border-white/20 group-hover:scale-105 transition-all">
-                                  📥
-                                </div>
-                                <div className="space-y-0.5">
-                                  <h4 className="font-extrabold text-sm sm:text-base tracking-tight leading-tight">{lang === 'bn' ? 'রুটিন ডাউনলোড' : 'Download Routine'}</h4>
-                                  <p className="text-[10px] text-amber-100 font-bold">{lang === 'bn' ? 'ক্লাস রুটিন ডাউনলোড' : 'Download pdf schedules'}</p>
-                                </div>
-                              </div>
-                              <span className="text-lg bg-white/15 h-8 w-8 rounded-full flex items-center justify-center group-hover:translate-x-1.5 transition-transform duration-300 border border-white/10 font-bold">➔</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* 6. HISTORY SECTION ("প্রতিষ্ঠানের ইতিহাস") */}
-                        <div className="p-6 bg-white">
-                          <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-                            {/* Section Blue Header */}
-                            <div className="bg-[#0b2545] text-white px-5 py-3 text-left font-black text-sm uppercase tracking-wider flex items-center gap-2">
-                              <span>📜</span>
-                              <span>{lang === 'bn' ? 'প্রতিষ্ঠানের ইতিহাস' : 'Institute History'}</span>
-                            </div>
-
-                            {/* Section Content */}
-                            <div className="p-5 bg-white grid grid-cols-1 md:grid-cols-12 gap-6 text-left items-start">
-                              {/* Left: Beautiful Classroom Image */}
-                              <div className="md:col-span-4 rounded-xl overflow-hidden border border-gray-150 shadow-xs h-[180px] sm:h-[220px] relative group">
-                                <img 
-                                  src="/src/assets/images/school_classroom_activity_1783321072592.jpg" 
-                                  alt="Students Care Classroom Activity" 
-                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                  referrerPolicy="no-referrer"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end p-3">
-                                  <span className="text-[10px] font-black text-white bg-blue-600 px-2.5 py-1 rounded-md">Smart Classroom</span>
-                                </div>
-                              </div>
-
-                              {/* Right: History Copy & Numbers */}
-                              <div className="md:col-span-8 space-y-4 flex flex-col justify-between h-full">
-                                <div className="space-y-2">
-                                  <p className="text-gray-700 text-xs sm:text-sm font-semibold leading-relaxed">
-                                    {lang === 'bn' ? (
-                                      <>
-                                        চট্টগ্রাম জেলার কর্ণফুলী উপজেলার চরলক্ষ্যা ইউনিয়নের বুকে শিক্ষার আলো ছড়িয়ে দেওয়ার এক মহান ব্রত নিয়ে <strong>২০১৮ সালে</strong> প্রতিষ্ঠিত হয় <strong>স্টুডেন্টস কেয়ার মডেল স্কুল</strong>। চরলক্ষ্যা ও এর আশেপাশের অঞ্চলের শিক্ষার্থীদের সুশিক্ষায় শিক্ষিত করা এবং নৈতিক চরিত্র গঠনের লক্ষে এই গৌরবময় বিদ্যাপীঠটি তার সফল শিক্ষাদানের ধারা বজায় রেখেছে...
-                                      </>
-                                    ) : (
-                                      <>
-                                        With a core mandate to disperse knowledge in Charlakshya Union of Karnaphuli, Chattogram, <strong>Students Care Model School</strong> was established in <strong>2018</strong>. This esteemed institution has maintained an unparalleled academic track record in cultivating moral integrity and excellence...
-                                      </>
-                                    )}
-                                  </p>
-                                  <button type="button" className="text-blue-600 hover:text-blue-800 font-extrabold text-xs inline-flex items-center gap-1 cursor-pointer">
-                                    <span>{lang === 'bn' ? 'বিস্তারিত জানুন' : 'Read More'}</span>
-                                    <span>»</span>
-                                  </button>
-                                </div>
-
-                                {/* Metric Stat Boxes Grid */}
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
-                                  <div className="bg-slate-50 border border-gray-150 rounded-xl p-3 text-center shadow-2xs">
-                                    <span className="text-lg sm:text-xl font-black text-blue-800 block">২০১৮</span>
-                                    <span className="text-[8px] sm:text-[9px] text-gray-400 font-black uppercase tracking-wider block mt-0.5">{lang === 'bn' ? 'প্রতিষ্ঠিত' : 'FOUNDED'}</span>
-                                  </div>
-                                  <div className="bg-slate-50 border border-gray-150 rounded-xl p-3 text-center shadow-2xs">
-                                    <span className="text-lg sm:text-xl font-black text-blue-800 block">১,০০০+</span>
-                                    <span className="text-[8px] sm:text-[9px] text-gray-400 font-black uppercase tracking-wider block mt-0.5">{lang === 'bn' ? 'শিক্ষার্থী' : 'STUDENTS'}</span>
-                                  </div>
-                                  <div className="bg-slate-50 border border-gray-150 rounded-xl p-3 text-center shadow-2xs">
-                                    <span className="text-lg sm:text-xl font-black text-blue-800 block">৪০+</span>
-                                    <span className="text-[8px] sm:text-[9px] text-gray-400 font-black uppercase tracking-wider block mt-0.5">{lang === 'bn' ? 'শিক্ষক' : 'TEACHERS'}</span>
-                                  </div>
-                                  <div className="bg-slate-50 border border-gray-150 rounded-xl p-3 text-center shadow-2xs">
-                                    <span className="text-lg sm:text-xl font-black text-blue-800 block">১০০%</span>
-                                    <span className="text-[8px] sm:text-[9px] text-gray-400 font-black uppercase tracking-wider block mt-0.5">{lang === 'bn' ? 'পাস রেট' : 'PASS RATE'}</span>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* 7. COMPACT FOOTER */}
-                        <div className="bg-slate-900 text-white/70 p-6 text-left space-y-4 border-t border-slate-950">
-                          <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-                            <div className="space-y-1">
-                              <h4 className="font-extrabold text-white text-xs">
-                                {lang === 'bn' ? frontendData.settings.siteNameBn : frontendData.settings.siteNameEn}
-                              </h4>
-                              <p className="text-[10px] text-gray-400 font-medium">
-                                {lang === 'bn' ? frontendData.settings.addressBn : frontendData.settings.addressEn}
-                              </p>
-                            </div>
-                            <div className="text-[10px] font-bold space-y-1 text-gray-400">
-                              <p>📧 {frontendData.settings.email || 'info@scms.edu.bd'}</p>
-                              <p>📞 {frontendData.settings.helpline || '+880 1814913049'}</p>
-                            </div>
-                          </div>
-                          <div className="text-[9px] border-t border-slate-800 pt-3 text-center text-gray-500 font-extrabold uppercase tracking-wider">
-                            &copy; 2026 {lang === 'bn' ? frontendData.settings.siteNameBn : frontendData.settings.siteNameEn}. All Rights Reserved.
-                          </div>
-                        </div>
-
-                      </div>
-                    </div>
-                  </div>
-                )}
 
                 {/* --- BANNER --- */}
                 {frontendSubTab === 'banner' && (
@@ -12371,67 +12018,987 @@ async function buildAttendanceExcelSheet(monthName, className, section, students
 
                 {/* --- PAGE SECTION --- */}
                 {frontendSubTab === 'page_section' && (
-                  <div className="space-y-4">
-                    <h4 className="font-extrabold text-sm text-gray-900 border-b pb-2">Toggle Active Homepage Content blocks</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-bold text-gray-700">
-                      {[
-                        { key: 'aboutEnabled', label: 'Legacy/About Us Section' },
-                        { key: 'statsEnabled', label: 'Dynamic Statistics Section' },
-                        { key: 'featuresEnabled', label: 'Core Strengths Block' },
-                        { key: 'committeeEnabled', label: 'Governing Body Section' },
-                        { key: 'speechEnabled', label: 'Headmaster Welcome Message' },
-                        { key: 'galleryEnabled', label: 'Photo Gallery Portfolio' },
-                        { key: 'faqEnabled', label: 'FAQ Accordion block' },
-                      ].map((sec) => (
-                        <div key={sec.key} className="flex justify-between items-center p-3.5 bg-gray-50 rounded-xl border border-gray-150">
-                          <span>{sec.label}</span>
+                  <div className="space-y-6">
+                    {/* Page Section Tab Header */}
+                    <div className="bg-gradient-to-r from-[#025644] to-[#047a61] p-5 rounded-2xl text-white shadow-xs">
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div className="text-left">
+                          <h4 className="font-extrabold text-lg sm:text-xl tracking-tight">Homepage Layout & Page Section Manager</h4>
+                          <p className="text-xs text-white/85 font-semibold mt-1">
+                            Rebuild, rearrange, toggle visibility, and update your school homepage content sections in real-time.
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
                           <button
                             type="button"
                             onClick={() => {
-                              setFrontendData(prev => ({
-                                ...prev,
-                                sections: {
-                                  ...prev.sections,
-                                  [sec.key]: !((prev.sections as any)[sec.key])
-                                }
-                              }));
+                              if (confirm("Are you sure you want to reset homepage sections to standard defaults? This will overwrite your order modifications.")) {
+                                setFrontendData((prev: any) => ({
+                                  ...prev,
+                                  sectionsList: [
+                                    { id: 'banner', nameEn: 'Homepage Banner', nameBn: 'হোমপেজ ব্যানার', descriptionEn: 'Hero banner slider section with major headings and CTA button', descriptionBn: 'মূল শিরোনাম এবং ভর্তি বাটনসহ প্রধান ব্যানার স্লাইডার সেকশন', order: 1, status: true },
+                                    { id: 'notice', nameEn: 'Notice Board', nameBn: 'নোটিশ বোর্ড', descriptionEn: 'Latest notices and academic announcements', descriptionBn: 'সর্বশেষ নোটিশ এবং শিক্ষাগত ঘোষণা', order: 2, status: true },
+                                    { id: 'speech', nameEn: 'Principal Speech', nameBn: 'প্রধান শিক্ষকের বাণী', descriptionEn: 'Welcoming address and message from the school headmaster', descriptionBn: 'বিদ্যালয়ের প্রধান শিক্ষকের স্বাগত বক্তব্য ও বাণী', order: 3, status: true },
+                                    { id: 'about', nameEn: 'About School / History', nameBn: 'বিদ্যালয় পরিচিতি ও ইতিহাস', descriptionEn: 'Brief summary of the school history and background metrics', descriptionBn: 'বিদ্যালয়ের ইতিহাস এবং পরিসংখ্যানের সংক্ষিপ্ত বিবরণ', order: 4, status: true },
+                                    { id: 'features', nameEn: 'Core Features / Strengths', nameBn: 'মূল বৈশিষ্ট্যসমূহ', descriptionEn: 'Key academic facilities, security and modern amenities', descriptionBn: 'প্রধান শিক্ষাগত সুবিধা, নিরাপত্তা ও আধুনিক সুযোগ-সুবিধা', order: 5, status: true },
+                                    { id: 'committee', nameEn: 'Governing Body / Committee', nameBn: 'পরিচালনা পর্ষদ', descriptionEn: 'Governing body members and administrative panel', descriptionBn: 'কমিটি সদস্যবৃন্দ এবং প্রশাসনিক প্যানেল', order: 6, status: true },
+                                    { id: 'gallery', nameEn: 'Photo Gallery', nameBn: 'ফটো গ্যালারি', descriptionEn: 'Campus celebration and activities image gallery', descriptionBn: 'ক্যাম্পাস উৎসব এবং কার্যক্রমের ছবি গ্যালারি', order: 7, status: true },
+                                    { id: 'testimonial', nameEn: 'Testimonials / Success Stories', nameBn: 'কৃতী শিক্ষার্থী ও প্রশংসাপত্র', descriptionEn: 'Success statements from alumni, guardians and achievements', descriptionBn: 'প্রাক্তন শিক্ষার্থী এবং অভিভাবকদের প্রশংসা বাণী', order: 8, status: true },
+                                    { id: 'service', nameEn: 'Special Guidance / Services', nameBn: 'বিশেষ সেবা ও নির্দেশনা', descriptionEn: 'Transport facilities, special classes and guidance plans', descriptionBn: 'পরিবহন সুবিধা, বিশেষ ক্লাস এবং অন্যান্য সেবা', order: 9, status: true },
+                                    { id: 'faq', nameEn: 'FAQ Accordion', nameBn: 'সচরাচর জিজ্ঞাসা (FAQ)', descriptionEn: 'Frequently asked questions with brief helpful answers', descriptionBn: 'সাধারণ প্রশ্নাবলী এবং সহজ সমাধান', order: 10, status: true }
+                                  ]
+                                }));
+                                setAdminSuccessMsg("Homepage sections restored to default settings.");
+                                setTimeout(() => setAdminSuccessMsg(''), 4000);
+                              }
                             }}
-                            className={`w-11 h-6 flex items-center rounded-full p-1 transition-all ${
-                              (frontendData.sections as any)[sec.key] ? 'bg-[#025644]' : 'bg-gray-300'
-                            }`}
+                            className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white border border-white/25 rounded-xl font-black text-xs transition-all cursor-pointer"
                           >
-                            <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-all ${
-                              (frontendData.sections as any)[sec.key] ? 'translate-x-5' : 'translate-x-0'
-                            }`} />
+                            Reset Defaults
                           </button>
                         </div>
-                      ))}
+                      </div>
+
+                      {/* Tabbed Navigation inside the Manager */}
+                      <div className="flex flex-wrap gap-2 mt-5 border-t border-white/15 pt-4">
+                        {[
+                          { id: 'editor', label: 'Live Section Editor', labelBn: 'লাইভ সেকশন এডিটর', icon: <Sliders className="h-4 w-4" /> },
+                          { id: 'schema', label: 'Laravel Migration / Schema', labelBn: 'ডাটাবেজ স্কিমা', icon: <Database className="h-4 w-4" /> },
+                          { id: 'controller', label: 'Laravel PHP Controller', labelBn: 'কন্ট্রোলার লজিক', icon: <Code className="h-4 w-4" /> },
+                          { id: 'blade', label: 'HTML Blade / Bootstrap UI', labelBn: 'ব্লেড টেমপ্লেট', icon: <Globe className="h-4 w-4" /> }
+                        ].map((t) => (
+                          <button
+                            key={t.id}
+                            type="button"
+                            onClick={() => setActiveDocTab(t.id)}
+                            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-black tracking-tight cursor-pointer transition-all ${
+                              activeDocTab === t.id
+                                ? 'bg-white text-[#025644] shadow-xs'
+                                : 'bg-white/10 hover:bg-white/15 text-white'
+                            }`}
+                          >
+                            {t.icon}
+                            <span>{lang === 'bn' ? t.labelBn : t.label}</span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
+
+                    {/* Copied Notification */}
+                    {copiedText && (
+                      <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-xl text-emerald-800 text-xs font-extrabold flex justify-between items-center animate-fade-in">
+                        <span>✓ Copied {copiedText} successfully! Paste directly in your school project files.</span>
+                        <button type="button" onClick={() => setCopiedText(null)} className="text-emerald-500 hover:text-emerald-700">✕</button>
+                      </div>
+                    )}
+
+                    {/* SUB-TAB 1: LIVE EDITOR */}
+                    {activeDocTab === 'editor' && (
+                      <div className="space-y-4">
+                        {/* Interactive Edit Form Area (Conditional) */}
+                        {editingSectionId && (
+                          <div className="bg-amber-50/50 border border-amber-200/90 rounded-2xl p-5 space-y-4 text-xs text-gray-700 font-bold animate-fade-in">
+                            <div className="flex justify-between items-center border-b border-amber-150 pb-2">
+                              <h5 className="text-amber-900 font-black text-sm flex items-center gap-1.5">
+                                <Edit3 className="h-4.5 w-4.5" />
+                                Edit Homepage Block: <span className="font-mono text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-md">{editingSectionId}</span>
+                              </h5>
+                              <button
+                                type="button"
+                                onClick={() => setEditingSectionId(null)}
+                                className="text-gray-400 hover:text-gray-600 font-black"
+                              >
+                                <X className="h-5 w-5" />
+                              </button>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="space-y-1 text-left">
+                                <label className="text-gray-500 font-bold">Section Title (English)</label>
+                                <input
+                                  type="text"
+                                  value={sectionEditLabelEn}
+                                  onChange={(e) => setSectionEditLabelEn(e.target.value)}
+                                  className="w-full px-3.5 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-400 focus:bg-white"
+                                />
+                              </div>
+                              <div className="space-y-1 text-left">
+                                <label className="text-gray-500 font-bold">সেকশন শিরোনাম (বাংলা)</label>
+                                <input
+                                  type="text"
+                                  value={sectionEditLabelBn}
+                                  onChange={(e) => setSectionEditLabelBn(e.target.value)}
+                                  className="w-full px-3.5 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-400 focus:bg-white font-semibold text-gray-800"
+                                />
+                              </div>
+                              <div className="space-y-1 text-left">
+                                <label className="text-gray-500 font-bold">Description / Contents (English)</label>
+                                <textarea
+                                  rows={2}
+                                  value={sectionEditDescEn}
+                                  onChange={(e) => setSectionEditDescEn(e.target.value)}
+                                  className="w-full px-3.5 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-400 focus:bg-white"
+                                />
+                              </div>
+                              <div className="space-y-1 text-left">
+                                <label className="text-gray-500 font-bold">সেকশন বর্ণনা / উপাদান (বাংলা)</label>
+                                <textarea
+                                  rows={2}
+                                  value={sectionEditDescBn}
+                                  onChange={(e) => setSectionEditDescBn(e.target.value)}
+                                  className="w-full px-3.5 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-400 focus:bg-white font-semibold text-gray-800"
+                                />
+                              </div>
+                              <div className="space-y-1 text-left md:col-span-2">
+                                <div className="flex items-center gap-4">
+                                  <div className="w-1/3">
+                                    <label className="text-gray-500 font-bold">Serial Number / Order</label>
+                                    <input
+                                      type="number"
+                                      value={sectionEditOrder}
+                                      onChange={(e) => setSectionEditOrder(Number(e.target.value))}
+                                      className="w-full px-3.5 py-2 border border-gray-200 rounded-lg mt-1 focus:outline-none focus:ring-1 focus:ring-amber-400"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex justify-end gap-2 pt-2">
+                              <button
+                                type="button"
+                                onClick={() => setEditingSectionId(null)}
+                                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-black rounded-lg transition-all cursor-pointer"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (!editingSectionId) return;
+                                  const updatedList = (frontendData.sectionsList || []).map((sec: any) => {
+                                    if (sec.id === editingSectionId) {
+                                      return {
+                                        ...sec,
+                                        nameBn: sectionEditLabelBn,
+                                        nameEn: sectionEditLabelEn,
+                                        descriptionBn: sectionEditDescBn,
+                                        descriptionEn: sectionEditDescEn,
+                                        order: Number(sectionEditOrder)
+                                      };
+                                    }
+                                    return sec;
+                                  });
+                                  updatedList.sort((a: any, b: any) => Number(a.order) - Number(b.order));
+                                  setFrontendData((prev: any) => ({
+                                    ...prev,
+                                    sectionsList: updatedList
+                                  }));
+                                  setEditingSectionId(null);
+                                  setAdminSuccessMsg("Page section configured and reordered successfully!");
+                                  setTimeout(() => setAdminSuccessMsg(''), 4000);
+                                }}
+                                className="px-4 py-2 bg-[#025644] hover:bg-[#013c2f] text-white font-black rounded-lg transition-all flex items-center gap-1 cursor-pointer"
+                              >
+                                <Save className="h-4 w-4" />
+                                Save Changes
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Search and Quick Filters bar */}
+                        <div className="flex flex-col sm:flex-row items-center gap-3">
+                          <div className="relative w-full">
+                            <input
+                              type="text"
+                              value={sectionSearchQuery}
+                              onChange={(e) => setSectionSearchQuery(e.target.value)}
+                              placeholder={lang === 'bn' ? "যেকোনো হোমপেজ সেকশন খুঁজুন..." : "Search homepage sections by name, key, or contents..."}
+                              className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white focus:outline-none rounded-xl text-xs font-bold"
+                            />
+                            {sectionSearchQuery && (
+                              <button
+                                type="button"
+                                onClick={() => setSectionSearchQuery('')}
+                                className="absolute right-3.5 top-2.5 text-gray-400 hover:text-gray-600 font-black text-xs"
+                              >
+                                Clear
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Essential Page Sections Grid list */}
+                        <div className="overflow-hidden border border-gray-200 rounded-2xl bg-white">
+                          <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200 text-left text-xs text-gray-700">
+                              <thead className="bg-gray-50 text-gray-400 uppercase tracking-wider font-extrabold text-[10px]">
+                                <tr>
+                                  <th className="px-4 py-3.5 text-center" width="80px">SL / Order</th>
+                                  <th className="px-4 py-3.5">Section Name & Key</th>
+                                  <th className="px-4 py-3.5">Content Details (Bn / En)</th>
+                                  <th className="px-4 py-3.5 text-center" width="100px">Status</th>
+                                  <th className="px-4 py-3.5 text-center" width="160px">Reorder</th>
+                                  <th className="px-4 py-3.5 text-center" width="100px">Actions</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-gray-150 font-bold bg-white">
+                                {(frontendData.sectionsList || [])
+                                  .filter((sec: any) => {
+                                    if (!sectionSearchQuery) return true;
+                                    const query = sectionSearchQuery.toLowerCase();
+                                    return (
+                                      sec.id.toLowerCase().includes(query) ||
+                                      sec.nameBn.toLowerCase().includes(query) ||
+                                      sec.nameEn.toLowerCase().includes(query) ||
+                                      (sec.descriptionEn && sec.descriptionEn.toLowerCase().includes(query)) ||
+                                      (sec.descriptionBn && sec.descriptionBn.toLowerCase().includes(query))
+                                    );
+                                  })
+                                  .map((sec: any, index: number) => (
+                                    <tr key={sec.id} className="hover:bg-gray-50/50 transition-colors">
+                                      {/* Order Badge column */}
+                                      <td className="px-4 py-3.5 text-center">
+                                        <span className="inline-flex items-center justify-center px-2.5 py-1 rounded-md bg-gray-100 text-gray-800 font-black text-xs font-mono border border-gray-150 shadow-2xs">
+                                          {sec.order}
+                                        </span>
+                                      </td>
+
+                                      {/* Name and key column */}
+                                      <td className="px-4 py-3.5">
+                                        <div className="space-y-0.5 text-left">
+                                          <p className="text-gray-900 font-extrabold">{lang === 'bn' ? sec.nameBn : sec.nameEn}</p>
+                                          <p className="text-[10px] text-gray-400 font-semibold">{lang === 'bn' ? sec.nameEn : sec.nameBn}</p>
+                                          <span className="inline-block text-[9px] font-mono font-bold bg-red-50 text-red-600 border border-red-100 px-1.5 py-0.5 rounded">
+                                            key: {sec.id}
+                                          </span>
+                                        </div>
+                                      </td>
+
+                                      {/* Description / Subtitle Column */}
+                                      <td className="px-4 py-3.5 text-left text-[11px] leading-relaxed max-w-xs sm:max-w-md font-semibold text-gray-500">
+                                        <div className="line-clamp-2" title={sec.descriptionBn}>
+                                          <span className="text-[#025644] font-bold">BN:</span> {sec.descriptionBn || 'N/A'}
+                                        </div>
+                                        <div className="line-clamp-2 mt-0.5" title={sec.descriptionEn}>
+                                          <span className="text-blue-600 font-bold">EN:</span> {sec.descriptionEn || 'N/A'}
+                                        </div>
+                                      </td>
+
+                                      {/* Status Toggle Button column */}
+                                      <td className="px-4 py-3.5 text-center">
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            const updatedList = (frontendData.sectionsList || []).map((s: any) => {
+                                              if (s.id === sec.id) {
+                                                const newStatus = !s.status;
+                                                const legacyKeyMap: { [key: string]: string } = {
+                                                  about: 'aboutEnabled',
+                                                  features: 'featuresEnabled',
+                                                  committee: 'committeeEnabled',
+                                                  speech: 'speechEnabled',
+                                                  gallery: 'galleryEnabled',
+                                                  faq: 'faqEnabled',
+                                                  notice: 'noticeEnabled',
+                                                  testimonial: 'testimonialEnabled',
+                                                  service: 'serviceEnabled',
+                                                  banner: 'bannerEnabled'
+                                                };
+                                                const legacyKey = legacyKeyMap[sec.id];
+                                                if (legacyKey && frontendData.sections) {
+                                                  setFrontendData((prev: any) => ({
+                                                    ...prev,
+                                                    sections: {
+                                                      ...prev.sections,
+                                                      [legacyKey]: newStatus
+                                                    }
+                                                  }));
+                                                }
+                                                return { ...s, status: newStatus };
+                                              }
+                                              return s;
+                                            });
+                                            setFrontendData((prev: any) => ({
+                                              ...prev,
+                                              sectionsList: updatedList
+                                            }));
+                                            setAdminSuccessMsg("Section visibility status toggled!");
+                                            setTimeout(() => setAdminSuccessMsg(''), 3000);
+                                          }}
+                                          className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                                            sec.status ? 'bg-[#009a68]' : 'bg-gray-300'
+                                          }`}
+                                        >
+                                          <span
+                                            className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-xs ring-0 transition duration-200 ease-in-out ${
+                                              sec.status ? 'translate-x-5' : 'translate-x-0'
+                                            }`}
+                                          />
+                                        </button>
+                                        <div className="mt-1">
+                                          <span className={`text-[9px] font-bold uppercase tracking-wider ${
+                                            sec.status ? 'text-emerald-600' : 'text-gray-400'
+                                          }`}>
+                                            {sec.status ? (lang === 'bn' ? 'দৃশ্যমান' : 'Active') : (lang === 'bn' ? 'লুকানো' : 'Hidden')}
+                                          </span>
+                                        </div>
+                                      </td>
+
+                                      {/* Quick Sorting Arrow Controls */}
+                                      <td className="px-4 py-3.5 text-center">
+                                        <div className="inline-flex rounded-xl border border-gray-200 overflow-hidden shadow-2xs">
+                                          <button
+                                            type="button"
+                                            disabled={index === 0}
+                                            onClick={() => {
+                                              const list = [...(frontendData.sectionsList || [])];
+                                              const tempOrder = list[index].order;
+                                              list[index].order = list[index - 1].order;
+                                              list[index - 1].order = tempOrder;
+                                              list.sort((a: any, b: any) => Number(a.order) - Number(b.order));
+                                              const sanitizedList = list.map((item, idx) => ({ ...item, order: idx + 1 }));
+                                              setFrontendData((prev: any) => ({ ...prev, sectionsList: sanitizedList }));
+                                              setAdminSuccessMsg("Homepage sections rearranged!");
+                                              setTimeout(() => setAdminSuccessMsg(''), 3000);
+                                            }}
+                                            className="px-2.5 py-1.5 bg-white hover:bg-gray-50 text-gray-500 disabled:text-gray-200 disabled:hover:bg-white border-r border-gray-150 cursor-pointer font-bold"
+                                            title="Move Up"
+                                          >
+                                            ▲
+                                          </button>
+                                          <button
+                                            type="button"
+                                            disabled={index === (frontendData.sectionsList || []).length - 1}
+                                            onClick={() => {
+                                              const list = [...(frontendData.sectionsList || [])];
+                                              const tempOrder = list[index].order;
+                                              list[index].order = list[index + 1].order;
+                                              list[index + 1].order = tempOrder;
+                                              list.sort((a: any, b: any) => Number(a.order) - Number(b.order));
+                                              const sanitizedList = list.map((item, idx) => ({ ...item, order: idx + 1 }));
+                                              setFrontendData((prev: any) => ({ ...prev, sectionsList: sanitizedList }));
+                                              setAdminSuccessMsg("Homepage sections rearranged!");
+                                              setTimeout(() => setAdminSuccessMsg(''), 3000);
+                                            }}
+                                            className="px-2.5 py-1.5 bg-white hover:bg-gray-50 text-gray-500 disabled:text-gray-200 disabled:hover:bg-white cursor-pointer font-bold"
+                                            title="Move Down"
+                                          >
+                                            ▼
+                                          </button>
+                                        </div>
+                                      </td>
+
+                                      {/* Actions Column */}
+                                      <td className="px-4 py-3.5 text-center">
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setEditingSectionId(sec.id);
+                                            setSectionEditLabelBn(sec.nameBn);
+                                            setSectionEditLabelEn(sec.nameEn);
+                                            setSectionEditDescBn(sec.descriptionBn || '');
+                                            setSectionEditDescEn(sec.descriptionEn || '');
+                                            setSectionEditOrder(sec.order);
+                                          }}
+                                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 hover:text-amber-800 border border-amber-200/50 rounded-xl transition-all cursor-pointer font-black"
+                                        >
+                                          <Edit3 className="h-3 w-3" />
+                                          <span>Edit</span>
+                                        </button>
+                                      </td>
+                                    </tr>
+                                  ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+
+                        {/* Guide to Essential Homepage Blocks */}
+                        <div className="bg-sky-50 border border-sky-100 p-4 rounded-2xl text-xs text-sky-800 font-semibold space-y-2 text-left">
+                          <p className="font-extrabold text-sky-900 flex items-center gap-1">
+                            ℹ Standard Recommended Homepage Sections:
+                          </p>
+                          <ul className="list-disc pl-5 space-y-1 text-sky-950">
+                            <li><strong>Homepage Banner:</strong> High impact greeting with sliders, pictures, and quick CTA admission anchors.</li>
+                            <li><strong>Notice Board:</strong> Urgent scrolls, notifications and school activity dates.</li>
+                            <li><strong>Principal Speech:</strong> The authoritative welcoming speech representing institutional philosophies.</li>
+                            <li><strong>About School & History:</strong> Historical statistics, founded date, student and teacher metrics.</li>
+                            <li><strong>Core Features & Strengths:</strong> Digital classrooms, lab systems, security systems, transport routing details.</li>
+                            <li><strong>Photo Gallery:</strong> Photographic highlights of sports, national days, and celebrations.</li>
+                          </ul>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* SUB-TAB 2: DATABASE SCHEMA */}
+                    {activeDocTab === 'schema' && (
+                      <div className="space-y-4 animate-fade-in text-left">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <h5 className="font-extrabold text-gray-900 text-sm">MySQL Database Migration & Schema</h5>
+                            <p className="text-[10px] text-gray-400 font-bold mt-0.5">Use this schema structure to define the page_sections MySQL table</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const schemaCode = `use Illuminate\\Database\\Migrations\\Migration;
+use Illuminate\\Database\\Schema\\Blueprint;
+use Illuminate\\Support\\Facades\\Schema;
+
+class CreatePageSectionsTable extends Migration {
+    public function up() {
+        Schema::create('page_sections', function (Blueprint $table) {
+            $table->id();
+            $table->string('section_key')->unique();
+            $table->string('name_bn');
+            $table->string('name_en');
+            $table->text('description_bn')->nullable();
+            $table->text('description_en')->nullable();
+            $table->integer('serial_number')->default(1);
+            $table->boolean('status')->default(true);
+            $table->string('image')->nullable();
+            $table->timestamps();
+        });
+    }
+    public function down() {
+        Schema::dropIfExists('page_sections');
+    }
+}`;
+                              navigator.clipboard.writeText(schemaCode);
+                              setCopiedText("MySQL Schema");
+                              setTimeout(() => setCopiedText(null), 2500);
+                            }}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-[#025644] hover:bg-[#01352a] text-white rounded-xl text-xs font-black tracking-tight cursor-pointer"
+                          >
+                            <Copy className="h-3 w-3" />
+                            Copy Migration SQL
+                          </button>
+                        </div>
+
+                        <div className="bg-slate-900 text-gray-100 rounded-2xl p-5 font-mono text-[11px] overflow-x-auto leading-relaxed border border-slate-950 shadow-inner">
+                          <p className="text-emerald-400 font-bold mb-3">// Laravel Migration File: database/migrations/xxxx_xx_xx_create_page_sections_table.php</p>
+                          <p className="text-gray-500">use Illuminate\\Database\\Migrations\\Migration;</p>
+                          <p className="text-gray-500">use Illuminate\\Database\\Schema\\Blueprint;</p>
+                          <p className="text-gray-500">use Illuminate\\Support\\Facades\\Schema;</p>
+                          <br />
+                          <p className="text-blue-400">class <span className="text-amber-300">CreatePageSectionsTable</span> extends <span className="text-purple-400">Migration</span></p>
+                          <p className="text-gray-300">{"{"}</p>
+                          <p className="text-gray-300">{"    public function "}<span className="text-amber-300">up</span>()</p>
+                          <p className="text-gray-300">{"    {"}</p>
+                          <p className="text-emerald-400">{"        Schema::create"}(<span className="text-amber-200">'page_sections'</span>, <span className="text-blue-400">function</span> (Blueprint $table) {"{"}</p>
+                          <p className="text-gray-300">            $table-&gt;id();</p>
+                          <p className="text-gray-300">            $table-&gt;string(<span className="text-amber-200">'section_key'</span>)-&gt;unique(); <span className="text-gray-500">// e.g. 'banner', 'notice', 'speech'</span></p>
+                          <p className="text-gray-300">            $table-&gt;string(<span className="text-amber-200">'name_bn'</span>);             <span className="text-gray-500">// সেকশন নাম (বাংলা)</span></p>
+                          <p className="text-gray-300">            $table-&gt;string(<span className="text-amber-200">'name_en'</span>);             <span className="text-gray-500">// Section name (English)</span></p>
+                          <p className="text-gray-300">            $table-&gt;text(<span className="text-amber-200">'description_bn'</span>)-&gt;nullable(); <span className="text-gray-500">// বর্ণনা / উপাদান (বাংলা)</span></p>
+                          <p className="text-gray-300">            $table-&gt;text(<span className="text-amber-200">'description_en'</span>)-&gt;nullable(); <span className="text-gray-500">// Description details (English)</span></p>
+                          <p className="text-gray-300">            $table-&gt;integer(<span className="text-amber-200">'serial_number'</span>)-&gt;default(<span className="text-rose-400">1</span>); <span className="text-gray-500">// Sorting serial order</span></p>
+                          <p className="text-gray-300">            $table-&gt;boolean(<span className="text-amber-200">'status'</span>)-&gt;default(<span className="text-rose-400">true</span>);           <span className="text-gray-500">// Show/Hide toggle active status</span></p>
+                          <p className="text-gray-300">            $table-&gt;string(<span className="text-amber-200">'image'</span>)-&gt;nullable();          <span className="text-gray-500">// Optional image pathway</span></p>
+                          <p className="text-gray-300">            $table-&gt;timestamps();</p>
+                          <p className="text-emerald-400">        {"});"}</p>
+                          <p className="text-gray-300">{"    }"}</p>
+                          <br />
+                          <p className="text-gray-300">{"    public function "}<span className="text-amber-300">down</span>()</p>
+                          <p className="text-gray-300">{"    {"}</p>
+                          <p className="text-emerald-400">{"        Schema::dropIfExists"}(<span className="text-amber-200">'page_sections'</span>);</p>
+                          <p className="text-gray-300">{"    }"}</p>
+                          <p className="text-gray-300">{"}"}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* SUB-TAB 3: BACKEND LOGIC CONTROLLER */}
+                    {activeDocTab === 'controller' && (
+                      <div className="space-y-4 animate-fade-in text-left">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <h5 className="font-extrabold text-gray-900 text-sm">Laravel Backend CRUD Controller (PHP)</h5>
+                            <p className="text-[10px] text-gray-400 font-bold mt-0.5">Place inside App/Http/Controllers/Admin/PageSectionController.php</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const controllerCode = `<?php
+namespace App\\Http\\Controllers\\Admin;
+use App\\Http\\Controllers\\Controller;
+use App\\Models\\PageSection;
+use Illuminate\\Http\\Request;
+
+class PageSectionController extends Controller {
+    public function index() {
+        $sections = PageSection::orderBy('serial_number', 'asc')->get();
+        return view('admin.frontend.page_sections.index', compact('sections'));
+    }
+    public function update(Request $request, PageSection $pageSection) {
+        $validated = $request->validate([
+            'name_bn' => 'required|string|max:255',
+            'name_en' => 'required|string|max:255',
+            'description_bn' => 'nullable|string',
+            'description_en' => 'nullable|string',
+            'serial_number' => 'required|integer|min:1'
+        ]);
+        $validated['status'] = $request->has('status');
+        $pageSection->update($validated);
+        return redirect()->back()->with('success', 'Section saved successfully.');
+    }
+    public function toggleStatus(PageSection $pageSection) {
+        $pageSection->status = !$pageSection->status;
+        $pageSection->save();
+        return response()->json(['success' => true, 'status' => $pageSection->status]);
+    }
+}`;
+                              navigator.clipboard.writeText(controllerCode);
+                              setCopiedText("Laravel Controller");
+                              setTimeout(() => setCopiedText(null), 2500);
+                            }}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-[#025644] hover:bg-[#01352a] text-white rounded-xl text-xs font-black tracking-tight cursor-pointer"
+                          >
+                            <Copy className="h-3 w-3" />
+                            Copy Laravel Controller Code
+                          </button>
+                        </div>
+
+                        <div className="bg-slate-900 text-gray-100 rounded-2xl p-5 font-mono text-[11px] overflow-x-auto leading-relaxed border border-slate-950 shadow-inner">
+                          <p className="text-emerald-400 font-bold mb-2">&lt;?php</p>
+                          <p className="text-gray-400">namespace App\Http\Controllers\Admin;</p>
+                          <p className="text-gray-400">use App\Http\Controllers\Controller;</p>
+                          <p className="text-gray-400">use App\Models\PageSection;</p>
+                          <p className="text-gray-400">use Illuminate\Http\Request;</p>
+                          <br />
+                          <p className="text-blue-400">class <span className="text-amber-300">PageSectionController</span> extends <span className="text-purple-400">Controller</span> {"{"}</p>
+                          <p className="text-gray-300">    <span className="text-gray-500">// 1. Display list in admin panel</span></p>
+                          <p className="text-blue-400">    public function <span className="text-amber-200">index</span>() {"{"}</p>
+                          <p className="text-gray-300">        $sections = PageSection::orderBy(<span className="text-amber-100">'serial_number'</span>, <span className="text-amber-100">'asc'</span>)-&gt;get();</p>
+                          <p className="text-gray-300">        return view(<span className="text-amber-100">'admin.frontend.page_sections.index'</span>, compact(<span className="text-amber-100">'sections'</span>));</p>
+                          <p className="text-blue-400">    {"}"}</p>
+                          <br />
+                          <p className="text-gray-300">    <span className="text-gray-500">// 2. Update page section properties</span></p>
+                          <p className="text-blue-400">    public function <span className="text-amber-200">update</span>(Request $request, PageSection $pageSection) {"{"}</p>
+                          <p className="text-gray-300">        $validated = $request-&gt;validate([</p>
+                          <p className="text-gray-300">            <span className="text-amber-100">'name_bn'</span> =&gt; <span className="text-amber-100">'required|string|max:255'</span>,</p>
+                          <p className="text-gray-300">            <span className="text-amber-100">'name_en'</span> =&gt; <span className="text-amber-100">'required|string|max:255'</span>,</p>
+                          <p className="text-gray-300">            <span className="text-amber-100">'description_bn'</span> =&gt; <span className="text-amber-100">'nullable|string'</span>,</p>
+                          <p className="text-gray-300">            <span className="text-amber-100">'description_en'</span> =&gt; <span className="text-amber-100">'nullable|string'</span>,</p>
+                          <p className="text-gray-300">            <span className="text-amber-100">'serial_number'</span> =&gt; <span className="text-amber-100">'required|integer|min:1'</span></p>
+                          <p className="text-gray-300">        ]);</p>
+                          <br />
+                          <p className="text-gray-300">        $validated[<span className="text-amber-100">'status'</span>] = $request-&gt;has(<span className="text-amber-100">'status'</span>);</p>
+                          <p className="text-gray-300">        $pageSection-&gt;update($validated);</p>
+                          <br />
+                          <p className="text-gray-300">        return redirect()-&gt;back()-&gt;with(<span className="text-amber-100">'success'</span>, <span className="text-amber-100">'Page section saved.'</span>);</p>
+                          <p className="text-blue-400">    {"}"}</p>
+                          <br />
+                          <p className="text-gray-300">    <span className="text-gray-500">// 3. Ajax Show/Hide switch toggle</span></p>
+                          <p className="text-blue-400">    public function <span className="text-amber-200">toggleStatus</span>(PageSection $pageSection) {"{"}</p>
+                          <p className="text-gray-300">        $pageSection-&gt;status = !$pageSection-&gt;status;</p>
+                          <p className="text-gray-300">        $pageSection-&gt;save();</p>
+                          <p className="text-gray-300">        return response()-&gt;json([<span className="text-amber-100">'success'</span> =&gt; <span className="text-rose-400">true</span>, <span className="text-amber-100">'status'</span> =&gt; $pageSection-&gt;status]);</p>
+                          <p className="text-blue-400">    {"}"}</p>
+                          <p className="text-blue-400">{"}"}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* SUB-TAB 4: BLADE LAYOUT TEMPLATE */}
+                    {activeDocTab === 'blade' && (
+                      <div className="space-y-4 animate-fade-in text-left">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <h5 className="font-extrabold text-gray-900 text-sm">Blade Template View (HTML & Bootstrap 5)</h5>
+                            <p className="text-[10px] text-gray-400 font-bold mt-0.5">Use as index.blade.php in admin frontend page sections</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const bladeCode = `@extends('layouts.admin')
+@section('content')
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-[#025644] text-white">
+        <h5 class="mb-0 font-weight-bold">Page Sections Layout</h5>
+    </div>
+    <div class="card-body text-start">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Serial</th>
+                    <th>Key</th>
+                    <th>Name (Bangla / English)</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($sections as $sec)
+                <tr>
+                    <td>{{ $sec->serial_number }}</td>
+                    <td><code>{{ $sec->section_key }}</code></td>
+                    <td>{{ $sec->name_bn }} / {{ $sec->name_en }}</td>
+                    <td>
+                        <input type="checkbox" class="form-check-input" {{ $sec->status ? 'checked' : '' }}>
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+</div>
+@endsection`;
+                              navigator.clipboard.writeText(bladeCode);
+                              setCopiedText("Blade Template");
+                              setTimeout(() => setCopiedText(null), 2500);
+                            }}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-[#025644] hover:bg-[#01352a] text-white rounded-xl text-xs font-black tracking-tight cursor-pointer"
+                          >
+                            <Copy className="h-3 w-3" />
+                            Copy Blade HTML
+                          </button>
+                        </div>
+
+                        <div className="bg-slate-900 text-gray-100 rounded-2xl p-5 font-mono text-[11px] overflow-x-auto leading-relaxed border border-slate-950 shadow-inner">
+                          <p className="text-rose-400 font-bold">@extends(<span className="text-amber-200">'layouts.admin'</span>)</p>
+                          <br />
+                          <p className="text-rose-400 font-bold">@section(<span className="text-amber-200">'content'</span>)</p>
+                          <p className="text-emerald-400">&lt;div <span className="text-blue-400">class</span>=<span className="text-amber-200">"card border-0 shadow-sm"</span>&gt;</p>
+                          <p className="text-emerald-400">    &lt;div <span className="text-blue-400">class</span>=<span className="text-amber-200">"card-header bg-[#025644] text-white"</span>&gt;</p>
+                          <p className="text-emerald-400">        &lt;h5 <span className="text-blue-400">class</span>=<span className="text-amber-200">"mb-0 font-weight-bold"</span>&gt;Page Sections Layout&lt;/h5&gt;</p>
+                          <p className="text-emerald-400">    &lt;/div&gt;</p>
+                          <p className="text-emerald-400">    &lt;div <span className="text-blue-400">class</span>=<span className="text-amber-200">"card-body"</span>&gt;</p>
+                          <p className="text-emerald-400">        &lt;table <span className="text-blue-400">class</span>=<span className="text-amber-200">"table table-hover"</span>&gt;</p>
+                          <p className="text-emerald-400">            &lt;thead&gt;</p>
+                          <p className="text-emerald-400">                &lt;tr&gt;</p>
+                          <p className="text-emerald-400">                    &lt;th&gt;Serial&lt;/th&gt;</p>
+                          <p className="text-emerald-400">                    &lt;th&gt;Key&lt;/th&gt;</p>
+                          <p className="text-emerald-400">                    &lt;th&gt;Name (Bangla / English)&lt;/th&gt;</p>
+                          <p className="text-emerald-400">                    &lt;th&gt;Status&lt;/th&gt;</p>
+                          <p className="text-emerald-400">                &lt;/tr&gt;</p>
+                          <p className="text-emerald-400">            &lt;/thead&gt;</p>
+                          <p className="text-emerald-400">            &lt;tbody&gt;</p>
+                          <p className="text-rose-400">                @foreach($sections as $sec)</p>
+                          <p className="text-emerald-400">                &lt;tr&gt;</p>
+                          <p className="text-emerald-400">                    &lt;td&gt;{"{{"} $sec-&gt;serial_number {"}}"}&lt;/td&gt;</p>
+                          <p className="text-emerald-400">                    &lt;td&gt;&lt;code&gt;{"{{"} $sec-&gt;section_key {"}}"}&lt;/code&gt;&lt;/td&gt;</p>
+                          <p className="text-emerald-400">                    &lt;td&gt;{"{{"} $sec-&gt;name_bn {"}}"} / {"{{"} $sec-&gt;name_en {"}}"}&lt;/td&gt;</p>
+                          <p className="text-emerald-400">                    &lt;td&gt;</p>
+                          <p className="text-emerald-400">                        &lt;input <span className="text-blue-400">type</span>=<span className="text-amber-200">"checkbox"</span> <span className="text-blue-400">class</span>=<span className="text-amber-200">"form-check-input"</span> {"{{"} $sec-&gt;status ? 'checked' : '' {"}}"}&gt;</p>
+                          <p className="text-emerald-400">                    &lt;/td&gt;</p>
+                          <p className="text-emerald-400">                &lt;/tr&gt;</p>
+                          <p className="text-rose-400">                @endforeach</p>
+                          <p className="text-emerald-400">            &lt;/tbody&gt;</p>
+                          <p className="text-emerald-400">        &lt;/table&gt;</p>
+                          <p className="text-emerald-400">    &lt;/div&gt;</p>
+                          <p className="text-emerald-400">&lt;/div&gt;</p>
+                          <p className="text-rose-400">@endsection</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {/* --- MANAGE PAGE --- */}
+                {/* --- MANAGE PAGE (FULLY FUNCTIONAL DESIGN) --- */}
                 {frontendSubTab === 'manage_page' && (
-                  <div className="space-y-4 text-xs font-bold text-gray-700">
-                    <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-xl">
-                      <h4 className="font-black text-[#025644]">Custom Content Pages</h4>
-                      <p className="text-[10px] text-gray-400 font-semibold mt-1">Publish additional descriptive text directories linked inside banners</p>
-                    </div>
-                    <div className="bg-gray-50 p-4 rounded-xl space-y-3">
-                      <h4 className="font-extrabold text-[#025644]">Create New Custom Inner Page</h4>
-                      <div className="space-y-2">
-                        <input type="text" placeholder="Page Title (e.g. Admission Criteria)" className="w-full px-3 py-2 bg-white border rounded-lg focus:outline-none" />
-                        <textarea rows={4} placeholder="Content body..." className="w-full px-3 py-2 bg-white border rounded-lg focus:outline-none" />
+                  <div className="space-y-6 text-xs font-bold text-gray-700">
+                    
+                    {/* Header Info Block */}
+                    <div className="p-5 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-100 rounded-2xl flex items-center justify-between shadow-xs">
+                      <div>
+                        <h4 className="font-black text-sm text-[#025644] flex items-center gap-1.5">
+                          <Sliders className="h-4 w-4" />
+                          <span>{lang === 'bn' ? 'ডায়নামিক পেজ ম্যানেজমেন্ট' : 'Dynamic Custom Page Management'}</span>
+                        </h4>
+                        <p className="text-[10px] text-gray-400 font-semibold mt-1">
+                          {lang === 'bn' 
+                            ? 'নতুন কনটেন্ট পেজ তৈরি করুন, এডিট করুন এবং সরাসরি মূল ওয়েবসাইটের মেনুবারের সাথে যুক্ত করুন।' 
+                            : 'Create additional descriptive content pages, edit information, and integrate them automatically into the website navigation menu.'}
+                        </p>
                       </div>
-                      <button
-                        onClick={() => {
-                          setAdminSuccessMsg("New descriptive page published successfully!");
-                          setTimeout(() => setAdminSuccessMsg(''), 4000);
-                        }}
-                        className="px-4 py-2 bg-[#025644] text-white rounded-xl cursor-pointer"
-                      >
-                        Publish Custom Page
-                      </button>
+                      <span className="text-[10px] bg-emerald-100 text-[#025644] px-2.5 py-1 rounded-full font-extrabold uppercase">
+                        {lang === 'bn' ? 'সক্রিয় ফিচার' : 'Live Engine'}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                      
+                      {/* Left Side: Create / Edit Form Card */}
+                      <div className="lg:col-span-5 bg-white border border-gray-150 rounded-2xl p-5 shadow-xs space-y-4">
+                        <div className="flex items-center justify-between border-b pb-3 mb-1">
+                          <h4 className="font-black text-[#025644] text-xs uppercase tracking-wide flex items-center gap-1.5">
+                            <PlusCircle className="h-4 w-4" />
+                            <span>
+                              {editingPageId 
+                                ? (lang === 'bn' ? 'পেজ পরিবর্তন করুন' : 'Edit Custom Page')
+                                : (lang === 'bn' ? 'নতুন পেজ তৈরি করুন' : 'Create Custom Page')
+                              }
+                            </span>
+                          </h4>
+                          {editingPageId && (
+                            <button
+                              onClick={() => {
+                                setEditingPageId(null);
+                                setPageTitleBn('');
+                                setPageTitleEn('');
+                                setPageSlug('');
+                                setPageContentBn('');
+                                setPageContentEn('');
+                                setPageShowInMenu(true);
+                                setPageMenuOrder(1);
+                                setPageStatus('active');
+                              }}
+                              className="text-[10px] font-extrabold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2 py-0.5 rounded-md flex items-center gap-0.5 transition-all cursor-pointer"
+                            >
+                              <X className="h-3 w-3" />
+                              <span>{lang === 'bn' ? 'বাতিল' : 'Cancel'}</span>
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Bangla Title */}
+                        <div className="space-y-1 text-left">
+                          <label className="text-gray-400">{lang === 'bn' ? 'পেজ শিরোনাম (বাংলা) *' : 'Page Title (Bangla) *'}</label>
+                          <input 
+                            type="text" 
+                            placeholder="উদা. ল্যাবরেটরি গাইডলাইন"
+                            value={pageTitleBn}
+                            onChange={(e) => setPageTitleBn(e.target.value)}
+                            className="w-full px-3 py-2 border bg-gray-50 focus:bg-white rounded-lg focus:outline-none font-semibold text-gray-800" 
+                          />
+                        </div>
+
+                        {/* English Title & Auto-slug */}
+                        <div className="space-y-1 text-left">
+                          <label className="text-gray-400">{lang === 'bn' ? 'পেজ শিরোনাম (ইংরেজি) *' : 'Page Title (English) *'}</label>
+                          <input 
+                            type="text" 
+                            placeholder="e.g. Laboratory Guidelines"
+                            value={pageTitleEn}
+                            onChange={(e) => handleTitleEnChange(e.target.value)}
+                            className="w-full px-3 py-2 border bg-gray-50 focus:bg-white rounded-lg focus:outline-none font-semibold text-gray-800" 
+                          />
+                        </div>
+
+                        {/* Page Slug / URL alias */}
+                        <div className="space-y-1 text-left">
+                          <label className="text-gray-400 flex items-center justify-between">
+                            <span>{lang === 'bn' ? 'ইউআরএল স্ল্যাগ / পাথ লিংক *' : 'URL Slug / Link Path *'}</span>
+                            <span className="text-[9px] text-gray-400 lowercase font-normal italic">e.g. /laboratory-guidelines</span>
+                          </label>
+                          <div className="relative">
+                            <span className="absolute left-3 top-2 text-gray-400 font-mono text-[10px]">/</span>
+                            <input 
+                              type="text" 
+                              placeholder="laboratory-guidelines"
+                              value={pageSlug}
+                              onChange={(e) => setPageSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                              className="w-full pl-6 pr-3 py-2 border bg-gray-50 focus:bg-white rounded-lg focus:outline-none font-mono font-semibold text-blue-600 text-[10px]" 
+                            />
+                          </div>
+                        </div>
+
+                        {/* Menu Options & Order */}
+                        <div className="grid grid-cols-2 gap-3 border-t border-b py-3 text-left">
+                          <div className="flex items-center gap-2">
+                            <input 
+                              type="checkbox" 
+                              id="show-in-menu-chk" 
+                              checked={pageShowInMenu}
+                              onChange={(e) => setPageShowInMenu(e.target.checked)}
+                              className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded cursor-pointer"
+                            />
+                            <label htmlFor="show-in-menu-chk" className="text-gray-600 cursor-pointer text-[10px] font-black select-none">
+                              {lang === 'bn' ? 'মেনুবারে দেখান' : 'Show in Menu Bar'}
+                            </label>
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-gray-400 text-[10px]">{lang === 'bn' ? 'মেনু ক্রমানুসার (Order)' : 'Menu Order'}</label>
+                            <input 
+                              type="number" 
+                              min="1"
+                              value={pageMenuOrder}
+                              onChange={(e) => setPageMenuOrder(Number(e.target.value) || 1)}
+                              className="w-full px-2 py-1 border bg-gray-50 focus:bg-white rounded-lg focus:outline-none font-semibold text-gray-800 text-[11px]" 
+                            />
+                          </div>
+                        </div>
+
+                        {/* Status Dropdown */}
+                        <div className="space-y-1 text-left">
+                          <label className="text-gray-400">{lang === 'bn' ? 'পেজ স্ট্যাটাস' : 'Page Status'}</label>
+                          <select 
+                            value={pageStatus}
+                            onChange={(e) => setPageStatus(e.target.value as any)}
+                            className="w-full px-3 py-2 border bg-gray-50 focus:bg-white rounded-lg focus:outline-none font-semibold text-gray-800 cursor-pointer"
+                          >
+                            <option value="active">{lang === 'bn' ? 'সক্রিয় (Active)' : 'Active'}</option>
+                            <option value="inactive">{lang === 'bn' ? 'নিষ্ক্রিয় (Inactive)' : 'Inactive'}</option>
+                          </select>
+                        </div>
+
+                        {/* Bangla Content Body */}
+                        <div className="space-y-1 text-left">
+                          <label className="text-gray-400">{lang === 'bn' ? 'পেজের মূল কনটেন্ট (বাংলা) *' : 'Page Content (Bangla) *'}</label>
+                          <textarea 
+                            rows={5} 
+                            placeholder="এখানে বিস্তারিত তথ্য লিখুন..."
+                            value={pageContentBn}
+                            onChange={(e) => setPageContentBn(e.target.value)}
+                            className="w-full px-3 py-2 border bg-gray-50 focus:bg-white rounded-lg focus:outline-none font-medium text-gray-700 leading-relaxed text-[11px]" 
+                          />
+                        </div>
+
+                        {/* English Content Body */}
+                        <div className="space-y-1 text-left">
+                          <label className="text-gray-400">{lang === 'bn' ? 'পেজের মূল কনটেন্ট (ইংরেজি) *' : 'Page Content (English) *'}</label>
+                          <textarea 
+                            rows={5} 
+                            placeholder="Type page detail information here..."
+                            value={pageContentEn}
+                            onChange={(e) => setPageContentEn(e.target.value)}
+                            className="w-full px-3 py-2 border bg-gray-50 focus:bg-white rounded-lg focus:outline-none font-medium text-gray-700 leading-relaxed text-[11px]" 
+                          />
+                        </div>
+
+                        {/* Submit Action Button */}
+                        <button
+                          onClick={handleSavePage}
+                          className="w-full py-2.5 bg-[#025644] hover:bg-[#014133] text-white rounded-xl cursor-pointer transition-all duration-200 flex items-center justify-center gap-1.5 text-xs font-extrabold shadow-sm"
+                        >
+                          <Save className="h-4 w-4" />
+                          <span>
+                            {editingPageId 
+                              ? (lang === 'bn' ? 'পরিবর্তন সংরক্ষণ করুন' : 'Save Changes')
+                              : (lang === 'bn' ? 'নতুন পেজ পাবলিশ করুন' : 'Publish Custom Page')
+                            }
+                          </span>
+                        </button>
+                      </div>
+
+                      {/* Right Side: Existing Custom Pages Table */}
+                      <div className="lg:col-span-7 bg-white border border-gray-150 rounded-2xl p-5 shadow-xs space-y-4">
+                        <div className="flex items-center justify-between border-b pb-3 mb-1">
+                          <h4 className="font-black text-gray-800 text-xs uppercase tracking-wide flex items-center gap-1.5">
+                            <Table className="h-4 w-4 text-gray-400" />
+                            <span>{lang === 'bn' ? 'তৈরিকৃত কাস্টম পেজ সমূহ' : 'Existing Custom Pages'}</span>
+                          </h4>
+                          <span className="text-[10px] text-gray-400 bg-gray-50 border px-2 py-0.5 rounded-md font-semibold">
+                            Total: {(frontendData?.customPages || []).length} Page(s)
+                          </span>
+                        </div>
+
+                        <div className="overflow-x-auto rounded-xl border border-gray-100">
+                          <table className="w-full text-left border-collapse">
+                            <thead>
+                              <tr className="bg-slate-50 text-gray-400 uppercase text-[9px] font-black tracking-wider border-b border-gray-100">
+                                <th className="py-3 px-3">{lang === 'bn' ? 'শিরোনাম / স্ল্যাগ' : 'Title / URL Slug'}</th>
+                                <th className="py-3 px-3 text-center">{lang === 'bn' ? 'মেনুবার / অর্ডার' : 'Menu / Order'}</th>
+                                <th className="py-3 px-3 text-center">{lang === 'bn' ? 'অবস্থা' : 'Status'}</th>
+                                <th className="py-3 px-3 text-right">{lang === 'bn' ? 'অ্যাকশন' : 'Actions'}</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-50">
+                              {(frontendData?.customPages || []).length === 0 ? (
+                                <tr>
+                                  <td colSpan={4} className="py-8 text-center text-gray-400 font-semibold italic text-[11px]">
+                                    No custom pages created yet. কাস্টম পেজ এখনো তৈরি করা হয়নি।
+                                  </td>
+                                </tr>
+                              ) : (
+                                (frontendData?.customPages || []).map((page: any) => (
+                                  <tr key={page.id} className="hover:bg-slate-50/65 transition-colors group">
+                                    {/* Title & Slug */}
+                                    <td className="py-3.5 px-3 max-w-[210px]">
+                                      <div className="font-extrabold text-gray-900 text-xs truncate">
+                                        {lang === 'bn' ? page.titleBn : page.titleEn}
+                                      </div>
+                                      <div className="flex items-center gap-1 mt-1 text-gray-400 font-mono text-[9px]">
+                                        <span>/{page.slug}</span>
+                                        <button 
+                                          onClick={() => {
+                                            // Quick preview callback: back to home and switch activeTab
+                                            onBackToHome();
+                                            setTimeout(() => {
+                                              const customEvent = new CustomEvent('navigate_custom_tab', { detail: page.slug });
+                                              window.dispatchEvent(customEvent);
+                                            }, 200);
+                                          }}
+                                          title="View Page"
+                                          className="p-0.5 hover:text-blue-500 rounded text-gray-300 hover:bg-blue-50 transition-colors cursor-pointer"
+                                        >
+                                          <ExternalLink className="h-2.5 w-2.5" />
+                                        </button>
+                                      </div>
+                                    </td>
+                                    
+                                    {/* Menu status and order */}
+                                    <td className="py-3.5 px-3 text-center">
+                                      {page.showInMenu !== false ? (
+                                        <div className="space-y-0.5">
+                                          <span className="inline-block text-[8px] bg-emerald-50 text-[#025644] border border-emerald-100 px-1.5 py-0.5 rounded-md font-black">
+                                            {lang === 'bn' ? 'মেনু সচল' : 'In Menu'}
+                                          </span>
+                                          <div className="text-[9px] text-gray-400">Order: {page.menuOrder || 1}</div>
+                                        </div>
+                                      ) : (
+                                        <span className="inline-block text-[8px] bg-gray-100 text-gray-400 px-1.5 py-0.5 rounded-md font-bold">
+                                          {lang === 'bn' ? 'লুকানো' : 'Hidden'}
+                                        </span>
+                                      )}
+                                    </td>
+
+                                    {/* Status Badge */}
+                                    <td className="py-3.5 px-3 text-center">
+                                      {page.status === 'active' ? (
+                                        <span className="inline-flex items-center gap-1 text-[8px] bg-green-50 text-green-700 border border-green-100 px-1.5 py-0.5 rounded-md font-black">
+                                          <span className="h-1 w-1 bg-green-500 rounded-full animate-ping" />
+                                          <span>{lang === 'bn' ? 'সক্রিয়' : 'Active'}</span>
+                                        </span>
+                                      ) : (
+                                        <span className="inline-block text-[8px] bg-amber-50 text-amber-700 border border-amber-100 px-1.5 py-0.5 rounded-md font-black">
+                                          {lang === 'bn' ? 'নিষ্ক্রিয়' : 'Inactive'}
+                                        </span>
+                                      )}
+                                    </td>
+
+                                    {/* Action buttons */}
+                                    <td className="py-3.5 px-3 text-right">
+                                      <div className="flex items-center justify-end gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
+                                        <button
+                                          onClick={() => handleEditPageClick(page)}
+                                          title="Edit Page"
+                                          className="p-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors cursor-pointer"
+                                        >
+                                          <Edit3 className="h-3 w-3" />
+                                        </button>
+                                        <button
+                                          onClick={() => handleDeletePage(page.id)}
+                                          title="Delete Page"
+                                          className="p-1.5 bg-red-50 text-red-500 hover:bg-red-100 rounded-lg transition-colors cursor-pointer"
+                                        >
+                                          <Trash2 className="h-3 w-3" />
+                                        </button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                ))
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        {/* Helpful Admin Checklist Guide */}
+                        <div className="p-4 bg-slate-50 rounded-xl text-left border space-y-2 mt-3 select-none">
+                          <h5 className="font-extrabold text-gray-800 text-[10px] uppercase tracking-wider flex items-center gap-1 text-emerald-700">
+                            <span>💡</span> {lang === 'bn' ? 'আদর্শ পেজ ডিজাইনের রিকমেন্ডেশন' : 'Best Practice Layout Checklist'}
+                          </h5>
+                          <ul className="space-y-1 text-[9px] text-gray-500 leading-normal list-disc pl-4 font-semibold">
+                            <li><strong>{lang === 'bn' ? 'দ্বিভাষিক টেক্সট:' : 'Bilingual Support:'}</strong> {lang === 'bn' ? 'বাংলা এবং ইংরেজিতে সুন্দর সাবলীল বাক্য ব্যবহার করুন।' : 'Always fill both Bangla & English title and body so language toggler works beautifully.'}</li>
+                            <li><strong>{lang === 'bn' ? 'স্বয়ংক্রিয় মেনু:' : 'Auto Menu injection:'}</strong> {lang === 'bn' ? '"Show in Menu Bar" চেকবক্স অন রাখলে এটি সাথে সাথে মূল মেনুবারে পিন হয়ে যাবে।' : 'Checking "Show in Menu Bar" automatically pins your page inside the public homepage header navigation.'}</li>
+                            <li><strong>{lang === 'bn' ? 'ইউনিক স্ল্যাগ:' : 'Slug Uniformity:'}</strong> {lang === 'bn' ? 'স্ল্যাগটি অবশ্যই সম্পূর্ণ ইউনিক হতে হবে এবং কোনো স্পেস ছাড়া ড্যাশ (-) ব্যবহার করতে হবে।' : 'Slugs must be lower-case alphanumeric codes with dashes instead of spaces (e.g. academic-syllabus-2026).'}</li>
+                          </ul>
+                        </div>
+                      </div>
+
                     </div>
                   </div>
                 )}
@@ -12741,6 +13308,97 @@ async function buildAttendanceExcelSheet(monthName, className, section, students
                                     </div>
                                   </div>
                                 </div>
+
+                                <div className="grid grid-cols-2 gap-3 pt-2 border-t border-gray-100">
+                                  <div className="space-y-1">
+                                    <label className="text-gray-500 uppercase text-[9px] block font-black tracking-wider">Button Text (Bangla)</label>
+                                    <input
+                                      type="text"
+                                      placeholder="উদা. ভর্তি ফরম"
+                                      value={item.btnTextBn || ''}
+                                      onChange={(e) => {
+                                        const val = e.target.value;
+                                        setFrontendData((prev: any) => ({
+                                          ...prev,
+                                          slider: prev.slider.map((s: any) => s.id === item.id ? { ...s, btnTextBn: val } : s)
+                                        }));
+                                      }}
+                                      className="w-full bg-slate-50 border border-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500 font-semibold text-gray-800"
+                                    />
+                                  </div>
+
+                                  <div className="space-y-1">
+                                    <label className="text-gray-500 uppercase text-[9px] block font-black tracking-wider">Button Text (English)</label>
+                                    <input
+                                      type="text"
+                                      placeholder="e.g. Apply Now"
+                                      value={item.btnTextEn || ''}
+                                      onChange={(e) => {
+                                        const val = e.target.value;
+                                        setFrontendData((prev: any) => ({
+                                          ...prev,
+                                          slider: prev.slider.map((s: any) => s.id === item.id ? { ...s, btnTextEn: val } : s)
+                                        }));
+                                      }}
+                                      className="w-full bg-slate-50 border border-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500 font-semibold text-gray-800"
+                                    />
+                                  </div>
+                                </div>
+
+                                <div className="space-y-1">
+                                  <label className="text-gray-500 uppercase text-[9px] block font-black tracking-wider">Button Link (URL / Slug / Tab Name)</label>
+                                  <input
+                                    type="text"
+                                    placeholder="e.g. admissions, notices, contact, or https://example.com"
+                                    value={item.btnLink || ''}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      setFrontendData((prev: any) => ({
+                                        ...prev,
+                                        slider: prev.slider.map((s: any) => s.id === item.id ? { ...s, btnLink: val } : s)
+                                      }));
+                                    }}
+                                    className="w-full bg-slate-50 border border-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500 font-semibold text-gray-800 font-mono text-[11px]"
+                                  />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3">
+                                  <div className="space-y-1">
+                                    <label className="text-gray-500 uppercase text-[9px] block font-black tracking-wider">Serial Number / Order</label>
+                                    <input
+                                      type="number"
+                                      min="1"
+                                      value={item.order || ''}
+                                      placeholder="1"
+                                      onChange={(e) => {
+                                        const val = parseInt(e.target.value) || '';
+                                        setFrontendData((prev: any) => ({
+                                          ...prev,
+                                          slider: prev.slider.map((s: any) => s.id === item.id ? { ...s, order: val } : s)
+                                        }));
+                                      }}
+                                      className="w-full bg-slate-50 border border-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500 font-semibold text-gray-800"
+                                    />
+                                  </div>
+
+                                  <div className="space-y-1">
+                                    <label className="text-gray-500 uppercase text-[9px] block font-black tracking-wider">Status</label>
+                                    <select
+                                      value={item.status === 'inactive' || item.status === false ? 'inactive' : 'active'}
+                                      onChange={(e) => {
+                                        const val = e.target.value;
+                                        setFrontendData((prev: any) => ({
+                                          ...prev,
+                                          slider: prev.slider.map((s: any) => s.id === item.id ? { ...s, status: val } : s)
+                                        }));
+                                      }}
+                                      className="w-full bg-slate-50 border border-slate-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500 font-semibold text-gray-800 cursor-pointer"
+                                    >
+                                      <option value="active">Active (সক্রিয়)</option>
+                                      <option value="inactive">Inactive (নিষ্ক্রিয়)</option>
+                                    </select>
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           ))}
@@ -12750,18 +13408,26 @@ async function buildAttendanceExcelSheet(monthName, className, section, students
                           <button
                             type="button"
                             onClick={() => {
-                              const newSlide = {
-                                id: Date.now().toString(),
-                                titleBn: 'নতুন স্লাইডার শিরোনাম',
-                                titleEn: 'New Slider Heading',
-                                descBn: 'আমাদের চমৎকার শিক্ষাদান পদ্ধতি।',
-                                descEn: 'Our excellent pedagogy and caring environment.',
-                                image: ''
-                              };
-                              setFrontendData((prev: any) => ({
-                                ...prev,
-                                slider: [...(prev.slider || []), newSlide]
-                              }));
+                              setFrontendData((prev: any) => {
+                                const currentSlider = prev.slider || [];
+                                const newSlide = {
+                                  id: Date.now().toString(),
+                                  titleBn: 'নতুন স্লাইডার শিরোনাম',
+                                  titleEn: 'New Slider Heading',
+                                  descBn: 'আমাদের চমৎকার শিক্ষাদান পদ্ধতি।',
+                                  descEn: 'Our excellent pedagogy and caring environment.',
+                                  image: '',
+                                  btnTextBn: 'বিস্তারিত জানুন',
+                                  btnTextEn: 'Learn More',
+                                  btnLink: 'about',
+                                  order: currentSlider.length + 1,
+                                  status: 'active'
+                                };
+                                return {
+                                  ...prev,
+                                  slider: [...currentSlider, newSlide]
+                                };
+                              });
                               addAuditLog("Admin added a new slide to the slider.");
                             }}
                             className="px-4 py-2.5 bg-[#025644] hover:bg-[#01352a] text-white rounded-xl cursor-pointer font-black inline-flex items-center gap-1.5 shadow-xs transition-colors"

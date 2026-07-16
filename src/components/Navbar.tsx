@@ -40,12 +40,60 @@ export default function Navbar({ activeTab, setActiveTab, lang, setLang, onSearc
   
   const t = translations[lang];
 
-  // Exactly 8 items in the screenshot:
+  // Dynamically load custom pages from localStorage
+  const [customMenuItems, setCustomMenuItems] = useState<any[]>([]);
+
+  React.useEffect(() => {
+    const loadCustomPages = () => {
+      try {
+        const saved = localStorage.getItem('school_frontend_data');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          const activePages = (parsed.customPages || [])
+            .filter((p: any) => p.status === 'active' && p.showInMenu !== false)
+            .sort((a: any, b: any) => (Number(a.menuOrder) || 1) - (Number(b.menuOrder) || 1))
+            .map((p: any) => ({
+              id: p.slug || p.id,
+              label: lang === 'bn' ? p.titleBn : p.titleEn
+            }));
+          setCustomMenuItems(activePages);
+        }
+      } catch (e) {
+        console.error("Error loading custom pages for navbar", e);
+      }
+    };
+
+    loadCustomPages();
+    window.addEventListener('storage', loadCustomPages);
+    
+    // Listen for custom event
+    const handleSettingsUpdate = () => {
+      loadCustomPages();
+    };
+    window.addEventListener('school_settings_updated', handleSettingsUpdate);
+
+    // Add support for navigation from preview links inside iframe
+    const handleCustomNavigate = (e: any) => {
+      if (e.detail) {
+        setActiveTab(e.detail);
+      }
+    };
+    window.addEventListener('navigate_custom_tab', handleCustomNavigate);
+
+    return () => {
+      window.removeEventListener('storage', loadCustomPages);
+      window.removeEventListener('school_settings_updated', handleSettingsUpdate);
+      window.removeEventListener('navigate_custom_tab', handleCustomNavigate);
+    };
+  }, [lang, setActiveTab]);
+
+  // Combined menu items
   const menuItems = [
     { id: 'home', label: lang === 'bn' ? 'প্রচ্ছদ' : 'Home', icon: Home },
     { id: 'history', label: lang === 'bn' ? 'প্রতিষ্ঠানের ইতিহাস' : 'History' },
     { id: 'teachers', label: lang === 'bn' ? 'শিক্ষকমণ্ডলী' : 'Teachers' },
     { id: 'student', label: lang === 'bn' ? 'শিক্ষার্থী' : 'Students' },
+    ...customMenuItems,
     { id: 'results', label: lang === 'bn' ? 'পরীক্ষার ফলাফল' : 'Exam Results' },
     { id: 'photo', label: lang === 'bn' ? 'ফটো' : 'Photo Gallery' },
     { id: 'video', label: lang === 'bn' ? 'ভিডিও' : 'Videos' },
@@ -383,6 +431,8 @@ export default function Navbar({ activeTab, setActiveTab, lang, setLang, onSearc
       setActiveTab('gallery');
     } else if (tabId === 'contact') {
       setActiveTab('contact');
+    } else {
+      setActiveTab(tabId);
     }
     setIsOpen(false);
   };
@@ -513,6 +563,7 @@ export default function Navbar({ activeTab, setActiveTab, lang, setLang, onSearc
                   else if (item.id === 'photo' && activeTab === 'gallery') isActive = true;
                   else if (item.id === 'video' && activeTab === 'gallery') isActive = false; 
                   else if (item.id === 'contact' && activeTab === 'contact') isActive = true;
+                  else if (item.id === activeTab) isActive = true;
 
                   const Icon = item.icon;
 
