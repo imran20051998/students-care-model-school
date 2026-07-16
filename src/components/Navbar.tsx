@@ -50,7 +50,7 @@ export default function Navbar({ activeTab, setActiveTab, lang, setLang, onSearc
         if (saved) {
           const parsed = JSON.parse(saved);
           const activePages = (parsed.customPages || [])
-            .filter((p: any) => p.status === 'active' && p.showInMenu !== false)
+            .filter((p: any) => p && p.status === 'active' && p.showInMenu !== false)
             .sort((a: any, b: any) => (Number(a.menuOrder) || 1) - (Number(b.menuOrder) || 1))
             .map((p: any) => ({
               id: p.slug || p.id,

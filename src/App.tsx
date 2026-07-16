@@ -215,7 +215,7 @@ export default function App() {
     }
   ];
 
-  const sliderSlides = frontendData?.slider && frontendData.slider.length > 0
+  const mappedSlides = frontendData?.slider && frontendData.slider.length > 0
     ? frontendData.slider
         .filter((slide: any) => slide.status !== 'inactive' && slide.status !== false)
         .sort((a: any, b: any) => (Number(a.order) || 99) - (Number(b.order) || 99))
@@ -232,7 +232,9 @@ export default function App() {
             btnLink: slide.btnLink || ''
           };
         })
-    : defaultSlides;
+    : [];
+
+  const sliderSlides = mappedSlides.length > 0 ? mappedSlides : defaultSlides;
 
   // Auto play the slider
   React.useEffect(() => {
@@ -1346,7 +1348,9 @@ export default function App() {
 
                       // Define orders and active statuses mapping safely
                       const orders = (frontendData?.sectionsList || []).reduce((acc: any, s: any) => {
-                        acc[s.id] = { order: Number(s.order), status: s.status };
+                        if (s && s.id) {
+                          acc[s.id] = { order: Number(s.order), status: s.status };
+                        }
                         return acc;
                       }, {});
 
