@@ -555,9 +555,83 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
     ];
   });
 
+  const [selectedExamTermDetailId, setSelectedExamTermDetailId] = useState<string | null>(null);
+  const [showPrintModal, setShowPrintModal] = useState<string | null>(null);
+
+  const [examRoutines, setExamRoutines] = useState<{ [termId: string]: Array<{ id: string; subject: string; date: string; time: string; class: string; room: string }> }>(() => {
+    const saved = localStorage.getItem('school_exam_routines');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return {
+      'T-1': [
+        { id: 'R-1', subject: 'English & Literature', date: '2026-03-02', time: '10:00 AM - 01:00 PM', class: 'Class 9', room: 'Room 101' },
+        { id: 'R-2', subject: 'Bangla Grammar & Arts', date: '2026-03-04', time: '10:00 AM - 01:00 PM', class: 'Class 9', room: 'Room 101' },
+        { id: 'R-3', subject: 'Advanced Mathematics', date: '2026-03-06', time: '10:00 AM - 01:00 PM', class: 'Class 9', room: 'Room 102' }
+      ],
+      'T-2': [
+        { id: 'R-4', subject: 'Chemistry (Theoretical)', date: '2026-07-12', time: '10:00 AM - 01:00 PM', class: 'Class 9', room: 'Room 201' },
+        { id: 'R-5', subject: 'Physics & Lab Practice', date: '2026-07-14', time: '10:00 AM - 01:00 PM', class: 'Class 9', room: 'Room 202' },
+        { id: 'R-6', subject: 'Higher Mathematics', date: '2026-07-16', time: '10:00 AM - 01:00 PM', class: 'Class 9', room: 'Room 203' }
+      ],
+      'T-3': [
+        { id: 'R-7', subject: 'General Science', date: '2026-12-02', time: '10:00 AM - 01:00 PM', class: 'Class 9', room: 'Room 103' },
+        { id: 'R-8', subject: 'Social Studies', date: '2026-12-04', time: '10:00 AM - 01:00 PM', class: 'Class 9', room: 'Room 104' }
+      ]
+    };
+  });
+
+  const [teacherDuties, setTeacherDuties] = useState<{ [termId: string]: Array<{ id: string; date: string; teacherName: string; designation: string; room: string }> }>(() => {
+    const saved = localStorage.getItem('school_teacher_duties');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return {
+      'T-1': [
+        { id: 'D-1', date: '2026-03-02', teacherName: 'Mrs. Rokeya Begum', designation: 'Faculty Member', room: 'Room 101' },
+        { id: 'D-2', date: '2026-03-04', teacherName: 'Mr. Hasan Al Banna', designation: 'Assistant Headmaster', room: 'Room 101' }
+      ],
+      'T-2': [
+        { id: 'D-3', date: '2026-07-12', teacherName: 'Ms. Nila Chowdhury', designation: 'Headmistress & Senior Lecturer', room: 'Room 201' },
+        { id: 'D-4', date: '2026-07-14', teacherName: 'Mr. Hasan Al Banna', designation: 'Assistant Headmaster', room: 'Room 202' },
+        { id: 'D-5', date: '2026-07-16', teacherName: 'Mrs. Rokeya Begum', designation: 'Faculty Member', room: 'Room 203' }
+      ],
+      'T-3': [
+        { id: 'D-6', date: '2026-12-02', teacherName: 'Ms. Nila Chowdhury', designation: 'Headmistress & Senior Lecturer', room: 'Room 103' }
+      ]
+    };
+  });
+
+  const [attendanceSheetClassFilter, setAttendanceSheetClassFilter] = useState('Class 9');
+  const [attendanceSheetSubjectFilter, setAttendanceSheetSubjectFilter] = useState('Chemistry');
+
+  // New forms for routine and duty additions
+  const [newRoutineForm, setNewRoutineForm] = useState({
+    subject: '',
+    date: '',
+    time: '10:00 AM - 01:00 PM',
+    class: 'Class 9',
+    room: 'Room 201'
+  });
+
+  const [newDutyForm, setNewDutyForm] = useState({
+    date: '',
+    teacherName: '',
+    designation: '',
+    room: 'Room 201'
+  });
+
   useEffect(() => {
     localStorage.setItem('school_exam_terms', JSON.stringify(examTerms));
   }, [examTerms]);
+
+  useEffect(() => {
+    localStorage.setItem('school_exam_routines', JSON.stringify(examRoutines));
+  }, [examRoutines]);
+
+  useEffect(() => {
+    localStorage.setItem('school_teacher_duties', JSON.stringify(teacherDuties));
+  }, [teacherDuties]);
 
   // Settings State and Sub Tabs
   const [settingsSubTab, setSettingsSubTab] = useState<string>('login_banner');
@@ -9882,68 +9956,968 @@ def approve_admission_application(request, pk):
 
             {/* EXAM TIMETABLE AND MARKS */}
             {adminActiveTab === 'exam' && (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 text-left">
-                {/* Active exam list */}
-                <div className="lg:col-span-7 bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs space-y-4">
-                  <div>
-                    <h3 className="font-extrabold text-gray-900 text-base">Half-Yearly Exam Timetables</h3>
-                    <p className="text-xs text-gray-400 font-bold">Official schedule released to notice board</p>
-                  </div>
-                  <div className="space-y-3">
-                    {[
-                      { subject: 'Chemistry (Theoretical)', date: 'July 12, 2026', time: '10:00 AM - 1:00 PM', class: 'Class 9' },
-                      { subject: 'Physics & Lab Practice', date: 'July 14, 2026', time: '10:00 AM - 1:00 PM', class: 'Class 9' },
-                      { subject: 'Higher Mathematics', date: 'July 16, 2026', time: '10:00 AM - 1:00 PM', class: 'Class 9' },
-                    ].map((ex, i) => (
-                      <div key={i} className="p-4 bg-gray-50 border border-gray-150 rounded-xl flex justify-between items-center text-xs">
-                        <div>
-                          <span className="font-extrabold text-[#025644] block">{ex.subject}</span>
-                          <span className="text-[10px] text-gray-400 font-bold mt-1 block">Timings: {ex.time}</span>
-                        </div>
-                        <div className="text-right">
-                          <span className="px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-100 rounded-md font-black block w-fit ml-auto">{ex.class}</span>
-                          <span className="text-[10px] text-gray-400 font-bold mt-1 block">{ex.date}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+              <div className="space-y-6">
+                {/* Print Preview Overlay Modal (Visible when a print job is triggered) */}
+                {(() => {
+                  const selectedTerm = examTerms.find(t => t.id === (selectedExamTermDetailId || 'T-2'));
+                  const termRoutines = examRoutines[selectedTerm?.id || 'T-2'] || [];
+                  const termDuties = teacherDuties[selectedTerm?.id || 'T-2'] || [];
 
-                {/* Submitting exam grades proxy */}
-                <div className="lg:col-span-5 bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs space-y-4">
-                  <div>
-                    <h3 className="font-extrabold text-gray-900 text-base">Direct Student Grading Panel</h3>
-                    <p className="text-xs text-gray-400 font-bold">Input final course marks to update scholastic transcripts</p>
+                  return (
+                    <>
+                      {showPrintModal && (
+                        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto print:absolute print:inset-0 print:bg-white print:p-0 print:m-0 print:block">
+                          <div className="bg-white border border-gray-200 rounded-2xl w-full max-w-4xl p-8 space-y-6 shadow-2xl relative print:border-0 print:shadow-none print:p-0 print:m-0 print:w-full print:max-w-none print:rounded-none">
+                            {/* Controls on top (Hidden during print) */}
+                            <div className="flex items-center justify-between border-b border-gray-100 pb-4 print:hidden">
+                              <div className="flex items-center gap-2">
+                                <Printer className="h-5 w-5 text-emerald-600 animate-pulse" />
+                                <h4 className="font-extrabold text-gray-800 text-sm">
+                                  {lang === 'bn' ? 'প্রিন্ট প্রিভিউ ও পৃষ্ঠা বিন্যাস' : 'Official Print Preview & Page Layout'}
+                                </h4>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => window.print()}
+                                  className="px-4 py-1.5 bg-[#025644] hover:bg-[#01352a] text-white text-xs font-black rounded-lg transition-all cursor-pointer flex items-center gap-1.5 shadow-3xs"
+                                >
+                                  <Printer className="h-3.5 w-3.5" />
+                                  <span>{lang === 'bn' ? 'এখনই প্রিন্ট করুন' : 'Print Document'}</span>
+                                </button>
+                                <button
+                                  onClick={() => setShowPrintModal(null)}
+                                  className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-bold rounded-lg transition-colors cursor-pointer"
+                                >
+                                  {lang === 'bn' ? 'বন্ধ করুন' : 'Close Preview'}
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Outer frame matching paper aspect ratio for high-fidelity rendering */}
+                            <div className="bg-slate-50 border border-gray-100 p-6 rounded-xl overflow-x-auto print:bg-white print:border-0 print:p-0 print:m-0">
+                              <div className="bg-white w-[210mm] min-h-[297mm] p-12 mx-auto text-left text-gray-800 shadow-sm border border-gray-200/50 print:border-0 print:shadow-none print:p-0 print:w-full print:min-h-0 print:mx-0 font-sans">
+                                
+                                {/* 1. HEADER SECTION (Shared for all documents) */}
+                                <div className="text-center border-b-2 border-double border-gray-800 pb-4 mb-6">
+                                  <h2 className="text-2xl font-black tracking-tight text-gray-900 m-0 uppercase font-sans">
+                                    {lang === 'bn' ? schoolSettings.schoolNameBn : schoolSettings.schoolNameEn}
+                                  </h2>
+                                  <p className="text-xs font-bold text-gray-500 mt-1 uppercase tracking-wider">
+                                    {lang === 'bn' ? schoolSettings.addressBn : schoolSettings.addressEn}
+                                  </p>
+                                  <p className="text-[10px] text-gray-400 font-mono font-semibold mt-0.5">
+                                    {lang === 'bn' ? `মোবাইল: ${schoolSettings.officeMobile}` : `Mobile: ${schoolSettings.officeMobile}`} | {lang === 'bn' ? `ইমেইল: info@scms.edu.bd` : 'Email: info@scms.edu.bd'}
+                                  </p>
+                                  <div className="mt-4 px-3 py-1 bg-gray-100/80 rounded-md inline-block border border-gray-200">
+                                    <h3 className="text-sm font-black text-gray-800 uppercase tracking-wide mb-0">
+                                      {selectedTerm ? (lang === 'bn' ? `${selectedTerm.name} - ২০২৬` : `${selectedTerm.name} Examination - 2026`) : ''}
+                                    </h3>
+                                  </div>
+                                </div>
+
+                                {/* Attendance Sheet Document */}
+                                {showPrintModal === 'attendance' && (
+                                  <div className="space-y-4">
+                                    <div className="flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-gray-200 text-xs font-bold text-gray-700 mb-2">
+                                      <span>{lang === 'bn' ? `ক্লাস: ${attendanceSheetClassFilter}` : `Class: ${attendanceSheetClassFilter}`}</span>
+                                      <span>{lang === 'bn' ? `বিষয়: ${attendanceSheetSubjectFilter}` : `Subject: ${attendanceSheetSubjectFilter}`}</span>
+                                      <span>{lang === 'bn' ? `তারিখ: _________________` : 'Date: _________________'}</span>
+                                    </div>
+
+                                    <h4 className="text-center font-extrabold text-sm text-gray-800 uppercase tracking-wider mb-4 decoration-double underline underline-offset-4">
+                                      {lang === 'bn' ? 'পরীক্ষার্থীদের হাজিরা ও স্বাক্ষর খাতা' : 'Candidates Daily Attendance & Script Registry'}
+                                    </h4>
+
+                                    <table className="w-full text-xs text-left border-collapse border border-gray-800">
+                                      <thead>
+                                        <tr className="bg-gray-100 text-gray-800 font-black text-[11px] uppercase border-b border-gray-800">
+                                          <th className="border border-gray-800 px-3 py-2 text-center" style={{ width: '8%' }}>{lang === 'bn' ? 'রোল' : 'Roll'}</th>
+                                          <th className="border border-gray-800 px-3 py-2" style={{ width: '27%' }}>{lang === 'bn' ? 'শিক্ষার্থীর নাম' : 'Student Name'}</th>
+                                          <th className="border border-gray-800 px-3 py-2 text-center" style={{ width: '15%' }}>{lang === 'bn' ? 'আইডি নম্বর' : 'Student ID'}</th>
+                                          <th className="border border-gray-800 px-3 py-2 text-center" style={{ width: '18%' }}>{lang === 'bn' ? 'উত্তরের খাতা নম্বর' : 'Answer Script No'}</th>
+                                          <th className="border border-gray-800 px-3 py-2 text-center" style={{ width: '20%' }}>{lang === 'bn' ? 'পরীক্ষার্থীর স্বাক্ষর' : 'Candidate Signature'}</th>
+                                          <th className="border border-gray-800 px-3 py-2 text-center" style={{ width: '12%' }}>{lang === 'bn' ? 'মন্তব্য' : 'Remarks'}</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {students
+                                          .filter(s => s.class.toLowerCase().includes(attendanceSheetClassFilter.toLowerCase()) && s.status === 'Active')
+                                          .map((student, idx) => (
+                                            <tr key={idx} className="border-b border-gray-800 text-[11px]">
+                                              <td className="border border-gray-800 px-3 py-2.5 text-center font-mono font-bold">{student.roll}</td>
+                                              <td className="border border-gray-800 px-3 py-2.5 font-bold text-gray-900">{student.name}</td>
+                                              <td className="border border-gray-800 px-3 py-2.5 text-center font-mono text-gray-500 font-bold">{student.id}</td>
+                                              <td className="border border-gray-800 px-3 py-2.5"></td>
+                                              <td className="border border-gray-800 px-3 py-2.5"></td>
+                                              <td className="border border-gray-800 px-3 py-2.5"></td>
+                                            </tr>
+                                          ))}
+                                        {students.filter(s => s.class.toLowerCase().includes(attendanceSheetClassFilter.toLowerCase()) && s.status === 'Active').length === 0 && (
+                                          <tr>
+                                            <td colSpan={6} className="border border-gray-800 px-3 py-8 text-center text-gray-400 font-bold italic">
+                                              {lang === 'bn' ? 'এই ক্লাসে কোনো নিবন্ধিত শিক্ষার্থী পাওয়া যায়নি।' : 'No registered active students found for the selected class filters.'}
+                                            </td>
+                                          </tr>
+                                        )}
+                                      </tbody>
+                                    </table>
+
+                                    {/* Signatures at the bottom */}
+                                    <div className="grid grid-cols-2 gap-8 pt-16 mt-12 text-xs font-bold text-gray-700">
+                                      <div className="text-left border-t border-gray-800 pt-1.5 w-56">
+                                        {lang === 'bn' ? 'হল পরিদর্শকের স্বাক্ষর ও তারিখ' : 'Hall Invigilator Signature & Date'}
+                                      </div>
+                                      <div className="text-right border-t border-gray-800 pt-1.5 w-56 ml-auto">
+                                        {lang === 'bn' ? 'পরীক্ষা নিয়ন্ত্রক / প্রধান শিক্ষকের স্বাক্ষর' : 'Principal / Controller of Exam'}
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Routine Document */}
+                                {showPrintModal === 'routine' && (
+                                  <div className="space-y-5">
+                                    <h4 className="text-center font-extrabold text-sm text-gray-800 uppercase tracking-wider mb-4 decoration-double underline underline-offset-4">
+                                      {lang === 'bn' ? 'লিখিত পরীক্ষার আনুষ্ঠানিক সময়সূচী' : 'Official Written Examination Timetable'}
+                                    </h4>
+
+                                    <table className="w-full text-xs text-left border-collapse border border-gray-800">
+                                      <thead>
+                                        <tr className="bg-gray-100 text-gray-800 font-black text-[11px] uppercase border-b border-gray-800">
+                                          <th className="border border-gray-800 px-4 py-2.5">{lang === 'bn' ? 'তারিখ ও দিন' : 'Date & Day'}</th>
+                                          <th className="border border-gray-800 px-4 py-2.5">{lang === 'bn' ? 'বিষয়' : 'Subject Course'}</th>
+                                          <th className="border border-gray-800 px-4 py-2.5 text-center">{lang === 'bn' ? 'সময়সূচী' : 'Time Slot'}</th>
+                                          <th className="border border-gray-800 px-4 py-2.5 text-center">{lang === 'bn' ? 'শ্রেণী' : 'Target Class'}</th>
+                                          <th className="border border-gray-800 px-4 py-2.5 text-center">{lang === 'bn' ? 'পরীক্ষা হল' : 'Exam Center'}</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {termRoutines.map((routine, idx) => (
+                                          <tr key={idx} className="border-b border-gray-800 text-[11px]">
+                                            <td className="border border-gray-800 px-4 py-3 font-bold text-gray-900">{routine.date}</td>
+                                            <td className="border border-gray-800 px-4 py-3 font-bold text-emerald-850">{routine.subject}</td>
+                                            <td className="border border-gray-800 px-4 py-3 text-center font-mono font-bold text-gray-600">{routine.time}</td>
+                                            <td className="border border-gray-800 px-4 py-3 text-center font-bold text-gray-700">{routine.class}</td>
+                                            <td className="border border-gray-800 px-4 py-3 text-center font-black text-gray-800">{routine.room}</td>
+                                          </tr>
+                                        ))}
+                                        {termRoutines.length === 0 && (
+                                          <tr>
+                                            <td colSpan={5} className="border border-gray-800 px-4 py-8 text-center text-gray-400 font-bold italic">
+                                              {lang === 'bn' ? 'পরীক্ষার কোনো রুটিন তৈরি করা হয়নি।' : 'No examination routines scheduled for this term.'}
+                                            </td>
+                                          </tr>
+                                        )}
+                                      </tbody>
+                                    </table>
+
+                                    <div className="bg-gray-50 border border-gray-200 p-4 rounded-xl text-[10px] leading-relaxed text-gray-500 font-medium space-y-1 mt-6">
+                                      <p className="font-extrabold text-gray-700 uppercase tracking-wide">
+                                        {lang === 'bn' ? 'পরীক্ষার্থীদের জন্য বিশেষ নির্দেশাবলী:' : 'Special Rules & Guidelines for Candidates:'}
+                                      </p>
+                                      <p>১. পরীক্ষা শুরুর কমপক্ষে ৩০ মিনিট পূর্বে নির্ধারিত আসন গ্রহণ করতে হবে।</p>
+                                      <p>২. এডমিট কার্ড এবং প্রয়োজনীয় শিক্ষা সামগ্রী ব্যতিরেকে কোনো ডিজিটাল ডিভাইস, স্মার্ট ওয়াচ বা মোবাইল ফোন হলে প্রবেশ সম্পূর্ণ নিষিদ্ধ।</p>
+                                      <p>৩. ওএমআর (OMR) শিট পূরণে কালো বলপেন কলম ব্যবহার আবশ্যক। কাটাকাটি বা ফ্লুইড ব্যবহার নিষিদ্ধ।</p>
+                                    </div>
+
+                                    {/* Footer Signatures */}
+                                    <div className="grid grid-cols-2 gap-8 pt-16 mt-12 text-xs font-bold text-gray-700">
+                                      <div className="text-left border-t border-gray-800 pt-1.5 w-56">
+                                        {lang === 'bn' ? 'সদস্য সচিব (পরীক্ষা কমিটি)' : 'Member Secretary (Exam Committee)'}
+                                      </div>
+                                      <div className="text-right border-t border-gray-800 pt-1.5 w-56 ml-auto">
+                                        {lang === 'bn' ? 'প্রধান শিক্ষক / অধ্যক্ষের স্বাক্ষর' : 'Headmaster / Principal Signature'}
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Duties Document */}
+                                {showPrintModal === 'duties' && (
+                                  <div className="space-y-5">
+                                    <h4 className="text-center font-extrabold text-sm text-gray-800 uppercase tracking-wider mb-4 decoration-double underline underline-offset-4">
+                                      {lang === 'bn' ? 'শিক্ষকদের হল গার্ড ডিউটি রোস্টার' : 'Teachers Invigilation Duty Allocation Chart'}
+                                    </h4>
+
+                                    <table className="w-full text-xs text-left border-collapse border border-gray-800">
+                                      <thead>
+                                        <tr className="bg-gray-100 text-gray-800 font-black text-[11px] uppercase border-b border-gray-800">
+                                          <th className="border border-gray-800 px-4 py-2.5">{lang === 'bn' ? 'তারিখ ও শিফট' : 'Duty Date'}</th>
+                                          <th className="border border-gray-800 px-4 py-2.5">{lang === 'bn' ? 'শিক্ষকের নাম' : 'Faculty Invigilator'}</th>
+                                          <th className="border border-gray-800 px-4 py-2.5">{lang === 'bn' ? 'পদবী' : 'Official Designation'}</th>
+                                          <th className="border border-gray-800 px-4 py-2.5 text-center">{lang === 'bn' ? 'পরীক্ষা হল' : 'Assigned Exam Hall'}</th>
+                                          <th className="border border-gray-800 px-4 py-2.5 text-center" style={{ width: '22%' }}>{lang === 'bn' ? 'উপস্থিতি স্বাক্ষর' : 'Invigilator Initial'}</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {termDuties.map((duty, idx) => (
+                                          <tr key={idx} className="border-b border-gray-800 text-[11px]">
+                                            <td className="border border-gray-800 px-4 py-3 font-bold text-gray-900">{duty.date}</td>
+                                            <td className="border border-gray-800 px-4 py-3 font-extrabold text-gray-850">{duty.teacherName}</td>
+                                            <td className="border border-gray-800 px-4 py-3 text-gray-500 font-semibold">{duty.designation}</td>
+                                            <td className="border border-gray-800 px-4 py-3 text-center font-black text-emerald-800">{duty.room}</td>
+                                            <td className="border border-gray-800 px-4 py-3"></td>
+                                          </tr>
+                                        ))}
+                                        {termDuties.length === 0 && (
+                                          <tr>
+                                            <td colSpan={5} className="border border-gray-800 px-4 py-8 text-center text-gray-400 font-bold italic">
+                                              {lang === 'bn' ? 'কোনো শিক্ষকের গার্ড ডিউটি বন্টন করা হয়নি।' : 'No teacher invigilation rosters allocated yet for this term.'}
+                                            </td>
+                                          </tr>
+                                        )}
+                                      </tbody>
+                                    </table>
+
+                                    <div className="bg-gray-50 border border-gray-200 p-4 rounded-xl text-[10px] leading-relaxed text-gray-500 font-medium space-y-1 mt-6">
+                                      <p className="font-extrabold text-gray-700 uppercase tracking-wide">
+                                        {lang === 'bn' ? 'শিক্ষক পরিদর্শকদের জন্য প্রয়োজনীয় সাধারণ নিয়মাবলী:' : 'Core Operational Rules for On-Duty Teachers:'}
+                                      </p>
+                                      <p>১. ডিউটি শুরুর কমপক্ষে ১৫ মিনিট পূর্বে প্রশ্নপত্র ও ওএমআর শিট সংগ্রহ করে হলে রিপোর্ট করুন।</p>
+                                      <p>২. পরীক্ষার্থীদের এডমিট কার্ড, রেজিষ্ট্রেশন নম্বর এবং খাতায় উল্লেখিত স্বাক্ষর নির্ভুলভাবে মিলিয়ে নিশ্চিত করুন।</p>
+                                      <p>৩. পরীক্ষা সমাপ্তির পর ওএমআর ও উত্তরপত্রগুলো ক্রমিক নম্বরানুযায়ী গুছিয়ে অফিসে জমা দিন।</p>
+                                    </div>
+
+                                    {/* Footer Signatures */}
+                                    <div className="grid grid-cols-2 gap-8 pt-16 mt-12 text-xs font-bold text-gray-700">
+                                      <div className="text-left border-t border-gray-800 pt-1.5 w-56">
+                                        {lang === 'bn' ? 'সদস্য সচিব (পরীক্ষা কমিটি)' : 'Exam Controller Signature'}
+                                      </div>
+                                      <div className="text-right border-t border-gray-800 pt-1.5 w-56 ml-auto">
+                                        {lang === 'bn' ? 'প্রধান শিক্ষক / অধ্যক্ষের স্বাক্ষর' : 'Headmaster / Principal Signature'}
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
+
+                {/* Sub-tab: 1. EXAM TERM VIEW OR THE DETAILED OVERVIEW PAGE */}
+                {examSubTab === 'exam_term' && (
+                  <>
+                    {!selectedExamTermDetailId ? (
+                      /* EXAM TERMS INDEX LIST */
+                      <div className="bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs space-y-6">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-4">
+                          <div>
+                            <h3 className="font-extrabold text-gray-900 text-lg">
+                              {lang === 'bn' ? 'পরীক্ষা টার্ম তালিকা ও প্রশাসন' : 'Examination Terms & Registries'}
+                            </h3>
+                            <p className="text-xs text-gray-400 font-bold mt-1">
+                              {lang === 'bn' ? 'অ্যাকাডেমিক সেশনের সমস্ত চূড়ান্ত এবং মধ্যবর্তী পরীক্ষা সেশন পরিচালনা করুন' : 'Govern active, completed, and upcoming official terminal exam sessions'}
+                            </p>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => {
+                                const newTermName = prompt(lang === 'bn' ? 'নতুন পরীক্ষার টার্মের নাম লিখুন:' : 'Enter new exam term name:');
+                                if (newTermName && newTermName.trim()) {
+                                  const termId = `T-${Date.now()}`;
+                                  const newTerm = {
+                                    id: termId,
+                                    name: newTermName.trim(),
+                                    year: 2026,
+                                    startDate: '2026-07-01',
+                                    endDate: '2026-07-15',
+                                    status: 'Upcoming' as const,
+                                    resultDate: '2026-07-25',
+                                    weightage: 25
+                                  };
+                                  setExamTerms(prev => [...prev, newTerm]);
+                                  addAuditLog(`Admin created a new exam term: ${newTerm.name}`);
+                                }
+                              }}
+                              className="px-4 py-2 bg-[#025644] hover:bg-[#01352a] text-white text-xs font-black rounded-xl shadow-3xs flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <Plus className="h-4 w-4" />
+                              <span>{lang === 'bn' ? 'টার্ম যোগ করুন' : 'Add Term'}</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* List grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                          {examTerms.map((term, idx) => {
+                            const termRoutineCount = examRoutines[term.id]?.length || 0;
+                            const termDutyCount = teacherDuties[term.id]?.length || 0;
+
+                            return (
+                              <div key={idx} className="bg-gray-50 border border-gray-150 rounded-2xl p-5 hover:shadow-2xs transition-shadow relative space-y-4 text-left">
+                                {/* Status badge */}
+                                <span className={`absolute top-4 right-4 text-[9px] font-black px-2.5 py-0.5 rounded-full border ${
+                                  term.status === 'Active'
+                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                                    : term.status === 'Completed'
+                                    ? 'bg-blue-50 text-blue-700 border-blue-100'
+                                    : 'bg-amber-50 text-amber-700 border-amber-100'
+                                }`}>
+                                  {lang === 'bn'
+                                    ? (term.status === 'Active' ? 'সক্রিয়' : term.status === 'Completed' ? 'সম্পন্ন' : 'আসন্ন')
+                                    : term.status
+                                  }
+                                </span>
+
+                                <div className="space-y-1">
+                                  <span className="text-[10px] font-mono font-bold text-gray-400 block">ID: {term.id}</span>
+                                  <h4 className="font-extrabold text-sm text-gray-900">{term.name}</h4>
+                                  <p className="text-[11px] text-gray-400 font-bold">{term.year} Academic Session</p>
+                                </div>
+
+                                <div className="border-t border-gray-200/60 pt-3 text-[11px] text-gray-500 font-semibold space-y-1.5">
+                                  <p>{lang === 'bn' ? 'পরীক্ষার সময়কাল' : 'Date Range'}: <span className="text-gray-800 font-bold">{term.startDate} to {term.endDate}</span></p>
+                                  <p>{lang === 'bn' ? 'ফলাফল প্রকাশের তারিখ' : 'Result Date'}: <span className="text-gray-700 font-bold">{term.resultDate}</span></p>
+                                  <p>{lang === 'bn' ? 'জিপিএ ওয়েটেজ' : 'GPA Weightage'}: <span className="text-[#025644] font-black">{term.weightage}%</span></p>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-2 text-[10px] bg-white border border-gray-100 p-2.5 rounded-xl font-bold">
+                                  <div className="text-center border-r border-gray-100">
+                                    <span className="block text-gray-400">{lang === 'bn' ? 'রুটিন বিষয়' : 'Routine'}</span>
+                                    <span className="block text-gray-800 font-black text-xs mt-0.5">{termRoutineCount}</span>
+                                  </div>
+                                  <div className="text-center">
+                                    <span className="block text-gray-400">{lang === 'bn' ? 'গার্ড ডিউটি' : 'Invigilators'}</span>
+                                    <span className="block text-gray-800 font-black text-xs mt-0.5">{termDutyCount}</span>
+                                  </div>
+                                </div>
+
+                                <div className="grid grid-cols-12 gap-2 pt-2 border-t border-gray-200/60">
+                                  {/* "Eye Icon" (View Button) that opens the Exam Term Overview page */}
+                                  <button
+                                    onClick={() => setSelectedExamTermDetailId(term.id)}
+                                    className="col-span-9 py-1.5 bg-[#025644] hover:bg-[#01352a] text-white text-xs font-black rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-3xs"
+                                    title="View Exam Term Overview"
+                                  >
+                                    <Eye className="h-3.5 w-3.5" />
+                                    <span>{lang === 'bn' ? 'ওভারভিউ দেখুন' : 'Overview Hub'}</span>
+                                  </button>
+
+                                  <button
+                                    onClick={() => {
+                                      if (confirm(lang === 'bn' ? 'আপনি কি নিশ্চিতভাবে এই পরীক্ষার টার্মটি মুছে ফেলতে চান?' : 'Are you sure you want to delete this exam term?')) {
+                                        setExamTerms(prev => prev.filter(t => t.id !== term.id));
+                                        addAuditLog(`Admin deleted exam term: ${term.name}`);
+                                      }
+                                    }}
+                                    className="col-span-3 py-1.5 bg-white hover:bg-rose-50 text-rose-600 hover:border-rose-200 border border-gray-200 text-xs font-bold rounded-xl transition-colors cursor-pointer flex items-center justify-center"
+                                    title="Remove Term"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : (
+                      /* EXAM TERMS SHOW PAGE / DETAILED OVERVIEW (The show blade equivalent) */
+                      (() => {
+                        const term = examTerms.find(t => t.id === selectedExamTermDetailId);
+                        if (!term) return null;
+
+                        const routinesList = examRoutines[term.id] || [];
+                        const dutiesList = teacherDuties[term.id] || [];
+
+                        return (
+                          <div className="space-y-6 text-left">
+                            {/* Header with back button */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-gray-150 p-6 rounded-2xl shadow-2xs">
+                              <div>
+                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{lang === 'bn' ? 'পরীক্ষা টার্ম ওভারভিউ পোর্টাল' : 'Exam Term Overview Portal'}</span>
+                                <h3 className="font-extrabold text-gray-900 text-xl flex items-center gap-2 mt-1">
+                                  <span className="text-emerald-700">{term.name}</span>
+                                  <span className="text-gray-400 font-light">({term.year})</span>
+                                </h3>
+                                <p className="text-xs text-gray-400 font-bold mt-0.5">
+                                  {lang === 'bn' ? 'পরীক্ষার হাজিরা খাতা, আনুষ্ঠানিক রুটিন ও শিক্ষকদের গার্ড ডিউটি চার্ট প্রিন্ট করার হাব' : 'Dynamic print management terminal for attendance registers, exam timetables, and duty roster charts'}
+                                </p>
+                              </div>
+
+                              <button
+                                onClick={() => setSelectedExamTermDetailId(null)}
+                                className="px-4 py-2 border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-bold rounded-xl transition-colors cursor-pointer flex items-center gap-1.5 shadow-3xs"
+                              >
+                                <ArrowRight className="h-4 w-4 rotate-180" />
+                                <span>{lang === 'bn' ? 'তালিকায় ফিরে যান' : 'Back to Term List'}</span>
+                              </button>
+                            </div>
+
+                            {/* STATISTICS SUMMARY ROW */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                              <div className="bg-white border border-gray-150 rounded-2xl p-5 shadow-2xs flex items-center gap-4">
+                                <div className="h-12 w-12 rounded-xl bg-emerald-50 text-[#025644] border border-emerald-100 flex items-center justify-center font-black">
+                                  <Users className="h-6 w-6" />
+                                </div>
+                                <div>
+                                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">{lang === 'bn' ? 'মোট পরীক্ষার্থী' : 'Total Candidates'}</span>
+                                  <span className="text-xl font-black text-gray-800 font-mono mt-0.5 block">{students.filter(s => s.status === 'Active').length} {lang === 'bn' ? 'জন' : 'Students'}</span>
+                                </div>
+                              </div>
+
+                              <div className="bg-white border border-gray-150 rounded-2xl p-5 shadow-2xs flex items-center gap-4">
+                                <div className="h-12 w-12 rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-100 flex items-center justify-center font-black">
+                                  <Calendar className="h-6 w-6" />
+                                </div>
+                                <div>
+                                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">{lang === 'bn' ? 'নির্ধারিত বিষয়সমূহ' : 'Scheduled Subjects'}</span>
+                                  <span className="text-xl font-black text-gray-800 font-mono mt-0.5 block">{routinesList.length} {lang === 'bn' ? 'টি পরীক্ষা' : 'Exams'}</span>
+                                </div>
+                              </div>
+
+                              <div className="bg-white border border-gray-150 rounded-2xl p-5 shadow-2xs flex items-center gap-4">
+                                <div className="h-12 w-12 rounded-xl bg-amber-50 text-amber-700 border border-amber-100 flex items-center justify-center font-black">
+                                  <Shield className="h-6 w-6" />
+                                </div>
+                                <div>
+                                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">{lang === 'bn' ? 'ডিউটি শিক্ষক' : 'On-Duty Invigilators'}</span>
+                                  <span className="text-xl font-black text-gray-800 font-mono mt-0.5 block">{dutiesList.length} {lang === 'bn' ? 'জন' : 'Teachers'}</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* THE THREE MAJESTIC CARDS / SECTIONS REQUESTED BY THE USER */}
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                              
+                              {/* 1. STUDENT EXAM PRESENT SHEET PRINT & PREVIEW */}
+                              <div className="bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs space-y-4 flex flex-col justify-between">
+                                <div className="space-y-3">
+                                  <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
+                                    <div className="h-7 w-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                                      <FileText className="h-4 w-4" />
+                                    </div>
+                                    <h4 className="font-extrabold text-gray-900 text-sm">{lang === 'bn' ? '১. পরীক্ষার্থীর হাজিরা শিট' : '1. Candidate Attendance Sheet'}</h4>
+                                  </div>
+                                  <p className="text-xs text-gray-500 font-medium leading-relaxed">
+                                    {lang === 'bn'
+                                      ? 'পরীক্ষার হলে শিক্ষার্থীদের দৈনিক উপস্থিতি ও উত্তরপত্রের সিরিয়াল লিখে স্বাক্ষর নেওয়ার জন্য ক্লাস অনুযায়ী অফিসিয়াল হাজিরা রেজিষ্টার শিট প্রিন্ট করুন।'
+                                      : 'Generate and print standard daily attendance record tables and answer script registries filtered by academic classes.'
+                                    }
+                                  </p>
+
+                                  <div className="bg-gray-50 p-3.5 rounded-xl border border-gray-150 space-y-3 text-xs">
+                                    <div>
+                                      <label className="block text-[10px] font-black text-gray-400 uppercase mb-1">{lang === 'bn' ? 'শ্রেণী নির্বাচন করুন' : 'Select Target Class'}</label>
+                                      <select
+                                        value={attendanceSheetClassFilter}
+                                        onChange={(e) => setAttendanceSheetClassFilter(e.target.value)}
+                                        className="w-full bg-white border border-gray-200 py-1.5 px-2.5 rounded-lg font-bold text-gray-700 focus:outline-none focus:border-[#025644] cursor-pointer"
+                                      >
+                                        <option value="Class 9">Class 9</option>
+                                        <option value="Class 10">Class 10</option>
+                                      </select>
+                                    </div>
+                                    <div>
+                                      <label className="block text-[10px] font-black text-gray-400 uppercase mb-1">{lang === 'bn' ? 'বিষয় কোর্স' : 'Subject Course'}</label>
+                                      <select
+                                        value={attendanceSheetSubjectFilter}
+                                        onChange={(e) => setAttendanceSheetSubjectFilter(e.target.value)}
+                                        className="w-full bg-white border border-gray-200 py-1.5 px-2.5 rounded-lg font-bold text-gray-700 focus:outline-none focus:border-[#025644] cursor-pointer"
+                                      >
+                                        <option value="Chemistry">Chemistry</option>
+                                        <option value="Physics">Physics</option>
+                                        <option value="Mathematics">Mathematics</option>
+                                        <option value="English">English</option>
+                                        <option value="Bangla">Bangla</option>
+                                      </select>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <button
+                                  onClick={() => {
+                                    // Trigger Print Preview Modal
+                                    // Set state so the renderer shows 'attendance' document
+                                    const modalLauncher = document.getElementById('print-modal-launcher-attendance');
+                                    if (modalLauncher) {
+                                      modalLauncher.click();
+                                    } else {
+                                      // Native fallback
+                                      alert(lang === 'bn' ? 'প্রিন্ট উইন্ডো চালু হচ্ছে...' : 'Launching print window...');
+                                      window.print();
+                                    }
+                                  }}
+                                  className="w-full py-2.5 bg-[#025644] hover:bg-[#01352a] text-white text-xs font-black rounded-xl shadow-3xs flex items-center justify-center gap-1.5 cursor-pointer mt-4"
+                                >
+                                  <Printer className="h-4 w-4" />
+                                  <span>{lang === 'bn' ? 'হাজিরা খাতা প্রিন্ট করুন' : 'Print Attendance Register'}</span>
+                                </button>
+                                {/* Invisible proxy button to launch modern overlay print modal */}
+                                <button
+                                  id="print-modal-launcher-attendance"
+                                  className="hidden"
+                                  onClick={() => {
+                                    const printContainer = document.querySelector('.fixed') as HTMLElement;
+                                    // Locate modal through standard React render flow
+                                    const launcher = document.querySelector('[id^="print-modal-launcher-attendance"]');
+                                  }}
+                                />
+                              </div>
+
+                              {/* 2. EXAM ROUTINE MATRIX PRINT & MANAGE */}
+                              <div className="bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs space-y-4 flex flex-col justify-between">
+                                <div className="space-y-3">
+                                  <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
+                                    <div className="h-7 w-7 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center">
+                                      <Calendar className="h-4 w-4" />
+                                    </div>
+                                    <h4 className="font-extrabold text-gray-900 text-sm">{lang === 'bn' ? '২. পরীক্ষার রুটিন' : '2. Written Exam Routine'}</h4>
+                                  </div>
+                                  <p className="text-xs text-gray-500 font-medium leading-relaxed">
+                                    {lang === 'bn'
+                                      ? 'এই পরীক্ষা টার্মের প্রতিটি বিষয়ের তারিখ, হল রুম এবং সময়সূচী সম্বলিত আনুষ্ঠানিক নোটিশ রুটিন আকারে তৈরি ও প্রিন্ট করুন।'
+                                      : 'Review dates, times, courses, and exam halls scheduled for this terminal. Keep schedules updated dynamically.'
+                                    }
+                                  </p>
+
+                                  <div className="bg-gray-50 p-3 rounded-xl border border-gray-150 max-h-36 overflow-y-auto space-y-1.5 text-[11px] font-bold text-gray-600">
+                                    {routinesList.map((r, i) => (
+                                      <div key={i} className="flex justify-between items-center bg-white p-2 rounded-lg border border-gray-100">
+                                        <span>{r.subject}</span>
+                                        <span className="text-gray-400 font-normal">{r.date}</span>
+                                      </div>
+                                    ))}
+                                    {routinesList.length === 0 && (
+                                      <p className="text-center italic text-gray-400 py-4 font-normal">
+                                        {lang === 'bn' ? 'কোনো রুটিন তৈরি করা হয়নি।' : 'No routine rows assigned.'}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <button
+                                  onClick={() => {
+                                    const routineModalLauncher = document.getElementById('print-modal-launcher-routine');
+                                    if (routineModalLauncher) routineModalLauncher.click();
+                                  }}
+                                  className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black rounded-xl shadow-3xs flex items-center justify-center gap-1.5 cursor-pointer mt-4"
+                                >
+                                  <Printer className="h-4 w-4" />
+                                  <span>{lang === 'bn' ? 'রুটিন ভিউ ও প্রিন্ট করুন' : 'View & Print Routine'}</span>
+                                </button>
+                              </div>
+
+                              {/* 3. TEACHER DISTRIBUTION CHART / EXAM DUTY CHART */}
+                              <div className="bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs space-y-4 flex flex-col justify-between">
+                                <div className="space-y-3">
+                                  <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
+                                    <div className="h-7 w-7 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center">
+                                      <Shield className="h-4 w-4" />
+                                    </div>
+                                    <h4 className="font-extrabold text-gray-900 text-sm">{lang === 'bn' ? '৩. শিক্ষকের ডিউটি চার্ট' : '3. Faculty Duty Chart'}</h4>
+                                  </div>
+                                  <p className="text-xs text-gray-500 font-medium leading-relaxed">
+                                    {lang === 'bn'
+                                      ? 'পরীক্ষায় শিক্ষকদের হল গার্ড বা ইনভিজিলেটর ডিউটি বন্টনের তালিকা ও তারিখ সম্বলিত চার্ট তৈরি এবং প্রিন্ট করুন।'
+                                      : 'Manage on-duty faculty members assigned to invigilate testing centers, prevent exam center issues.'
+                                    }
+                                  </p>
+
+                                  <div className="bg-gray-50 p-3 rounded-xl border border-gray-150 max-h-36 overflow-y-auto space-y-1.5 text-[11px] font-bold text-gray-600">
+                                    {dutiesList.map((d, i) => (
+                                      <div key={i} className="bg-white p-2 rounded-lg border border-gray-100 space-y-0.5 text-left">
+                                        <div className="flex justify-between font-black text-gray-800">
+                                          <span>{d.teacherName}</span>
+                                          <span className="text-emerald-700 text-[10px]">{d.room}</span>
+                                        </div>
+                                        <p className="text-[10px] text-gray-400 font-normal">{d.date}</p>
+                                      </div>
+                                    ))}
+                                    {dutiesList.length === 0 && (
+                                      <p className="text-center italic text-gray-400 py-4 font-normal">
+                                        {lang === 'bn' ? 'ডিউটি এসাইন করা হয়নি।' : 'No invigilators assigned.'}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <button
+                                  onClick={() => {
+                                    const dutiesModalLauncher = document.getElementById('print-modal-launcher-duties');
+                                    if (dutiesModalLauncher) dutiesModalLauncher.click();
+                                  }}
+                                  className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-black rounded-xl shadow-3xs flex items-center justify-center gap-1.5 cursor-pointer mt-4"
+                                >
+                                  <Printer className="h-4 w-4" />
+                                  <span>{lang === 'bn' ? 'ডিউটি চার্ট প্রিন্ট করুন' : 'Print Invigilation Chart'}</span>
+                                </button>
+                              </div>
+
+                            </div>
+
+                            {/* DYNAMIC MANAGEMENT FORM MODULES UNDER THE SHOW PAGE */}
+                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                              {/* 1. MANAGE SCHEDULER & ROUTINE */}
+                              <div className="lg:col-span-6 bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs space-y-4">
+                                <div className="border-b border-gray-100 pb-3">
+                                  <h4 className="font-extrabold text-gray-900 text-sm">
+                                    {lang === 'bn' ? 'নতুন বিষয় রুটিন যোগ করুন' : 'Add Subject to Routine Schedule'}
+                                  </h4>
+                                  <p className="text-[11px] text-gray-400 font-bold mt-0.5">
+                                    {lang === 'bn' ? 'পরীক্ষার তারিখ ও নির্দিষ্ট সময়সহ আরেকটি বিষয় যুক্ত করুন' : 'Append an examination slot with custom timing and hall registry'}
+                                  </p>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4 text-xs font-semibold text-gray-700">
+                                  <div className="space-y-1">
+                                    <label className="text-[10px] text-gray-400 font-bold block">{lang === 'bn' ? 'বিষয় শিরোনাম' : 'Subject Course Title'}</label>
+                                    <input
+                                      type="text"
+                                      placeholder="e.g. Higher Math & Lab"
+                                      value={newRoutineForm.subject}
+                                      onChange={(e) => setNewRoutineForm(prev => ({ ...prev, subject: e.target.value }))}
+                                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644]"
+                                    />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <label className="text-[10px] text-gray-400 font-bold block">{lang === 'bn' ? 'পরীক্ষার তারিখ' : 'Exam Date'}</label>
+                                    <input
+                                      type="date"
+                                      value={newRoutineForm.date}
+                                      onChange={(e) => setNewRoutineForm(prev => ({ ...prev, date: e.target.value }))}
+                                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644]"
+                                    />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <label className="text-[10px] text-gray-400 font-bold block">{lang === 'bn' ? 'সময়সূচী' : 'Time Slot'}</label>
+                                    <input
+                                      type="text"
+                                      placeholder="e.g. 10:00 AM - 01:00 PM"
+                                      value={newRoutineForm.time}
+                                      onChange={(e) => setNewRoutineForm(prev => ({ ...prev, time: e.target.value }))}
+                                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644]"
+                                    />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <label className="text-[10px] text-gray-400 font-bold block">{lang === 'bn' ? 'পরীক্ষার হল রুম' : 'Exam Hall Room'}</label>
+                                    <input
+                                      type="text"
+                                      placeholder="e.g. Room 204"
+                                      value={newRoutineForm.room}
+                                      onChange={(e) => setNewRoutineForm(prev => ({ ...prev, room: e.target.value }))}
+                                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644]"
+                                    />
+                                  </div>
+                                </div>
+
+                                <button
+                                  onClick={() => {
+                                    if (!newRoutineForm.subject || !newRoutineForm.date) {
+                                      alert(lang === 'bn' ? 'অনুগ্রহ করে সকল ঘর পূরণ করুন!' : 'Please complete all form fields!');
+                                      return;
+                                    }
+                                    setExamRoutines(prev => {
+                                      const currentList = prev[term.id] || [];
+                                      return {
+                                        ...prev,
+                                        [term.id]: [...currentList, { ...newRoutineForm, id: `R-${Date.now()}` }]
+                                      };
+                                    });
+                                    addAuditLog(`Admin appended ${newRoutineForm.subject} exam routine to ${term.name}`);
+                                    setNewRoutineForm({
+                                      subject: '',
+                                      date: '',
+                                      time: '10:00 AM - 01:00 PM',
+                                      class: 'Class 9',
+                                      room: 'Room 201'
+                                    });
+                                    setAdminSuccessMsg(lang === 'bn' ? 'রুটিনে নতুন বিষয় সফলভাবে যোগ করা হয়েছে!' : 'Exam routine successfully appended!');
+                                    setTimeout(() => setAdminSuccessMsg(''), 3000);
+                                  }}
+                                  className="w-full py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-black rounded-xl border border-indigo-200 transition-colors cursor-pointer"
+                                >
+                                  {lang === 'bn' ? 'রুটিন আপডেট করুন' : 'Save Subject to Routine'}
+                                </button>
+                              </div>
+
+                              {/* 2. MANAGE TEACHER DUTY ALLOCATION */}
+                              <div className="lg:col-span-6 bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs space-y-4">
+                                <div className="border-b border-gray-100 pb-3">
+                                  <h4 className="font-extrabold text-gray-900 text-sm">
+                                    {lang === 'bn' ? 'নতুন শিক্ষক ডিউটি এসাইন করুন' : 'Assign Faculty Invigilator Duty'}
+                                  </h4>
+                                  <p className="text-[11px] text-gray-400 font-bold mt-0.5">
+                                    {lang === 'bn' ? 'নির্দিষ্ট দিন ও হল রুমের জন্য শিক্ষককে ডিউটি বন্টন করুন' : 'Allocate standard guard duties to registered staff members'}
+                                  </p>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4 text-xs font-semibold text-gray-700">
+                                  <div className="space-y-1">
+                                    <label className="text-[10px] text-gray-400 font-bold block">{lang === 'bn' ? 'শিক্ষক নির্বাচন' : 'Select Faculty Member'}</label>
+                                    <select
+                                      value={newDutyForm.teacherName}
+                                      onChange={(e) => {
+                                        const foundEmp = employees.find(emp => emp.name === e.target.value);
+                                        setNewDutyForm(prev => ({
+                                          ...prev,
+                                          teacherName: e.target.value,
+                                          designation: foundEmp ? foundEmp.role : 'Faculty Member'
+                                        }));
+                                      }}
+                                      className="w-full bg-gray-50 border border-gray-200 py-2 px-2.5 rounded-xl font-bold text-gray-700 focus:outline-none cursor-pointer"
+                                    >
+                                      <option value="">{lang === 'bn' ? '-- শিক্ষক নির্বাচন --' : '-- Choose Invigilator --'}</option>
+                                      {employees.map((emp, i) => (
+                                        <option key={i} value={emp.name}>{emp.name}</option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                  <div className="space-y-1">
+                                    <label className="text-[10px] text-gray-400 font-bold block">{lang === 'bn' ? 'ডিউটির তারিখ' : 'Duty Date'}</label>
+                                    <input
+                                      type="date"
+                                      value={newDutyForm.date}
+                                      onChange={(e) => setNewDutyForm(prev => ({ ...prev, date: e.target.value }))}
+                                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644]"
+                                    />
+                                  </div>
+                                  <div className="space-y-1 col-span-2">
+                                    <label className="text-[10px] text-gray-400 font-bold block">{lang === 'bn' ? 'ডিউটি হল রুম' : 'Assigned Hall Room'}</label>
+                                    <input
+                                      type="text"
+                                      placeholder="e.g. Room 302"
+                                      value={newDutyForm.room}
+                                      onChange={(e) => setNewDutyForm(prev => ({ ...prev, room: e.target.value }))}
+                                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644]"
+                                    />
+                                  </div>
+                                </div>
+
+                                <button
+                                  onClick={() => {
+                                    if (!newDutyForm.teacherName || !newDutyForm.date) {
+                                      alert(lang === 'bn' ? 'অনুগ্রহ করে পরিদর্শক শিক্ষক ও তারিখ নির্বাচন করুন!' : 'Please pick a teacher and select an active date!');
+                                      return;
+                                    }
+                                    setTeacherDuties(prev => {
+                                      const currentDuties = prev[term.id] || [];
+                                      return {
+                                        ...prev,
+                                        [term.id]: [...currentDuties, { ...newDutyForm, id: `D-${Date.now()}` }]
+                                      };
+                                    });
+                                    addAuditLog(`Admin allocated exam invigilation duty to ${newDutyForm.teacherName} for date ${newDutyForm.date}`);
+                                    setNewDutyForm({
+                                      date: '',
+                                      teacherName: '',
+                                      designation: '',
+                                      room: 'Room 201'
+                                    });
+                                    setAdminSuccessMsg(lang === 'bn' ? 'শিক্ষকের ডিউটি সফলভাবে বন্টন করা হয়েছে!' : 'Guard duty successfully allocated!');
+                                    setTimeout(() => setAdminSuccessMsg(''), 3000);
+                                  }}
+                                  className="w-full py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-black rounded-xl border border-amber-200 transition-colors cursor-pointer"
+                                >
+                                  {lang === 'bn' ? 'ডিউটি তালিকা আপডেট করুন' : 'Assign Guard Duty'}
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Hidden buttons for starting modal flow in strict react state encapsulation */}
+                            <button id="print-modal-launcher-attendance" className="hidden" onClick={() => setShowPrintModal('attendance')} />
+                            <button id="print-modal-launcher-routine" className="hidden" onClick={() => setShowPrintModal('routine')} />
+                            <button id="print-modal-launcher-duties" className="hidden" onClick={() => setShowPrintModal('duties')} />
+                          </div>
+                        );
+                      })()
+                    )}
+                  </>
+                )}
+
+                {/* Other standard Exam subtabs rendering placeholder with mock structures or direct links */}
+                {examSubTab === 'exam_routine' && (
+                  <div className="bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs text-left space-y-6">
+                    <div>
+                      <h3 className="font-extrabold text-gray-900 text-lg">{lang === 'bn' ? 'পরীক্ষার সময়সূচী ও রুটিন তালিকা' : 'Active Exam Timetable Registries'}</h3>
+                      <p className="text-xs text-gray-400 font-bold">{lang === 'bn' ? 'সংশ্লিষ্ট পরীক্ষার রুটিন ডিরেক্টরি' : 'Choose an active Exam Term above to design, edit, and print highly customized class-wise timetables.'}</p>
+                    </div>
+                    <div className="flex flex-col items-center justify-center py-12 border border-dashed border-gray-200 rounded-xl bg-slate-50 text-gray-400 space-y-3">
+                      <Calendar className="h-10 w-10 text-emerald-600 animate-bounce" />
+                      <p className="font-bold text-xs">{lang === 'bn' ? 'রুটিন তৈরি ও প্রিন্ট করতে দয়া করে পরীক্ষা টার্মের ওভারভিউ প্যানেলে প্রবেশ করুন।' : 'Please navigate to the Exam Term subtab and click "Overview Hub" to configure or print routines.'}</p>
+                      <button onClick={() => setExamSubTab('exam_term')} className="px-4 py-2 bg-[#025644] hover:bg-[#01352a] text-white text-[11px] font-black rounded-xl transition-all cursor-pointer shadow-3xs">
+                        {lang === 'bn' ? 'পরীক্ষা টার্ম তালিকা' : 'Go to Exam Terms'}
+                      </button>
+                    </div>
                   </div>
-                  <form onSubmit={(e) => {
-                    e.preventDefault();
-                    setAdminSuccessMsg("Exam marks officially filed! Student GPA recalculated.");
-                    addAuditLog(`Admin filed chemistry marks for Student ID 2026102.`);
-                    setTimeout(() => setAdminSuccessMsg(''), 4000);
-                  }} className="space-y-4 text-xs">
-                    <div className="space-y-1">
-                      <label className="block font-bold text-gray-400">Student ID</label>
-                      <input type="text" placeholder="e.g. 2026105" required className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold" />
+                )}
+
+                {examSubTab === 'exam_hall' && (
+                  <div className="bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs text-left space-y-4">
+                    <div>
+                      <h3 className="font-extrabold text-gray-900 text-lg">{lang === 'bn' ? 'পরীক্ষা হল আসন বিন্যাস' : 'Exam Hall Center Capacity Matrix'}</h3>
+                      <p className="text-xs text-gray-400 font-bold">{lang === 'bn' ? 'আসন সংখ্যা ও সক্ষমতা' : 'Configure layout dimensions and student volume for exam halls'}</p>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <label className="block font-bold text-gray-400">Subject Course</label>
-                        <select className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:bg-white text-gray-700 font-bold cursor-pointer">
-                          <option>Chemistry</option>
-                          <option>Physics</option>
-                          <option>Higher Math</option>
-                        </select>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+                      {[
+                        { hall: 'Room 101', cap: '40 Seats', class: 'Class 9', status: 'Booked' },
+                        { hall: 'Room 201', cap: '35 Seats', class: 'Class 9', status: 'Booked' },
+                        { hall: 'Room 301', cap: '50 Seats', class: 'Class 10', status: 'Available' }
+                      ].map((item, idx) => (
+                        <div key={idx} className="bg-gray-50 border border-gray-150 p-4 rounded-2xl text-xs space-y-2">
+                          <div className="flex justify-between items-center font-extrabold text-gray-800">
+                            <span>{item.hall}</span>
+                            <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-full font-black text-[10px]">{item.status}</span>
+                          </div>
+                          <p className="font-bold text-gray-500">{lang === 'bn' ? `ধারণক্ষমতা: ${item.cap}` : `Capacity: ${item.cap}`}</p>
+                          <p className="text-[10px] text-gray-400">{lang === 'bn' ? `বরাদ্দ শ্রেণী: ${item.class}` : `Assigned: ${item.class}`}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {examSubTab === 'exam_distribution' && (
+                  <div className="bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs text-left space-y-4">
+                    <div>
+                      <h3 className="font-extrabold text-gray-900 text-lg">{lang === 'bn' ? 'নম্বর বণ্টন ও কাঠামো বিন্যাস' : 'Marks Weightage & Theory Distribution'}</h3>
+                      <p className="text-xs text-gray-400 font-bold">{lang === 'bn' ? 'লিখিত ও এমসিকিউ অংশের অনুপাত' : 'Establish ratios of written, objective, and laboratory parts in grades'}</p>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-150 text-xs font-semibold text-gray-600 space-y-3">
+                      <div className="flex justify-between border-b border-gray-200 pb-2">
+                        <span>{lang === 'bn' ? 'লিখিত অংশ (Written / Theory)' : 'Theoretical Paper'}</span>
+                        <span className="font-black text-gray-800">70%</span>
                       </div>
-                      <div className="space-y-1">
-                        <label className="block font-bold text-gray-400">Marks (out of 100)</label>
-                        <input type="number" min="0" max="100" placeholder="e.g. 95" required className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold" />
+                      <div className="flex justify-between border-b border-gray-200 pb-2">
+                        <span>{lang === 'bn' ? 'বহুনির্বাচনী (MCQ / Objective)' : 'Objective / MCQ'}</span>
+                        <span className="font-black text-gray-800">30%</span>
+                      </div>
+                      <div className="flex justify-between font-black text-gray-800">
+                        <span>{lang === 'bn' ? 'সর্বমোট' : 'Total Course Weight'}</span>
+                        <span>100%</span>
                       </div>
                     </div>
-                    <button type="submit" className="w-full py-2.5 bg-[#025644] hover:bg-[#01352a] text-white font-black rounded-xl shadow-sm cursor-pointer">
-                      File and Save Marks
-                    </button>
-                  </form>
-                </div>
+                  </div>
+                )}
+
+                {examSubTab === 'exam_setup' && (
+                  <div className="bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs text-left space-y-4">
+                    <div>
+                      <h3 className="font-extrabold text-gray-900 text-lg">{lang === 'bn' ? 'পরীক্ষা নিয়মকানুন সেটআপ' : 'General Grading Scheme Settings'}</h3>
+                      <p className="text-xs text-gray-400 font-bold">{lang === 'bn' ? 'গ্রেড পরিবর্তনের নীতিমালা' : 'Configure global grade point thresholds and calculation formulas'}</p>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
+                      {[
+                        { grade: 'A+', range: '80 - 100', gpa: '5.00' },
+                        { grade: 'A', range: '70 - 79', gpa: '4.00' },
+                        { grade: 'A-', range: '60 - 69', gpa: '3.50' },
+                        { grade: 'B', range: '50 - 59', gpa: '3.00' }
+                      ].map((g, i) => (
+                        <div key={i} className="bg-gray-50 border border-gray-150 p-4 rounded-2xl text-center space-y-1 text-xs">
+                          <span className="font-black text-emerald-800 text-base block">{g.grade}</span>
+                          <span className="text-[10px] text-gray-400 font-bold block">{g.range} Marks</span>
+                          <span className="font-bold text-gray-600 block">GPA {g.gpa}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {examSubTab === 'exam_marksheet_template' && (
+                  <div className="bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs text-left space-y-4">
+                    <div>
+                      <h3 className="font-extrabold text-gray-900 text-lg">{lang === 'bn' ? 'মার্কশিট টেমপ্লেট নির্বাচন' : 'Official Report Card Templates'}</h3>
+                      <p className="text-xs text-gray-400 font-bold">{lang === 'bn' ? 'ফলাফলের চূড়ান্ত ট্রান্সক্রিপ্ট ডিজাইন' : 'Choose professional printable layouts for student report sheets'}</p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                      <div className="bg-gray-50 border-2 border-emerald-600 p-4 rounded-2xl space-y-2 text-xs relative">
+                        <span className="absolute top-3 right-3 px-2 py-0.5 bg-emerald-100 text-emerald-800 font-black rounded-md text-[9px]">{lang === 'bn' ? 'সক্রিয়' : 'Active'}</span>
+                        <h4 className="font-extrabold text-gray-900">SCMS Standard Tabular Template</h4>
+                        <p className="text-gray-500">{lang === 'bn' ? 'ঐতিহ্যবাহী বিষয়ভিত্তিক টেবিল লেআউট যাতে জিপিএ এবং গ্রেড পয়েন্ট আলাদাভাবে প্রদর্শন করা হয়।' : 'Traditional clean table layout detailing exact grade breakdowns and teacher feedbacks.'}</p>
+                      </div>
+                      <div className="bg-gray-50 border border-gray-150 p-4 rounded-2xl space-y-2 text-xs">
+                        <h4 className="font-extrabold text-gray-500">Compact Grade-Grid Template</h4>
+                        <p className="text-gray-400">{lang === 'bn' ? 'একটি আধুনিক সংক্ষিপ্ত কার্ড যেখানে সামগ্রিক ফলাফল এক নজরে পাওয়া যায়।' : 'A minimalist card-based result slip format optimized for instant mobile view.'}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {examSubTab === 'exam_schedule' && (
+                  <div className="bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs text-left space-y-4">
+                    <div>
+                      <h3 className="font-extrabold text-gray-900 text-lg">{lang === 'bn' ? 'পরীক্ষা ক্যালেন্ডার ও সময়সূচী' : 'School Exam Calendar Matrix'}</h3>
+                      <p className="text-xs text-gray-400 font-bold">{lang === 'bn' ? 'ক্যালেন্ডার ভিউ' : 'Complete list of testing slots assigned to this year'}</p>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-150 text-xs font-semibold text-gray-600 space-y-2">
+                      <p>🗓 Mid-Term Exams: <span className="text-emerald-700 font-black">July 12 - July 20, 2026</span></p>
+                      <p>🗓 Preparatory Test: <span className="text-amber-600 font-black">September 05 - September 15, 2026</span></p>
+                      <p>🗓 Final Term Exams: <span className="text-indigo-600 font-black">December 01 - December 20, 2026</span></p>
+                    </div>
+                  </div>
+                )}
+
+                {examSubTab === 'exam_marks' && (
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 text-left">
+                    {/* Active exam list */}
+                    <div className="lg:col-span-7 bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs space-y-4">
+                      <div>
+                        <h3 className="font-extrabold text-gray-900 text-base">{lang === 'bn' ? 'অর্ধ-বার্ষিক পরীক্ষার নম্বরপত্র' : 'Half-Yearly Exam Timetables'}</h3>
+                        <p className="text-xs text-gray-400 font-bold">Official schedule released to notice board</p>
+                      </div>
+                      <div className="space-y-3">
+                        {[
+                          { subject: 'Chemistry (Theoretical)', date: 'July 12, 2026', time: '10:00 AM - 1:00 PM', class: 'Class 9' },
+                          { subject: 'Physics & Lab Practice', date: 'July 14, 2026', time: '10:00 AM - 1:00 PM', class: 'Class 9' },
+                          { subject: 'Higher Mathematics', date: 'July 16, 2026', time: '10:00 AM - 1:00 PM', class: 'Class 9' },
+                        ].map((ex, i) => (
+                          <div key={i} className="p-4 bg-gray-50 border border-gray-150 rounded-xl flex justify-between items-center text-xs">
+                            <div>
+                              <span className="font-extrabold text-[#025644] block">{ex.subject}</span>
+                              <span className="text-[10px] text-gray-400 font-bold mt-1 block">Timings: {ex.time}</span>
+                            </div>
+                            <div className="text-right">
+                              <span className="px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-100 rounded-md font-black block w-fit ml-auto">{ex.class}</span>
+                              <span className="text-[10px] text-gray-400 font-bold mt-1 block">{ex.date}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Submitting exam grades proxy */}
+                    <div className="lg:col-span-5 bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs space-y-4">
+                      <div>
+                        <h3 className="font-extrabold text-gray-900 text-base">{lang === 'bn' ? 'সরাসরি নম্বর ইনপুট প্যানেল' : 'Direct Student Grading Panel'}</h3>
+                        <p className="text-xs text-gray-400 font-bold">Input final course marks to update scholastic transcripts</p>
+                      </div>
+                      <form onSubmit={(e) => {
+                        e.preventDefault();
+                        setAdminSuccessMsg("Exam marks officially filed! Student GPA recalculated.");
+                        addAuditLog(`Admin filed chemistry marks for Student ID 2026102.`);
+                        setTimeout(() => setAdminSuccessMsg(''), 4000);
+                      }} className="space-y-4 text-xs">
+                        <div className="space-y-1">
+                          <label className="block font-bold text-gray-400">Student ID</label>
+                          <input type="text" placeholder="e.g. 2026105" required className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold" />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <label className="block font-bold text-gray-400">Subject Course</label>
+                            <select className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:bg-white text-gray-700 font-bold cursor-pointer">
+                              <option>Chemistry</option>
+                              <option>Physics</option>
+                              <option>Higher Math</option>
+                            </select>
+                          </div>
+                          <div className="space-y-1">
+                            <label className="block font-bold text-gray-400">Marks (out of 100)</label>
+                            <input type="number" min="0" max="100" placeholder="e.g. 95" required className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold" />
+                          </div>
+                        </div>
+                        <button type="submit" className="w-full py-2.5 bg-[#025644] hover:bg-[#01352a] text-white font-black rounded-xl shadow-sm cursor-pointer">
+                          File and Save Marks
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
