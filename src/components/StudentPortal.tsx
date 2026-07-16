@@ -532,7 +532,8 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
     endDate: '',
     status: 'Upcoming' as 'Upcoming' | 'Active' | 'Completed',
     resultDate: '',
-    weightage: 0
+    weightage: 0,
+    description: ''
   });
 
   const [examTerms, setExamTerms] = useState<Array<{
@@ -544,15 +545,16 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
     status: 'Upcoming' | 'Active' | 'Completed';
     resultDate: string;
     weightage: number;
+    description?: string;
   }>>(() => {
     const saved = localStorage.getItem('school_exam_terms');
     if (saved) {
       try { return JSON.parse(saved); } catch (e) {}
     }
     return [
-      { id: 'T-1', name: 'First Term', year: 2026, startDate: '2026-03-01', endDate: '2026-03-15', status: 'Completed', resultDate: '2026-03-25', weightage: 25 },
-      { id: 'T-2', name: 'Mid Term', year: 2026, startDate: '2026-07-01', endDate: '2026-07-15', status: 'Active', resultDate: '2026-07-25', weightage: 25 },
-      { id: 'T-3', name: 'Final Term', year: 2026, startDate: '2026-12-01', endDate: '2026-12-20', status: 'Upcoming', resultDate: '2026-12-30', weightage: 50 }
+      { id: 'T-1', name: 'First Term', year: 2026, startDate: '2026-03-01', endDate: '2026-03-15', status: 'Completed', resultDate: '2026-03-25', weightage: 25, description: 'First term general examination for academic evaluation.' },
+      { id: 'T-2', name: 'Mid Term', year: 2026, startDate: '2026-07-01', endDate: '2026-07-15', status: 'Active', resultDate: '2026-07-25', weightage: 25, description: 'Mid term assessment focusing on half-yearly curriculum.' },
+      { id: 'T-3', name: 'Final Term', year: 2026, startDate: '2026-12-01', endDate: '2026-12-20', status: 'Upcoming', resultDate: '2026-12-30', weightage: 50, description: 'Annual comprehensive evaluation for grade promotion.' }
     ];
   });
 
@@ -1072,6 +1074,7 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
   const [studentPhotoFile, setStudentPhotoFile] = useState<File | null>(null);
   const [viewingStudentDetails, setViewingStudentDetails] = useState<any | null>(null);
   const [viewingAdmissionForm, setViewingAdmissionForm] = useState<any | null>(null);
+  const [viewingAdmitCard, setViewingAdmitCard] = useState<any | null>(null);
   
   // Edit Student Form States
   const [isEditStudentModalOpen, setIsEditStudentModalOpen] = useState(false);
@@ -5574,6 +5577,15 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
                                           <Eye className="h-3.5 w-3.5" />
                                         </button>
                                         <button 
+                                          title={lang === 'bn' ? "প্রবেশপত্র ডাউনলোড / প্রিন্ট" : "Download Admit Card"}
+                                          onClick={() => {
+                                            setViewingAdmitCard(std);
+                                          }}
+                                          className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-sky-600 rounded-lg transition-colors cursor-pointer flex items-center justify-center text-sm"
+                                        >
+                                          <span>🎫</span>
+                                        </button>
+                                        <button 
                                           title={lang === 'bn' ? "সম্পাদনা করুন" : "Edit"}
                                           onClick={() => handleEditStudentClick(std)}
                                           className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-[#025644] rounded-lg transition-colors cursor-pointer"
@@ -10055,120 +10067,389 @@ def approve_admission_application(request, pk):
                 {examSubTab === 'exam_term' && (
                   <>
                     {!selectedExamTermDetailId ? (
-                      /* EXAM TERMS INDEX LIST */
-                      <div className="bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs space-y-6">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-4">
-                          <div>
-                            <h3 className="font-extrabold text-gray-900 text-lg">
-                              {lang === 'bn' ? 'পরীক্ষা টার্ম তালিকা ও প্রশাসন' : 'Examination Terms & Registries'}
-                            </h3>
-                            <p className="text-xs text-gray-400 font-bold mt-1">
-                              {lang === 'bn' ? 'অ্যাকাডেমিক সেশনের সমস্ত চূড়ান্ত এবং মধ্যবর্তী পরীক্ষা সেশন পরিচালনা করুন' : 'Govern active, completed, and upcoming official terminal exam sessions'}
-                            </p>
-                          </div>
-                          
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => {
-                                const newTermName = prompt(lang === 'bn' ? 'নতুন পরীক্ষার টার্মের নাম লিখুন:' : 'Enter new exam term name:');
-                                if (newTermName && newTermName.trim()) {
-                                  const termId = `T-${Date.now()}`;
-                                  const newTerm = {
-                                    id: termId,
-                                    name: newTermName.trim(),
-                                    year: 2026,
-                                    startDate: '2026-07-01',
-                                    endDate: '2026-07-15',
-                                    status: 'Upcoming' as const,
-                                    resultDate: '2026-07-25',
-                                    weightage: 25
-                                  };
-                                  setExamTerms(prev => [...prev, newTerm]);
-                                  addAuditLog(`Admin created a new exam term: ${newTerm.name}`);
-                                }
-                              }}
-                              className="px-4 py-2 bg-[#025644] hover:bg-[#01352a] text-white text-xs font-black rounded-xl shadow-3xs flex items-center gap-1.5 cursor-pointer"
-                            >
-                              <Plus className="h-4 w-4" />
-                              <span>{lang === 'bn' ? 'টার্ম যোগ করুন' : 'Add Term'}</span>
-                            </button>
-                          </div>
-                        </div>
+                      /* EXAM TERMS INDEX LIST - TWO-COLUMN HIGH-FIDELITY LAYOUT */
+                      (() => {
+                        const handleSaveExamTerm = (e: React.FormEvent) => {
+                          e.preventDefault();
+                          if (!newExamTermForm.name.trim()) return;
 
-                        {/* List grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                          {examTerms.map((term, idx) => {
-                            const termRoutineCount = examRoutines[term.id]?.length || 0;
-                            const termDutyCount = teacherDuties[term.id]?.length || 0;
+                          if (editingExamTermId) {
+                            setExamTerms(prev => prev.map(t => t.id === editingExamTermId ? {
+                              ...t,
+                              name: newExamTermForm.name.trim(),
+                              year: Number(newExamTermForm.year),
+                              startDate: newExamTermForm.startDate || t.startDate,
+                              endDate: newExamTermForm.endDate || t.endDate,
+                              status: newExamTermForm.status,
+                              resultDate: newExamTermForm.resultDate || t.resultDate,
+                              weightage: Number(newExamTermForm.weightage) || t.weightage,
+                              description: newExamTermForm.description
+                            } : t));
+                            addAuditLog(`Admin updated exam term: ${newExamTermForm.name}`);
+                            setEditingExamTermId(null);
+                          } else {
+                            const termId = `T-${Date.now()}`;
+                            const newTerm = {
+                              id: termId,
+                              name: newExamTermForm.name.trim(),
+                              year: Number(newExamTermForm.year),
+                              startDate: newExamTermForm.startDate || '2026-07-01',
+                              endDate: newExamTermForm.endDate || '2026-07-15',
+                              status: newExamTermForm.status,
+                              resultDate: newExamTermForm.resultDate || '2026-07-25',
+                              weightage: Number(newExamTermForm.weightage) || 25,
+                              description: newExamTermForm.description
+                            };
+                            setExamTerms(prev => [...prev, newTerm]);
+                            addAuditLog(`Admin created a new exam term: ${newTerm.name}`);
+                          }
 
-                            return (
-                              <div key={idx} className="bg-gray-50 border border-gray-150 rounded-2xl p-5 hover:shadow-2xs transition-shadow relative space-y-4 text-left">
-                                {/* Status badge */}
-                                <span className={`absolute top-4 right-4 text-[9px] font-black px-2.5 py-0.5 rounded-full border ${
-                                  term.status === 'Active'
-                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-                                    : term.status === 'Completed'
-                                    ? 'bg-blue-50 text-blue-700 border-blue-100'
-                                    : 'bg-amber-50 text-amber-700 border-amber-100'
-                                }`}>
-                                  {lang === 'bn'
-                                    ? (term.status === 'Active' ? 'সক্রিয়' : term.status === 'Completed' ? 'সম্পন্ন' : 'আসন্ন')
-                                    : term.status
+                          // Reset form
+                          setNewExamTermForm({
+                            name: '',
+                            year: 2026,
+                            startDate: '',
+                            endDate: '',
+                            status: 'Upcoming',
+                            resultDate: '',
+                            weightage: 25,
+                            description: ''
+                          });
+                        };
+
+                        return (
+                          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                            {/* Left Column: Form */}
+                            <div className="lg:col-span-5 bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs space-y-5 text-left">
+                              <div>
+                                <h4 className="font-extrabold text-gray-900 text-base">
+                                  {editingExamTermId 
+                                    ? (lang === 'bn' ? 'পরীক্ষা টার্ম সংশোধন করুন' : 'Edit Exam Term') 
+                                    : (lang === 'bn' ? 'নতুন পরীক্ষার টার্ম যোগ করুন' : 'Add New Exam Term')
                                   }
-                                </span>
-
-                                <div className="space-y-1">
-                                  <span className="text-[10px] font-mono font-bold text-gray-400 block">ID: {term.id}</span>
-                                  <h4 className="font-extrabold text-sm text-gray-900">{term.name}</h4>
-                                  <p className="text-[11px] text-gray-400 font-bold">{term.year} Academic Session</p>
-                                </div>
-
-                                <div className="border-t border-gray-200/60 pt-3 text-[11px] text-gray-500 font-semibold space-y-1.5">
-                                  <p>{lang === 'bn' ? 'পরীক্ষার সময়কাল' : 'Date Range'}: <span className="text-gray-800 font-bold">{term.startDate} to {term.endDate}</span></p>
-                                  <p>{lang === 'bn' ? 'ফলাফল প্রকাশের তারিখ' : 'Result Date'}: <span className="text-gray-700 font-bold">{term.resultDate}</span></p>
-                                  <p>{lang === 'bn' ? 'জিপিএ ওয়েটেজ' : 'GPA Weightage'}: <span className="text-[#025644] font-black">{term.weightage}%</span></p>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-2 text-[10px] bg-white border border-gray-100 p-2.5 rounded-xl font-bold">
-                                  <div className="text-center border-r border-gray-100">
-                                    <span className="block text-gray-400">{lang === 'bn' ? 'রুটিন বিষয়' : 'Routine'}</span>
-                                    <span className="block text-gray-800 font-black text-xs mt-0.5">{termRoutineCount}</span>
-                                  </div>
-                                  <div className="text-center">
-                                    <span className="block text-gray-400">{lang === 'bn' ? 'গার্ড ডিউটি' : 'Invigilators'}</span>
-                                    <span className="block text-gray-800 font-black text-xs mt-0.5">{termDutyCount}</span>
-                                  </div>
-                                </div>
-
-                                <div className="grid grid-cols-12 gap-2 pt-2 border-t border-gray-200/60">
-                                  {/* "Eye Icon" (View Button) that opens the Exam Term Overview page */}
-                                  <button
-                                    onClick={() => setSelectedExamTermDetailId(term.id)}
-                                    className="col-span-9 py-1.5 bg-[#025644] hover:bg-[#01352a] text-white text-xs font-black rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-3xs"
-                                    title="View Exam Term Overview"
-                                  >
-                                    <Eye className="h-3.5 w-3.5" />
-                                    <span>{lang === 'bn' ? 'ওভারভিউ দেখুন' : 'Overview Hub'}</span>
-                                  </button>
-
-                                  <button
-                                    onClick={() => {
-                                      if (confirm(lang === 'bn' ? 'আপনি কি নিশ্চিতভাবে এই পরীক্ষার টার্মটি মুছে ফেলতে চান?' : 'Are you sure you want to delete this exam term?')) {
-                                        setExamTerms(prev => prev.filter(t => t.id !== term.id));
-                                        addAuditLog(`Admin deleted exam term: ${term.name}`);
-                                      }
-                                    }}
-                                    className="col-span-3 py-1.5 bg-white hover:bg-rose-50 text-rose-600 hover:border-rose-200 border border-gray-200 text-xs font-bold rounded-xl transition-colors cursor-pointer flex items-center justify-center"
-                                    title="Remove Term"
-                                  >
-                                    <Trash2 className="h-3.5 w-3.5" />
-                                  </button>
-                                </div>
+                                </h4>
+                                <p className="text-xs text-gray-400 font-bold mt-1 leading-relaxed">
+                                  {lang === 'bn' 
+                                    ? 'নতুন একটি পরীক্ষা সেশন বা টার্ম তৈরি করতে নিচের তথ্যগুলো পূরণ করুন।' 
+                                    : 'Provide accurate terminal credentials below to initialize a fresh session.'
+                                  }
+                                </p>
                               </div>
-                            );
-                          })}
-                        </div>
-                      </div>
+
+                              <form onSubmit={handleSaveExamTerm} className="space-y-4">
+                                {/* Exam Name */}
+                                <div className="space-y-1">
+                                  <label className="block text-xs font-black text-gray-700 uppercase tracking-wide">
+                                    {lang === 'bn' ? 'পরীক্ষার নাম (Exam Name) *' : 'Exam Name *'}
+                                  </label>
+                                  <input 
+                                    type="text"
+                                    required
+                                    value={newExamTermForm.name}
+                                    onChange={e => setNewExamTermForm(prev => ({ ...prev, name: e.target.value }))}
+                                    placeholder={lang === 'bn' ? 'যেমন: অর্ধ-বার্ষিক পরীক্ষা' : 'e.g., Mid Term Examination'}
+                                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 focus:border-[#025644] focus:bg-white text-gray-900 rounded-xl text-xs font-bold transition-all outline-none"
+                                  />
+                                </div>
+
+                                {/* Session/Year */}
+                                <div className="space-y-1">
+                                  <label className="block text-xs font-black text-gray-700 uppercase tracking-wide">
+                                    {lang === 'bn' ? 'অ্যাকাডেমিক সেশন / বছর (Session/Year) *' : 'Session / Year *'}
+                                  </label>
+                                  <input 
+                                    type="number"
+                                    required
+                                    min={2000}
+                                    max={2100}
+                                    value={newExamTermForm.year}
+                                    onChange={e => setNewExamTermForm(prev => ({ ...prev, year: Number(e.target.value) }))}
+                                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 focus:border-[#025644] focus:bg-white text-gray-900 rounded-xl text-xs font-mono font-bold transition-all outline-none"
+                                  />
+                                </div>
+
+                                {/* Description */}
+                                <div className="space-y-1">
+                                  <label className="block text-xs font-black text-gray-700 uppercase tracking-wide">
+                                    {lang === 'bn' ? 'বিবরণ (Description)' : 'Description'}
+                                  </label>
+                                  <textarea 
+                                    rows={3}
+                                    value={newExamTermForm.description}
+                                    onChange={e => setNewExamTermForm(prev => ({ ...prev, description: e.target.value }))}
+                                    placeholder={lang === 'bn' ? 'পরীক্ষা সম্পর্কিত সংক্ষিপ্ত বিবরণ...' : 'Enter term specific instructions or comments...'}
+                                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 focus:border-[#025644] focus:bg-white text-gray-900 rounded-xl text-xs font-bold transition-all outline-none resize-none"
+                                  />
+                                </div>
+
+                                {/* Technical Params (Minimalist and clean layout) */}
+                                <div className="border-t border-dashed border-gray-150 pt-4 space-y-3">
+                                  <span className="block text-[10px] font-black text-[#025644] uppercase tracking-widest mb-1">
+                                    {lang === 'bn' ? 'সিস্টেম ইন্টিগ্রেশন প্যারামিটার' : 'System Parameters'}
+                                  </span>
+                                  
+                                  <div className="grid grid-cols-2 gap-3 text-left">
+                                    {/* Status Select */}
+                                    <div className="space-y-1">
+                                      <label className="block text-[10px] font-bold text-gray-500 uppercase">
+                                        {lang === 'bn' ? 'স্ট্যাটাস' : 'Status'}
+                                      </label>
+                                      <select
+                                        value={newExamTermForm.status}
+                                        onChange={e => setNewExamTermForm(prev => ({ ...prev, status: e.target.value as any }))}
+                                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-gray-800 rounded-xl text-xs font-bold transition-all outline-none"
+                                      >
+                                        <option value="Upcoming">{lang === 'bn' ? 'আসন্ন' : 'Upcoming'}</option>
+                                        <option value="Active">{lang === 'bn' ? 'সক্রিয়' : 'Active'}</option>
+                                        <option value="Completed">{lang === 'bn' ? 'সম্পন্ন' : 'Completed'}</option>
+                                      </select>
+                                    </div>
+
+                                    {/* Weightage Number */}
+                                    <div className="space-y-1">
+                                      <label className="block text-[10px] font-bold text-gray-500 uppercase">
+                                        {lang === 'bn' ? 'জিপিএ ওয়েটেজ (%)' : 'GPA Weightage (%)'}
+                                      </label>
+                                      <input
+                                        type="number"
+                                        min={0}
+                                        max={100}
+                                        value={newExamTermForm.weightage || 25}
+                                        onChange={e => setNewExamTermForm(prev => ({ ...prev, weightage: Number(e.target.value) }))}
+                                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-gray-800 rounded-xl text-xs font-bold transition-all outline-none"
+                                      />
+                                    </div>
+                                  </div>
+
+                                  <div className="grid grid-cols-2 gap-3 text-left">
+                                    {/* Start Date */}
+                                    <div className="space-y-1">
+                                      <label className="block text-[10px] font-bold text-gray-500 uppercase">
+                                        {lang === 'bn' ? 'পরীক্ষা শুরু' : 'Start Date'}
+                                      </label>
+                                      <input
+                                        type="date"
+                                        value={newExamTermForm.startDate || '2026-07-01'}
+                                        onChange={e => setNewExamTermForm(prev => ({ ...prev, startDate: e.target.value }))}
+                                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-gray-800 rounded-xl text-[11px] font-bold transition-all outline-none"
+                                      />
+                                    </div>
+
+                                    {/* End Date */}
+                                    <div className="space-y-1">
+                                      <label className="block text-[10px] font-bold text-gray-500 uppercase">
+                                        {lang === 'bn' ? 'পরীক্ষা শেষ' : 'End Date'}
+                                      </label>
+                                      <input
+                                        type="date"
+                                        value={newExamTermForm.endDate || '2026-07-15'}
+                                        onChange={e => setNewExamTermForm(prev => ({ ...prev, endDate: e.target.value }))}
+                                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-gray-800 rounded-xl text-[11px] font-bold transition-all outline-none"
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Form Submit Actions */}
+                                <div className="flex items-center gap-2 pt-2">
+                                  <button
+                                    type="submit"
+                                    className="flex-1 py-2.5 bg-[#025644] hover:bg-[#013f31] text-white text-xs font-black rounded-xl transition-all cursor-pointer shadow-3xs flex items-center justify-center gap-1.5"
+                                  >
+                                    <span>💾</span>
+                                    <span>
+                                      {editingExamTermId 
+                                        ? (lang === 'bn' ? 'পরীক্ষা টার্ম আপডেট করুন' : 'Update Exam Term')
+                                        : (lang === 'bn' ? 'পরীক্ষা টার্ম সংরক্ষণ করুন' : 'Save Exam Term')
+                                      }
+                                    </span>
+                                  </button>
+
+                                  {editingExamTermId && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setEditingExamTermId(null);
+                                        setNewExamTermForm({
+                                          name: '',
+                                          year: 2026,
+                                          startDate: '',
+                                          endDate: '',
+                                          status: 'Upcoming',
+                                          resultDate: '',
+                                          weightage: 25,
+                                          description: ''
+                                        });
+                                      }}
+                                      className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-bold rounded-xl transition-colors cursor-pointer"
+                                    >
+                                      {lang === 'bn' ? 'বাতিল' : 'Cancel'}
+                                    </button>
+                                  )}
+                                </div>
+                              </form>
+                            </div>
+
+                            {/* Right Column: Table */}
+                            <div className="lg:col-span-7 bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs space-y-4 text-left">
+                              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                                <div>
+                                  <h4 className="font-extrabold text-gray-900 text-base">
+                                    {lang === 'bn' ? 'পরীক্ষার টার্ম তালিকা' : 'Exam Term List'}
+                                  </h4>
+                                  <p className="text-xs text-gray-400 font-bold mt-1">
+                                    {lang === 'bn' ? 'সিস্টেমের সচল এবং আসন্ন পরীক্ষা টার্মসমূহ পরিচালনা করুন।' : 'Govern terminal exam schedules and structural academic milestones.'}
+                                  </p>
+                                </div>
+                                <span className="text-[11px] font-black px-3 py-1 bg-emerald-50 text-[#025644] border border-emerald-100/50 rounded-full">
+                                  {examTerms.length} {lang === 'bn' ? 'টি টার্ম' : 'Terms'}
+                                </span>
+                              </div>
+
+                              <div className="overflow-x-auto">
+                                <table className="w-full text-left text-xs border-collapse">
+                                  <thead>
+                                    <tr className="border-b border-gray-100 font-black text-gray-400 uppercase tracking-wider text-[10px]">
+                                      <th className="py-3 px-2 text-center" style={{ width: '8%' }}>SL</th>
+                                      <th className="py-3 px-3" style={{ width: '42%' }}>{lang === 'bn' ? 'পরীক্ষার নাম' : 'Exam Name'}</th>
+                                      <th className="py-3 px-3 text-center" style={{ width: '15%' }}>{lang === 'bn' ? 'সেশন / বছর' : 'Session'}</th>
+                                      <th className="py-3 px-3 text-center" style={{ width: '15%' }}>Status</th>
+                                      <th className="py-3 px-3 text-center" style={{ width: '20%' }}>Action</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="divide-y divide-gray-100 text-gray-700 font-bold">
+                                    {examTerms.map((term, index) => {
+                                      const isEditingThis = editingExamTermId === term.id;
+                                      return (
+                                        <tr 
+                                          key={term.id} 
+                                          className={`group transition-colors ${
+                                            isEditingThis ? 'bg-[#025644]/5' : 'hover:bg-slate-50/50'
+                                          }`}
+                                        >
+                                          {/* SL */}
+                                          <td className="py-3.5 px-2 text-center text-gray-400 font-mono font-black">
+                                            {index + 1}
+                                          </td>
+
+                                          {/* Exam Name & Description */}
+                                          <td className="py-3.5 px-3">
+                                            <div className="space-y-1 text-left">
+                                              <button
+                                                type="button"
+                                                onClick={() => setSelectedExamTermDetailId(term.id)}
+                                                className="text-gray-900 font-extrabold hover:text-[#025644] text-left transition-colors cursor-pointer text-xs block leading-snug"
+                                                title={lang === 'bn' ? 'ওভারভিউ হাব খুলুন' : 'Open Overview Hub'}
+                                              >
+                                                {term.name}
+                                              </button>
+                                              {term.description ? (
+                                                <p className="text-[10px] text-gray-400 font-medium max-w-[240px] truncate leading-tight">
+                                                  {term.description}
+                                                </p>
+                                              ) : (
+                                                <p className="text-[10px] text-gray-300 font-medium italic">
+                                                  {lang === 'bn' ? 'কোনো বিবরণ নেই' : 'No description provided'}
+                                                </p>
+                                              )}
+                                            </div>
+                                          </td>
+
+                                          {/* Session */}
+                                          <td className="py-3.5 px-3 text-center font-mono font-black text-gray-600 text-[11px]">
+                                            {term.year}
+                                          </td>
+
+                                          {/* Status Badge */}
+                                          <td className="py-3.5 px-3 text-center">
+                                            <span className={`inline-block text-[9px] font-black px-2.5 py-0.5 rounded-full border ${
+                                              term.status === 'Active'
+                                                ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                                                : term.status === 'Completed'
+                                                ? 'bg-blue-50 text-blue-700 border-blue-100'
+                                                : 'bg-amber-50 text-amber-700 border-amber-100'
+                                            }`}>
+                                              {lang === 'bn'
+                                                ? (term.status === 'Active' ? 'সক্রিয়' : term.status === 'Completed' ? 'সম্পন্ন' : 'আসন্ন')
+                                                : term.status
+                                              }
+                                            </span>
+                                          </td>
+
+                                          {/* Actions */}
+                                          <td className="py-3.5 px-3">
+                                            <div className="flex items-center justify-center gap-1.5">
+                                              {/* View/Overview Icon */}
+                                              <button
+                                                type="button"
+                                                onClick={() => setSelectedExamTermDetailId(term.id)}
+                                                title={lang === 'bn' ? 'ওভারভিউ পোর্টাল দেখুন' : 'View Hub Overview'}
+                                                className="p-1.5 bg-slate-50 hover:bg-emerald-50 text-slate-400 hover:text-[#025644] border border-gray-200/50 hover:border-emerald-100 rounded-lg transition-all cursor-pointer flex items-center justify-center"
+                                              >
+                                                <Eye className="h-3.5 w-3.5" />
+                                              </button>
+
+                                              {/* Edit Icon */}
+                                              <button
+                                                type="button"
+                                                onClick={() => {
+                                                  setEditingExamTermId(term.id);
+                                                  setNewExamTermForm({
+                                                    name: term.name,
+                                                    year: term.year,
+                                                    startDate: term.startDate || '',
+                                                    endDate: term.endDate || '',
+                                                    status: term.status,
+                                                    resultDate: term.resultDate || '',
+                                                    weightage: term.weightage || 25,
+                                                    description: term.description || ''
+                                                  });
+                                                }}
+                                                title={lang === 'bn' ? 'সম্পাদনা করুন' : 'Edit Term'}
+                                                className="p-1.5 bg-slate-50 hover:bg-sky-50 text-slate-400 hover:text-sky-600 border border-gray-200/50 hover:border-sky-100 rounded-lg transition-all cursor-pointer flex items-center justify-center"
+                                              >
+                                                <Edit3 className="h-3.5 w-3.5" />
+                                              </button>
+
+                                              {/* Delete Icon */}
+                                              <button
+                                                type="button"
+                                                onClick={() => {
+                                                  if (confirm(lang === 'bn' ? 'আপনি কি নিশ্চিতভাবে এই পরীক্ষার টার্মটি মুছে ফেলতে চান?' : 'Are you sure you want to delete this exam term?')) {
+                                                    setExamTerms(prev => prev.filter(t => t.id !== term.id));
+                                                    addAuditLog(`Admin deleted exam term: ${term.name}`);
+                                                    if (editingExamTermId === term.id) {
+                                                      setEditingExamTermId(null);
+                                                      setNewExamTermForm({
+                                                        name: '',
+                                                        year: 2026,
+                                                        startDate: '',
+                                                        endDate: '',
+                                                        status: 'Upcoming',
+                                                        resultDate: '',
+                                                        weightage: 25,
+                                                        description: ''
+                                                      });
+                                                    }
+                                                  }
+                                                }}
+                                                title={lang === 'bn' ? 'মুছে ফেলুন' : 'Delete Term'}
+                                                className="p-1.5 bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-600 border border-gray-200/50 hover:border-rose-100 rounded-lg transition-all cursor-pointer flex items-center justify-center"
+                                              >
+                                                <Trash2 className="h-3.5 w-3.5" />
+                                              </button>
+                                            </div>
+                                          </td>
+                                        </tr>
+                                      );
+                                    })}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()
                     ) : (
                       /* EXAM TERMS SHOW PAGE / DETAILED OVERVIEW (The show blade equivalent) */
                       (() => {
@@ -15981,9 +16262,19 @@ class PageSectionController extends Controller {
                       setViewingAdmissionForm(viewingStudentDetails);
                       setViewingStudentDetails(null);
                     }}
-                    className="px-4 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-[#025644] font-extrabold text-xs rounded-full transition-all cursor-pointer shadow-3xs flex items-center gap-1.5 border border-emerald-100"
+                    className="px-4 py-2.5 bg-emerald-50 hover:bg-[#d5f5ee] text-[#025644] font-extrabold text-xs rounded-full transition-all cursor-pointer shadow-3xs flex items-center gap-1.5 border border-[#addad1]"
                   >
                     📝 {lang === 'bn' ? 'ভর্তি ফরম ডাউনলোড / প্রিন্ট' : 'Admission Form Download/Print'}
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setViewingAdmitCard(viewingStudentDetails);
+                      setViewingStudentDetails(null);
+                    }}
+                    className="px-4 py-2.5 bg-sky-50 hover:bg-sky-100 text-sky-700 font-extrabold text-xs rounded-full transition-all cursor-pointer shadow-3xs flex items-center gap-1.5 border border-sky-100"
+                  >
+                    🎫 {lang === 'bn' ? 'প্রবেশপত্র ডাউনলোড / প্রিন্ট' : 'Admit Card Download/Print'}
                   </button>
                 </div>
                 
@@ -16496,6 +16787,303 @@ class PageSectionController extends Controller {
                 <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end shrink-0">
                   <button
                     onClick={() => setViewingAdmissionForm(null)}
+                    className="px-6 py-2 bg-[#025644] hover:bg-[#01352a] text-white font-black text-xs rounded-full cursor-pointer transition-all shadow-sm"
+                  >
+                    {lang === 'bn' ? 'বন্ধ করুন' : 'Close'}
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* VIEW ADMIT CARD DOWNLOAD / PRINT MODAL */}
+        {viewingAdmitCard && (() => {
+          const toLocalDigits = (numStr: string | number | undefined | null) => {
+            if (numStr === undefined || numStr === null) return '';
+            if (lang !== 'bn') return String(numStr);
+            const banglaDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+            return String(numStr).replace(/[0-9]/g, (digit) => banglaDigits[parseInt(digit)]);
+          };
+
+          const handlePrintAdmitCard = () => {
+            const printContent = document.getElementById('printable-admit-card-element')?.innerHTML;
+            if (!printContent) return;
+            
+            const iframe = document.createElement('iframe');
+            iframe.style.position = 'absolute';
+            iframe.style.width = '0px';
+            iframe.style.height = '0px';
+            iframe.style.border = 'none';
+            document.body.appendChild(iframe);
+            
+            const doc = iframe.contentWindow?.document;
+            if (doc) {
+              doc.open();
+              doc.write(`
+                <html>
+                  <head>
+                    <title>Admit Card - \${viewingAdmitCard.name}</title>
+                    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+                    <script src="https://cdn.tailwindcss.com"></script>
+                    <style>
+                      body {
+                        font-family: 'Inter', 'Hind Siliguri', sans-serif;
+                        background-color: white;
+                        color: black;
+                        padding: 10px;
+                        margin: 0;
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                      }
+                      @page {
+                        size: A4;
+                        margin: 15mm;
+                      }
+                    </style>
+                  </head>
+                  <body class="bg-white">
+                    <div class="w-full max-w-[800px] mx-auto p-4 bg-white">
+                      \${printContent}
+                    </div>
+                    <script>
+                      window.onload = function() {
+                        window.focus();
+                        setTimeout(function() {
+                          window.print();
+                          setTimeout(function() {
+                            window.parent.document.body.removeChild(window.frameElement);
+                          }, 500);
+                        }, 300);
+                      };
+                    </script>
+                  </body>
+                </html>
+              `);
+              doc.close();
+            }
+          };
+
+          return (
+            <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-[9999] p-4 text-left">
+              <div className="bg-slate-100 rounded-[32px] shadow-2xl w-full max-w-4xl flex flex-col max-h-[96vh] overflow-hidden border border-slate-200">
+                
+                {/* Control Header */}
+                <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-white shrink-0">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 bg-sky-50 rounded-xl flex items-center justify-center text-sky-600">
+                      <span className="text-xl">🎫</span>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-black text-slate-900 tracking-tight">
+                        {lang === 'bn' ? 'অফিসিয়াল প্রবেশপত্র প্রিন্ট প্রিভিউ' : 'Official Admit Card Print Preview'}
+                      </h3>
+                      <p className="text-xs text-slate-500 font-bold mt-0.5">
+                        {lang === 'bn' ? 'পরীক্ষার্থীর প্রবেশপত্র (Admit Card) ডাউনলোড বা প্রিন্ট করুন' : 'Download or print candidate entry admit card'}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handlePrintAdmitCard}
+                      className="px-5 py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-black text-xs rounded-full transition-all cursor-pointer shadow-md flex items-center gap-2"
+                    >
+                      <Printer className="h-4 w-4 animate-pulse" />
+                      {lang === 'bn' ? 'প্রিন্ট / প্রবেশপত্র ডাউনলোড' : 'Print / Download Admit Card'}
+                    </button>
+                    <button
+                      onClick={() => setViewingAdmitCard(null)}
+                      className="p-2 hover:bg-slate-150 rounded-full transition-all cursor-pointer text-slate-400 hover:text-slate-600"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Preview Sheet Container */}
+                <div className="flex-1 overflow-y-auto p-8 flex justify-center bg-slate-200">
+                  <div 
+                    id="printable-admit-card-element"
+                    className="w-full max-w-[760px] bg-white text-black p-8 sm:p-10 rounded-2xl shadow-sm border border-slate-300 relative select-none"
+                    style={{ minHeight: '120mm', color: '#000000', backgroundColor: '#ffffff' }}
+                  >
+                    
+                    {/* Watermark */}
+                    <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none select-none rotate-12">
+                      <span className="text-6xl font-black text-[#025644] uppercase tracking-widest text-center leading-normal">
+                        STUDENTS CARE<br />MODEL SCHOOL
+                      </span>
+                    </div>
+
+                    {/* School Header Banner */}
+                    <div className="border-b-4 border-emerald-900 pb-4 text-center space-y-1 relative">
+                      <h1 className="text-2xl font-black tracking-tight text-emerald-900 uppercase">
+                        {lang === 'bn' ? 'স্টুডেন্টস কেয়ার মডেল স্কুল' : 'Students Care Model School'}
+                      </h1>
+                      <p className="text-xs font-bold text-gray-700">
+                        {lang === 'bn' ? 'চরলক্ষ্যা, কর্ণফুলী, চট্টগ্রাম | ফোন: +৮৮০১৯১১৮১৬০৮৩' : 'Charlakshya, Karnaphuli, Chattogram | Phone: +8801911816083'}
+                      </p>
+                      <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
+                        {lang === 'bn' ? 'স্থাপিত: ২০১২ | ইআইআইএন: ১৩৪৫৬৭ | বিদ্যালয় কোড: ২০৮৪' : 'Established: 2012 | EIIN: 134567 | Code: 2084'}
+                      </p>
+                      
+                      <div className="bg-emerald-950 text-white text-xs font-black px-6 py-1 rounded-full uppercase tracking-widest inline-block mt-3 border-2 border-yellow-400">
+                        {lang === 'bn' ? 'প্রবেশপত্র - অর্ধ-বার্ষিক পরীক্ষা ২০২৬' : 'ADMIT CARD - HALF-YEARLY EXAM 2026'}
+                      </div>
+                    </div>
+
+                    {/* Core Layout Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-6 pt-6 text-xs font-bold text-gray-800">
+                      
+                      {/* Student Details Column */}
+                      <div className="md:col-span-8 space-y-3">
+                        <table className="w-full text-left border-collapse">
+                          <tbody>
+                            <tr className="border-b border-gray-150">
+                              <td className="py-2.5 text-gray-400 font-extrabold w-1/3 uppercase tracking-wider">{lang === 'bn' ? 'শিক্ষার্থীর নাম:' : "Student Name:"}</td>
+                              <td className="py-2.5 text-gray-900 font-black text-sm uppercase">{viewingAdmitCard.name}</td>
+                            </tr>
+                            <tr className="border-b border-gray-150">
+                              <td className="py-2.5 text-gray-400 font-extrabold uppercase tracking-wider">{lang === 'bn' ? 'শিক্ষার্থী আইডি:' : "Student ID:"}</td>
+                              <td className="py-2.5 text-emerald-800 font-mono font-black text-sm">{viewingAdmitCard.id}</td>
+                            </tr>
+                            <tr className="border-b border-gray-150">
+                              <td className="py-2.5 text-gray-400 font-extrabold uppercase tracking-wider">{lang === 'bn' ? 'শ্রেণি / শাখা:' : "Class / Section:"}</td>
+                              <td className="py-2.5 text-gray-900 font-black">
+                                {lang === 'bn' ? `শ্রেণি ${toLocalDigits(viewingAdmitCard.class)} (${viewingAdmitCard.section} শাখা)` : `Class ${viewingAdmitCard.class} (Section ${viewingAdmitCard.section})`}
+                              </td>
+                            </tr>
+                            <tr className="border-b border-gray-150">
+                              <td className="py-2.5 text-gray-400 font-extrabold uppercase tracking-wider">{lang === 'bn' ? 'রোল নাম্বার:' : "Roll Number:"}</td>
+                              <td className="py-2.5 text-gray-900 font-black font-mono">{toLocalDigits(viewingAdmitCard.roll)}</td>
+                            </tr>
+                            <tr className="border-b border-gray-150">
+                              <td className="py-2.5 text-gray-400 font-extrabold uppercase tracking-wider">{lang === 'bn' ? 'অভিভাবক:' : "Guardian:"}</td>
+                              <td className="py-2.5 text-gray-900 font-black">{viewingAdmitCard.guardianName}</td>
+                            </tr>
+                            <tr className="border-b border-gray-150">
+                              <td className="py-2.5 text-gray-400 font-extrabold uppercase tracking-wider">{lang === 'bn' ? 'মোবাইল:' : "Contact No:"}</td>
+                              <td className="py-2.5 text-gray-900 font-mono">{toLocalDigits(viewingAdmitCard.guardianPhone)}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Right Photo Column */}
+                      <div className="md:col-span-4 flex flex-col items-center justify-start pt-2">
+                        <div className="h-32 w-28 border-2 border-emerald-950/20 rounded-xl overflow-hidden shadow-3xs bg-white shrink-0">
+                          {viewingAdmitCard.photo ? (
+                            <img src={viewingAdmitCard.photo} alt={viewingAdmitCard.name} className="h-full w-full object-cover" />
+                          ) : (
+                            <div className="h-full w-full bg-slate-50 flex flex-col items-center justify-center text-slate-300">
+                              <User className="h-10 w-10 text-emerald-900/10" />
+                              <span className="text-[9px] font-extrabold text-emerald-900/30 uppercase mt-1">SCMS Stamp</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="text-[10px] text-gray-400 font-black uppercase tracking-wider mt-2.5 text-center leading-none">
+                          {lang === 'bn' ? 'অফিসিয়াল সিলমোহর' : 'Official Photo Stamp'}
+                        </div>
+                      </div>
+
+                    </div>
+
+                    {/* Examination Schedule / Subjects List */}
+                    <div className="mt-8 space-y-2.5">
+                      <h4 className="text-xs font-black uppercase text-emerald-900 border-b border-emerald-900/20 pb-1 tracking-widest">
+                        {lang === 'bn' ? 'পরীক্ষার সময়সূচী ও বিষয়সমূহ' : 'Examination Routine & Subjects'}
+                      </h4>
+                      <table className="w-full text-left text-[11px] border-collapse">
+                        <thead>
+                          <tr className="bg-slate-100 border-b border-gray-300 font-black text-gray-700 uppercase tracking-wider">
+                            <th className="py-2 px-3 w-1/4">{lang === 'bn' ? 'তারিখ' : 'Date'}</th>
+                            <th className="py-2 px-3 w-1/2">{lang === 'bn' ? 'পরীক্ষার বিষয়' : 'Subject Name'}</th>
+                            <th className="py-2 px-3 w-1/4 text-right">{lang === 'bn' ? 'সময়' : 'Timing'}</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100 text-gray-800 font-bold">
+                          <tr>
+                            <td className="py-2 px-3 font-mono">15/07/2026</td>
+                            <td className="py-2 px-3">{lang === 'bn' ? 'বাংলা ১ম পত্র' : 'Bangla 1st Paper'}</td>
+                            <td className="py-2 px-3 text-right font-mono">10:00 AM - 01:00 PM</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 font-mono">16/07/2026</td>
+                            <td className="py-2 px-3">{lang === 'bn' ? 'বাংলা ২য় পত্র' : 'Bangla 2nd Paper'}</td>
+                            <td className="py-2 px-3 text-right font-mono">10:00 AM - 01:00 PM</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 font-mono">18/07/2026</td>
+                            <td className="py-2 px-3">{lang === 'bn' ? 'ইংরেজি ১ম পত্র' : 'English 1st Paper'}</td>
+                            <td className="py-2 px-3 text-right font-mono">10:00 AM - 01:00 PM</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 font-mono">19/07/2026</td>
+                            <td className="py-2 px-3">{lang === 'bn' ? 'ইংরেজি ২য় পত্র' : 'English 2nd Paper'}</td>
+                            <td className="py-2 px-3 text-right font-mono">10:00 AM - 01:00 PM</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 font-mono">20/07/2026</td>
+                            <td className="py-2 px-3">{lang === 'bn' ? 'গণিত' : 'Mathematics'}</td>
+                            <td className="py-2 px-3 text-right font-mono">10:00 AM - 01:00 PM</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 font-mono">22/07/2026</td>
+                            <td className="py-2 px-3">{lang === 'bn' ? 'সাধারণ বিজ্ঞান' : 'General Science'}</td>
+                            <td className="py-2 px-3 text-right font-mono">10:00 AM - 01:00 PM</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Instructions Box */}
+                    <div className="mt-8 bg-gray-50 border border-gray-200 rounded-xl p-4 text-[10px] text-gray-500 font-medium space-y-1 text-justify leading-relaxed">
+                      <p className="font-extrabold uppercase text-gray-700 tracking-wider">
+                        {lang === 'bn' ? 'পরীক্ষার্থীদের জন্য বিশেষ নির্দেশনাবলী:' : 'Instructions to the Candidates:'}
+                      </p>
+                      <p>
+                        {lang === 'bn' 
+                          ? '১. এই প্রবেশপত্রটি ব্যতিরেকে কোনো পরীক্ষার্থীকে পরীক্ষা কক্ষে প্রবেশ করতে দেওয়া হবে না।' 
+                          : '1. No candidate will be allowed to enter the exam hall without presenting this Admit Card.'}
+                      </p>
+                      <p>
+                        {lang === 'bn' 
+                          ? '২. পরীক্ষার হলে কোনো প্রকার ইলেকট্রনিক ডিভাইস (স্মার্টফোন, স্মার্টওয়াচ ইত্যাদি) বা অপ্রাসঙ্গিক কাগজ আনা সম্পূর্ণ নিষিদ্ধ।' 
+                          : '2. All kinds of electronic devices (smartphones, smartwatches) and unauthorized materials are strictly prohibited.'}
+                      </p>
+                      <p>
+                        {lang === 'bn' 
+                          ? '৩. পরীক্ষা আরম্ভ হওয়ার অন্ততঃ ১৫ মিনিট পূর্বে অবশ্যই স্ব-স্ব আসনে উপস্থিত হতে হবে।' 
+                          : '3. Candidates must report and occupy their respective seats at least 15 minutes before exam commencement.'}
+                      </p>
+                    </div>
+
+                    {/* Official Signatures Section */}
+                    <div className="mt-12 flex justify-between items-end text-[10px] text-gray-500 font-extrabold">
+                      <div className="text-center space-y-1">
+                        <div className="border-b border-gray-300 w-32 pb-1 mx-auto"></div>
+                        <div>{lang === 'bn' ? 'পরীক্ষার্থীর স্বাক্ষর' : 'Candidate Signature'}</div>
+                      </div>
+                      <div className="text-center space-y-1">
+                        <div className="border-b border-gray-300 w-32 pb-1 mx-auto"></div>
+                        <div>{lang === 'bn' ? 'হল পরিদর্শকের স্বাক্ষর' : 'Invigilator Signature'}</div>
+                      </div>
+                      <div className="text-center space-y-1">
+                        <div className="text-emerald-900 font-serif italic text-xs leading-none">Prof. Dr. Rahman</div>
+                        <div className="border-b border-gray-300 w-32 pb-1 mx-auto"></div>
+                        <div className="uppercase tracking-wider text-emerald-950 font-black">{lang === 'bn' ? 'প্রধান শিক্ষক' : 'Principal / SCMS'}</div>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+
+                {/* Footer Controls (Close only) */}
+                <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end shrink-0">
+                  <button
+                    onClick={() => setViewingAdmitCard(null)}
                     className="px-6 py-2 bg-[#025644] hover:bg-[#01352a] text-white font-black text-xs rounded-full cursor-pointer transition-all shadow-sm"
                   >
                     {lang === 'bn' ? 'বন্ধ করুন' : 'Close'}
