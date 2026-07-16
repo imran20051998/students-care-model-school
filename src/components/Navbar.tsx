@@ -463,33 +463,33 @@ export default function Navbar({ activeTab, setActiveTab, lang, setLang, onSearc
         <div className="absolute right-0 top-0 w-96 h-96 bg-white/5 rounded-full blur-2xl -mr-20 -mt-20 pointer-events-none" />
         <div className="absolute left-1/4 bottom-0 w-64 h-64 bg-blue-500/10 rounded-full blur-xl -ml-20 -mb-20 pointer-events-none" />
 
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 md:gap-5 relative z-10">
+        <div className="max-w-7xl mx-auto flex flex-row items-center justify-between gap-2.5 sm:gap-5 relative z-10">
           
           {/* Left / Middle: Logo & School Identifiers */}
           <div 
             onClick={() => handleNavClick('home')}
-            className="flex flex-row items-center gap-3 sm:gap-4 text-left grow w-full md:w-auto min-w-0 cursor-pointer select-none active:scale-[0.99] transition-transform"
+            className="flex flex-row items-center gap-2 sm:gap-4 text-left flex-1 min-w-0 cursor-pointer select-none active:scale-[0.99] transition-transform"
           >
             {/* White circle containing the school logo or default icon */}
-            <div className="h-14 w-14 xs:h-16 xs:w-16 sm:h-20 sm:w-20 bg-white rounded-full flex items-center justify-center shadow-lg border border-white/20 shrink-0 transform hover:scale-105 transition-transform duration-300 overflow-hidden">
+            <div className="h-11 w-11 xs:h-14 xs:w-14 sm:h-20 sm:w-20 bg-white rounded-full flex items-center justify-center shadow-lg border border-white/20 shrink-0 transform hover:scale-105 transition-transform duration-300 overflow-hidden">
               {settings?.logoUrl ? (
                 <img src={settings.logoUrl} alt="School Logo" className="h-full w-full object-cover" />
               ) : (
-                <School className="h-8 w-8 xs:h-9 xs:w-9 sm:h-11 sm:w-11 text-blue-600" />
+                <School className="h-6 w-6 xs:h-8 xs:w-8 sm:h-11 sm:w-11 text-blue-600" />
               )}
             </div>
 
             <div className="min-w-0 flex-1 flex flex-col items-start justify-center text-left">
               <h1 
-                style={{ fontSize: settings?.bannerFontSize ? `${settings.bannerFontSize}px` : undefined }}
-                className="text-sm xs:text-base sm:text-lg md:text-xl lg:text-2xl font-black text-white tracking-tight drop-shadow-xs break-words w-full leading-tight"
+                style={{ fontSize: settings?.bannerFontSize ? `clamp(11px, 2.5vw + 5px, ${settings.bannerFontSize}px)` : undefined }}
+                className="text-[11px] xs:text-sm sm:text-lg md:text-xl lg:text-2xl font-black text-white tracking-tight drop-shadow-xs break-words w-full leading-tight"
               >
                 {settings?.siteNameBn || 'স্টুডেন্টস কেয়ার মডেল স্কুল'}
               </h1>
-              <h2 className="text-[10px] xs:text-xs sm:text-sm md:text-base font-black text-blue-100 tracking-normal break-words w-full leading-snug mt-1.5 uppercase">
+              <h2 className="text-[8px] xs:text-[10px] sm:text-xs md:text-sm lg:text-base font-black text-blue-100 tracking-normal break-words w-full leading-snug mt-1 sm:mt-1.5 uppercase">
                 {formatToNiceEnglish(settings?.siteNameEn || 'STUDENTS CARE MODEL SCHOOL')}
               </h2>
-              <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[8px] xs:text-[9px] sm:text-xs text-blue-100/85 mt-2 w-full">
+              <div className="hidden xs:flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[8px] sm:text-[10px] md:text-xs text-blue-100/85 mt-1 sm:mt-2 w-full">
                 <span className="break-words">{settings?.addressBn || 'চরলক্ষ্যা, কর্ণফুলী, চট্টগ্রাম'}</span>
                 <span className="opacity-60">•</span>
                 <span>EIIN: {settings?.eiin || '471547'}</span>
@@ -500,18 +500,24 @@ export default function Navbar({ activeTab, setActiveTab, lang, setLang, onSearc
           </div>
 
           {/* Right: Contact details box */}
-          <div className="w-full md:w-auto border border-white/20 rounded-xl p-3 bg-white/5 flex flex-col sm:flex-row md:flex-col justify-between sm:justify-around md:justify-start gap-2 text-[10px] sm:text-xs text-white tracking-wide select-text shadow-inner">
-            <div className="flex items-center gap-2">
-              <Phone className="h-3.5 w-3.5 text-blue-200 shrink-0" />
-              <span className="font-bold whitespace-nowrap">{settings?.helpline || '+880 1814913049'}</span>
+          <div className="w-[45%] xs:w-[40%] md:w-auto shrink-0 border border-white/15 rounded-xl p-1.5 sm:p-3 bg-white/5 flex flex-col justify-center gap-1 sm:gap-2 text-[8px] xs:text-[10px] sm:text-xs text-white tracking-wide select-text shadow-inner">
+            <div className="flex items-center gap-1 sm:gap-2">
+              <Phone className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 text-blue-200 shrink-0" />
+              <span className="font-bold truncate" title={settings?.helpline || '+880 1814913049'}>
+                {settings?.helpline || '+880 1814913049'}
+              </span>
             </div>
-            <div className="flex items-center gap-2 border-t sm:border-t-0 md:border-t border-white/10 pt-1.5 sm:pt-0 md:pt-1.5">
-              <Mail className="h-3.5 w-3.5 text-blue-200 shrink-0" />
-              <span className="font-bold select-all break-all">{settings?.email || 'studentscare2006@gmail.com'}</span>
+            <div className="flex items-center gap-1 sm:gap-2 border-t border-white/10 pt-1 sm:pt-1.5">
+              <Mail className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 text-blue-200 shrink-0" />
+              <span className="font-bold select-all truncate" title={settings?.email || 'studentscare2006@gmail.com'}>
+                {settings?.email || 'studentscare2006@gmail.com'}
+              </span>
             </div>
-            <div className="flex items-center gap-2 border-t sm:border-t-0 md:border-t border-white/10 pt-1.5 sm:pt-0 md:pt-1.5">
-              <Globe className="h-3.5 w-3.5 text-blue-200 shrink-0" />
-              <span className="font-bold break-all">{settings?.website || 'studentscaremodelschool.com'}</span>
+            <div className="flex items-center gap-1 sm:gap-2 border-t border-white/10 pt-1 sm:pt-1.5">
+              <Globe className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 text-blue-200 shrink-0" />
+              <span className="font-bold truncate" title={settings?.website || 'studentscaremodelschool.com'}>
+                {settings?.website || 'studentscaremodelschool.com'}
+              </span>
             </div>
           </div>
 
