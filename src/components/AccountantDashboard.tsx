@@ -1157,6 +1157,10 @@ export default function AccountantDashboard({ lang, setLang, onLogout }: Account
               setSpotCashForm={setSpotCashForm}
               handleSpotCashSubmit={handleSpotCashSubmit}
               mockStudents={mockStudents}
+              txs={txs}
+              setTxs={setTxs}
+              stats={stats}
+              setStats={setStats}
             />
           ) : activeTab === 'expense_reports' ? (
             <ExpenseReportsView lang={lang} />
