@@ -22,16 +22,23 @@ import {
   GraduationCap, 
   Trash2, 
   RotateCcw, 
-  Send 
+  Send,
+  CreditCard,
+  Download,
+  Wallet,
+  Loader2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 interface AdmissionFormProps {
   lang: 'bn' | 'en';
   onBack?: () => void;
 }
 
-export default function AdmissionForm({ lang, onBack }: AdmissionFormProps) {
+export default function AdmissionForm({ lang: appLang, onBack }: AdmissionFormProps) {
+  const [lang, setLang] = useState<'bn' | 'en'>('en');
   const [formData, setFormData] = useState({
     studentName: '',
     fatherName: '',
@@ -70,10 +77,26 @@ export default function AdmissionForm({ lang, onBack }: AdmissionFormProps) {
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
   const [generatedAppId, setGeneratedAppId] = useState('');
 
+  // Payment states
+  const [paymentMethod, setPaymentMethod] = useState<'bkash' | 'nagad' | 'rocket' | 'card' | null>(null);
+  const [paymentStatus, setPaymentStatus] = useState<'unpaid' | 'processing' | 'paid'>('unpaid');
+  const [paymentNumber, setPaymentNumber] = useState('');
+  const [paymentOtp, setPaymentOtp] = useState('');
+  const [paymentPin, setPaymentPin] = useState('');
+  const [cardNo, setCardNo] = useState('');
+  const [cardExpiry, setCardExpiry] = useState('');
+  const [cardCvv, setCardCvv] = useState('');
+  const [cardName, setCardName] = useState('');
+  const [transactionId, setTransactionId] = useState('');
+  const [paymentError, setPaymentError] = useState('');
+  const [isPdfDownloading, setIsPdfDownloading] = useState(false);
+  const [paymentStep, setPaymentStep] = useState<1 | 2>(1);
+
   // Signature drawing states
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const isDrawingRef = useRef(false);
   const [signatureDrawn, setSignatureDrawn] = useState(false);
+  const [signatureDataUrl, setSignatureDataUrl] = useState('');
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -176,6 +199,13 @@ export default function AdmissionForm({ lang, onBack }: AdmissionFormProps) {
 
   const stopDrawing = () => {
     isDrawingRef.current = false;
+    if (canvasRef.current && signatureDrawn) {
+      try {
+        setSignatureDataUrl(canvasRef.current.toDataURL('image/png'));
+      } catch (e) {
+        console.warn('Could not export canvas data:', e);
+      }
+    }
   };
 
   const clearCanvas = () => {
@@ -185,6 +215,7 @@ export default function AdmissionForm({ lang, onBack }: AdmissionFormProps) {
     if (!ctx) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     setSignatureDrawn(false);
+    setSignatureDataUrl('');
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -275,6 +306,10 @@ export default function AdmissionForm({ lang, onBack }: AdmissionFormProps) {
     }
     if (formData.signatureType === 'draw' && !signatureDrawn) {
       newErrors.signatureText = lang === 'bn' ? "স্বাক্ষর আঁকুন" : "Please draw your signature";
+    }
+
+    if (paymentStatus !== 'paid') {
+      newErrors.payment = lang === 'bn' ? "আবেদন ফি ৫০০ টাকা পরিশোধ করা আবশ্যক" : "Admission fee payment of 500 BDT is required";
     }
 
     setErrors(newErrors);
@@ -391,8 +426,60 @@ export default function AdmissionForm({ lang, onBack }: AdmissionFormProps) {
     setPhotoFile(null);
     setPhotoName('');
     setSignatureDrawn(false);
+    setSignatureDataUrl('');
     setErrors({});
     setSubmissionSuccess(false);
+    setPaymentMethod(null);
+    setPaymentStatus('unpaid');
+    setPaymentNumber('');
+    setPaymentOtp('');
+    setPaymentPin('');
+    setCardNo('');
+    setCardExpiry('');
+    setCardCvv('');
+    setCardName('');
+    setTransactionId('');
+    setPaymentError('');
+    setPaymentStep(1);
+  };
+
+  const downloadPDF = async () => {
+    const element = document.getElementById('admission-receipt-print-area');
+    if (!element) return;
+    
+    setIsPdfDownloading(true);
+    try {
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 210;
+      const pageHeight = 297;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+      
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+      
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+      
+      pdf.save(`Admission_Receipt_${generatedAppId || 'SCMS'}.pdf`);
+    } catch (error) {
+      console.error('Failed to generate PDF:', error);
+    } finally {
+      setIsPdfDownloading(false);
+    }
   };
 
   return (
@@ -411,24 +498,52 @@ export default function AdmissionForm({ lang, onBack }: AdmissionFormProps) {
         )}
       </div>
 
-      {/* Hero Banner Header exactly like screenshot */}
+      {/* Hero Banner Header exactly like screenshot with language toggle */}
       <div className="w-full max-w-5xl px-4 sm:px-6 mt-6">
-        <div className="bg-[#025644] text-white rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row items-center gap-4 sm:gap-6 shadow-sm">
-          <div className="h-16 w-16 bg-white/10 text-white rounded-2xl flex items-center justify-center shadow-inner shrink-0">
-            <GraduationCap className="h-10 w-10 text-[#d0f3eb]" />
+        <div className="bg-[#025644] text-white rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row justify-between items-center gap-4 sm:gap-6 shadow-sm">
+          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 text-center sm:text-left">
+            <div className="h-16 w-16 bg-white/10 text-white rounded-2xl flex items-center justify-center shadow-inner shrink-0">
+              <GraduationCap className="h-10 w-10 text-[#d0f3eb]" />
+            </div>
+            <div className="space-y-1">
+              <span className="text-[10px] sm:text-xs font-extrabold tracking-widest uppercase text-[#d0f3eb] bg-white/10 px-3 py-1 rounded-full border border-white/5 inline-block">
+                {lang === 'bn' ? "অনলাইন ভর্তি" : "ONLINE ADMISSION"}
+              </span>
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight">
+                Students Care Model School
+              </h1>
+              <p className="text-xs sm:text-sm text-[#d0f3eb]/95 font-medium leading-relaxed">
+                {lang === 'bn' 
+                  ? "শিক্ষাবর্ষ ২০২৫–২৬ • তারকা চিহ্নিত (*) সকল ঘর পূরণ করা বাধ্যতামূলক" 
+                  : "Academic Year 2025–26 • All fields marked are required"}
+              </p>
+            </div>
           </div>
-          <div className="text-center sm:text-left space-y-1">
-            <span className="text-[10px] sm:text-xs font-extrabold tracking-widest uppercase text-[#d0f3eb] bg-white/10 px-3 py-1 rounded-full border border-white/5">
-              {lang === 'bn' ? "অনলাইন ভর্তি" : "ONLINE ADMISSION"}
-            </span>
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight">
-              Students Care Model School
-            </h1>
-            <p className="text-xs sm:text-sm text-[#d0f3eb]/95 font-medium leading-relaxed">
-              {lang === 'bn' 
-                ? "শিক্ষাবর্ষ ২০২৫–২৬ • তারকা চিহ্নিত (*) সকল ঘর পূরণ করা বাধ্যতামূলক" 
-                : "Academic Year 2025–26 • All fields marked are required"}
-            </p>
+          
+          {/* Premium Language Toggle */}
+          <div className="shrink-0 flex items-center gap-1.5 bg-white/10 p-1 rounded-2xl border border-white/15 backdrop-blur-xs select-none">
+            <button
+              type="button"
+              onClick={() => setLang('en')}
+              className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+                lang === 'en' 
+                  ? 'bg-white text-[#025644] shadow-sm' 
+                  : 'text-white/80 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              English
+            </button>
+            <button
+              type="button"
+              onClick={() => setLang('bn')}
+              className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+                lang === 'bn' 
+                  ? 'bg-white text-[#025644] shadow-sm' 
+                  : 'text-white/80 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              বাংলা
+            </button>
           </div>
         </div>
       </div>
@@ -1028,6 +1143,393 @@ export default function AdmissionForm({ lang, onBack }: AdmissionFormProps) {
               </div>
             </div>
 
+            {/* Card 5.5: Admission Fee Payment System */}
+            <div id="field-payment" className="bg-white rounded-3xl border border-gray-150 p-6 sm:p-8 shadow-3xs text-left space-y-6">
+              <div className="border-b border-gray-100 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <h3 className="text-base sm:text-lg font-extrabold text-[#025644] tracking-tight">
+                    {lang === 'bn' ? "ভর্তি আবেদন ফি পরিশোধ" : "Admission Application Fee Payment"} <span className="text-red-500">*</span>
+                  </h3>
+                  <p className="text-xs text-gray-400 font-semibold mt-0.5">
+                    {lang === 'bn' ? "যেকোনো একটি গেটওয়ে ব্যবহার করে ৫০০ টাকা আবেদন ফি পরিশোধ করুন" : "Pay 500 BDT admission application fee using any secure gateway below"}
+                  </p>
+                </div>
+                <div className="bg-emerald-50 border border-emerald-100 px-3 py-1.5 rounded-xl text-center shrink-0">
+                  <span className="text-[10px] text-emerald-800 font-bold block leading-none">{lang === 'bn' ? "মোট প্রদেয়" : "TOTAL PAYABLE"}</span>
+                  <span className="text-sm font-black text-[#025644] mt-0.5 block leading-none">500.00 BDT</span>
+                </div>
+              </div>
+
+              {paymentStatus === 'paid' ? (
+                /* PAYMENT SUCCESS CONTAINER */
+                <div className="bg-emerald-50/50 border border-emerald-200/60 rounded-2xl p-5 text-center space-y-4">
+                  <div className="h-12 w-12 bg-emerald-500 text-white rounded-full flex items-center justify-center mx-auto shadow-3xs">
+                    <Check className="h-6 w-6 stroke-[3]" />
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="text-sm sm:text-base font-extrabold text-gray-800">
+                      {lang === 'bn' ? "পেমেন্ট সফল হয়েছে!" : "Payment Successful!"}
+                    </h4>
+                    <p className="text-xs text-gray-500 font-semibold">
+                      {lang === 'bn' 
+                        ? `আপনার ৫০০ টাকা আবেদন ফি সফলভাবে গৃহীত হয়েছে।` 
+                        : `Your admission fee of 500 BDT has been successfully processed.`}
+                    </p>
+                  </div>
+
+                  <div className="bg-white border border-emerald-100 rounded-xl p-3.5 max-w-sm mx-auto text-xs space-y-2 font-semibold">
+                    <div className="flex justify-between text-gray-400">
+                      <span>{lang === 'bn' ? "পেমেন্ট মাধ্যম:" : "Payment Method:"}</span>
+                      <span className="text-gray-800 font-black uppercase">{paymentMethod}</span>
+                    </div>
+                    <div className="flex justify-between text-gray-400 border-t border-gray-100 pt-2">
+                      <span>{lang === 'bn' ? "লেনদেন আইডি (TxnID):" : "Transaction ID:"}</span>
+                      <span className="text-emerald-800 font-black font-mono">{transactionId}</span>
+                    </div>
+                    <div className="flex justify-between text-gray-400 border-t border-gray-100 pt-2">
+                      <span>{lang === 'bn' ? "টাকার পরিমাণ:" : "Amount Paid:"}</span>
+                      <span className="text-gray-800 font-black">500.00 BDT</span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPaymentStatus('unpaid');
+                      setPaymentStep(1);
+                      setTransactionId('');
+                      setPaymentError('');
+                    }}
+                    className="text-xs text-red-600 hover:text-red-700 font-extrabold underline cursor-pointer transition-colors"
+                  >
+                    {lang === 'bn' ? "অন্য মাধ্যমে পরিশোধ করতে চান? পেমেন্ট রিসেট করুন" : "Want to use another method? Reset payment"}
+                  </button>
+                </div>
+              ) : (
+                /* SELECT GATEWAY & INTERACTION FLOW */
+                <div className="space-y-5">
+                  {/* Gateway selector buttons */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {/* bKash */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPaymentMethod('bkash');
+                        setPaymentStep(1);
+                        setPaymentError('');
+                      }}
+                      className={`relative overflow-hidden p-3.5 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1.5 ${
+                        paymentMethod === 'bkash'
+                          ? 'border-[#e2125b] bg-[#e2125b]/5 text-[#e2125b] ring-2 ring-[#e2125b]/20 font-black'
+                          : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50 font-bold'
+                      }`}
+                    >
+                      <div className="w-8 h-8 rounded-full bg-[#e2125b] text-white flex items-center justify-center font-black text-xs">
+                        b
+                      </div>
+                      <span className="text-xs">bKash</span>
+                    </button>
+
+                    {/* Nagad */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPaymentMethod('nagad');
+                        setPaymentStep(1);
+                        setPaymentError('');
+                      }}
+                      className={`relative overflow-hidden p-3.5 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1.5 ${
+                        paymentMethod === 'nagad'
+                          ? 'border-[#f58220] bg-[#f58220]/5 text-[#f58220] ring-2 ring-[#f58220]/20 font-black'
+                          : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50 font-bold'
+                      }`}
+                    >
+                      <div className="w-8 h-8 rounded-full bg-[#f58220] text-white flex items-center justify-center font-black text-xs">
+                        N
+                      </div>
+                      <span className="text-xs">Nagad</span>
+                    </button>
+
+                    {/* Rocket */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPaymentMethod('rocket');
+                        setPaymentStep(1);
+                        setPaymentError('');
+                      }}
+                      className={`relative overflow-hidden p-3.5 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1.5 ${
+                        paymentMethod === 'rocket'
+                          ? 'border-[#8c338c] bg-[#8c338c]/5 text-[#8c338c] ring-2 ring-[#8c338c]/20 font-black'
+                          : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50 font-bold'
+                      }`}
+                    >
+                      <div className="w-8 h-8 rounded-full bg-[#8c338c] text-white flex items-center justify-center font-black text-xs">
+                        R
+                      </div>
+                      <span className="text-xs">Rocket</span>
+                    </button>
+
+                    {/* Card */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPaymentMethod('card');
+                        setPaymentStep(1);
+                        setPaymentError('');
+                      }}
+                      className={`relative overflow-hidden p-3.5 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1.5 ${
+                        paymentMethod === 'card'
+                          ? 'border-[#1a1f71] bg-[#1a1f71]/5 text-[#1a1f71] ring-2 ring-[#1a1f71]/20 font-black'
+                          : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50 font-bold'
+                      }`}
+                    >
+                      <div className="w-8 h-8 rounded-full bg-[#1a1f71] text-white flex items-center justify-center">
+                        <CreditCard className="h-4 w-4" />
+                      </div>
+                      <span className="text-xs">{lang === 'bn' ? "কার্ড পেমেন্ট" : "Card"}</span>
+                    </button>
+                  </div>
+
+                  {/* Gateway interactive forms */}
+                  {paymentMethod && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="border border-gray-150 rounded-2xl p-4 bg-gray-50/50 space-y-4"
+                    >
+                      {paymentStatus === 'processing' ? (
+                        <div className="py-6 text-center space-y-3">
+                          <Loader2 className="h-8 w-8 text-emerald-600 animate-spin mx-auto" />
+                          <p className="text-xs font-bold text-gray-600">
+                            {lang === 'bn' ? "পেমেন্ট প্রসেসিং করা হচ্ছে, অনুগ্রহ করে অপেক্ষা করুন..." : "Processing secure payment, please wait..."}
+                          </p>
+                        </div>
+                      ) : paymentMethod === 'card' ? (
+                        /* CARD FORM */
+                        <div className="space-y-3">
+                          <span className="text-[10px] font-extrabold text-gray-400 tracking-wider uppercase block">
+                            {lang === 'bn' ? "নিরাপদ কার্ড পেমেন্ট বিবরণ" : "Secure Card Details"}
+                          </span>
+
+                          <div className="space-y-1.5 text-left">
+                            <label className="text-[11px] font-bold text-gray-600 uppercase">{lang === 'bn' ? "কার্ডধারী নাম" : "Cardholder Name"}</label>
+                            <input
+                              type="text"
+                              placeholder="e.g. Imran Hosen"
+                              value={cardName}
+                              onChange={(e) => setCardName(e.target.value)}
+                              className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm font-semibold text-gray-800 focus:outline-none focus:border-[#025644]"
+                            />
+                          </div>
+
+                          <div className="space-y-1.5 text-left">
+                            <label className="text-[11px] font-bold text-gray-600 uppercase">{lang === 'bn' ? "কার্ড নম্বর" : "Card Number"}</label>
+                            <input
+                              type="text"
+                              maxLength={19}
+                              placeholder="4123 4567 8901 2345"
+                              value={cardNo}
+                              onChange={(e) => {
+                                const val = e.target.value.replace(/\D/g, '').replace(/(.{4})/g, '$1 ').trim();
+                                setCardNo(val);
+                              }}
+                              className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm font-semibold text-gray-800 font-mono focus:outline-none focus:border-[#025644]"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1.5 text-left">
+                              <label className="text-[11px] font-bold text-gray-600 uppercase">{lang === 'bn' ? "মেয়াদোত্তীর্ণের তারিখ" : "Expiry (MM/YY)"}</label>
+                              <input
+                                type="text"
+                                maxLength={5}
+                                placeholder="12/28"
+                                value={cardExpiry}
+                                onChange={(e) => {
+                                  let val = e.target.value.replace(/\D/g, '');
+                                  if (val.length > 2) {
+                                    val = val.substring(0, 2) + '/' + val.substring(2, 4);
+                                  }
+                                  setCardExpiry(val);
+                                }}
+                                className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm font-semibold text-gray-800 font-mono focus:outline-none focus:border-[#025644]"
+                              />
+                            </div>
+                            <div className="space-y-1.5 text-left">
+                              <label className="text-[11px] font-bold text-gray-600 uppercase">CVV / CVC</label>
+                              <input
+                                type="password"
+                                maxLength={3}
+                                placeholder="***"
+                                value={cardCvv}
+                                onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, ''))}
+                                className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm font-semibold text-gray-800 font-mono focus:outline-none focus:border-[#025644]"
+                              />
+                            </div>
+                          </div>
+
+                          {paymentError && (
+                            <p className="text-red-600 text-[10px] font-bold flex items-center gap-1">
+                              <AlertCircle className="h-3.5 w-3.5" /> {paymentError}
+                            </p>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!cardName.trim() || cardNo.length < 15 || cardExpiry.length < 5 || cardCvv.length < 3) {
+                                setPaymentError(lang === 'bn' ? "অনুগ্রহ করে কার্ডের সকল সঠিক তথ্য প্রদান করুন।" : "Please provide all correct card credentials.");
+                                return;
+                              }
+                              setPaymentError('');
+                              setPaymentStatus('processing');
+                              setTimeout(() => {
+                                setPaymentStatus('paid');
+                                setTransactionId(`CARD-TXN-${Math.floor(100000 + Math.random() * 900000)}`);
+                              }, 1500);
+                            }}
+                            className="w-full py-2.5 bg-[#1a1f71] hover:bg-[#11144a] text-white rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-3xs"
+                          >
+                            <CreditCard className="h-3.5 w-3.5" />
+                            {lang === 'bn' ? "৫০০ টাকা পেমেন্ট সম্পন্ন করুন" : "Pay 500 BDT Securely"}
+                          </button>
+                        </div>
+                      ) : (
+                        /* MOBILE WALLET (bKash / Nagad / Rocket) FORM */
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-1.5">
+                            <Wallet className="h-4 w-4 text-emerald-600" />
+                            <span className="text-[10px] font-extrabold text-gray-400 tracking-wider uppercase block">
+                              {paymentMethod === 'bkash' ? 'bKash Wallet Verification' : paymentMethod === 'nagad' ? 'Nagad Wallet Verification' : 'Rocket Wallet Verification'}
+                            </span>
+                          </div>
+
+                          {paymentStep === 1 ? (
+                            <div className="space-y-3">
+                              <div className="space-y-1.5 text-left">
+                                <label className="text-[11px] font-bold text-gray-600 uppercase">
+                                  {paymentMethod === 'bkash' ? 'bKash Account Number' : paymentMethod === 'nagad' ? 'Nagad Account Number' : 'Rocket Account Number'}
+                                </label>
+                                <input
+                                  type="text"
+                                  maxLength={11}
+                                  placeholder="01xxxxxxxxx"
+                                  value={paymentNumber}
+                                  onChange={(e) => setPaymentNumber(e.target.value.replace(/\D/g, ''))}
+                                  className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm font-semibold text-gray-800 font-mono focus:outline-none focus:border-[#025644]"
+                                />
+                              </div>
+
+                              {paymentError && (
+                                <p className="text-red-600 text-[10px] font-bold flex items-center gap-1">
+                                  <AlertCircle className="h-3.5 w-3.5" /> {paymentError}
+                                </p>
+                              )}
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (!/^01[3-9]\d{8}$/.test(paymentNumber)) {
+                                    setPaymentError(lang === 'bn' ? "১১ ডিজিটের সঠিক বাংলাদেশী মোবাইল নম্বর দিন।" : "Please provide a valid 11-digit mobile wallet number.");
+                                    return;
+                                  }
+                                  setPaymentError('');
+                                  setPaymentStep(2);
+                                }}
+                                className="w-full py-2.5 text-white rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-3xs"
+                                style={{
+                                  backgroundColor: paymentMethod === 'bkash' ? '#e2125b' : paymentMethod === 'nagad' ? '#f58220' : '#8c338c'
+                                }}
+                              >
+                                {lang === 'bn' ? "ওটিপি (OTP) ও পিন কোড দিন" : "Proceed to OTP & PIN"}
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="space-y-3 text-left">
+                              <div className="p-2.5 bg-amber-50 border border-amber-100 rounded-xl text-[10px] sm:text-xs text-amber-800 font-semibold leading-relaxed">
+                                {lang === 'bn' 
+                                  ? `একটি ডেমো ওটিপি মোবাইল নম্বর (${paymentNumber}) এ পাঠানো হয়েছে। পরীক্ষার সুবিধার জন্য যেকোনো ওটিপি: "123456" এবং পিন ব্যবহার করুন।` 
+                                  : `A simulated OTP has been sent to ${paymentNumber}. For simulation, enter any OTP (e.g. 123456) and PIN.`}
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1.5 text-left">
+                                  <label className="text-[11px] font-bold text-gray-600 uppercase">{lang === 'bn' ? "ভেরিফিকেশন কোড (OTP)" : "Enter OTP"}</label>
+                                  <input
+                                    type="text"
+                                    maxLength={6}
+                                    placeholder="123456"
+                                    value={paymentOtp}
+                                    onChange={(e) => setPaymentOtp(e.target.value.replace(/\D/g, ''))}
+                                    className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm font-semibold text-gray-800 font-mono text-center focus:outline-none focus:border-[#025644]"
+                                  />
+                                </div>
+                                <div className="space-y-1.5 text-left">
+                                  <label className="text-[11px] font-bold text-gray-600 uppercase">{lang === 'bn' ? "ওয়ালেট পিন (PIN)" : "Enter PIN"}</label>
+                                  <input
+                                    type="password"
+                                    maxLength={5}
+                                    placeholder="*****"
+                                    value={paymentPin}
+                                    onChange={(e) => setPaymentPin(e.target.value.replace(/\D/g, ''))}
+                                    className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm font-semibold text-gray-800 font-mono text-center focus:outline-none focus:border-[#025644]"
+                                  />
+                                </div>
+                              </div>
+
+                              {paymentError && (
+                                <p className="text-red-600 text-[10px] font-bold flex items-center gap-1">
+                                  <AlertCircle className="h-3.5 w-3.5" /> {paymentError}
+                                </p>
+                              )}
+
+                              <div className="flex gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setPaymentStep(1)}
+                                  className="px-3.5 py-2.5 bg-gray-150 text-gray-700 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                                >
+                                  {lang === 'bn' ? "পিছনে যান" : "Back"}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (paymentOtp.length < 4 || paymentPin.length < 4) {
+                                      setPaymentError(lang === 'bn' ? "সভ্য ওটিপি (OTP) এবং পিন কোড প্রদান করুন।" : "Please provide both valid OTP and PIN.");
+                                      return;
+                                    }
+                                    setPaymentError('');
+                                    setPaymentStatus('processing');
+                                    setTimeout(() => {
+                                      setPaymentStatus('paid');
+                                      setTransactionId(`${paymentMethod.toUpperCase()}-TXN-${Math.floor(100000 + Math.random() * 900000)}`);
+                                    }, 1500);
+                                  }}
+                                  className="flex-1 py-2.5 text-white rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-3xs"
+                                  style={{
+                                    backgroundColor: paymentMethod === 'bkash' ? '#e2125b' : paymentMethod === 'nagad' ? '#f58220' : '#8c338c'
+                                  }}
+                                >
+                                  {lang === 'bn' ? "৫০০ টাকা পেমেন্ট নিশ্চিত করুন" : "Confirm BDT 500 Payment"}
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </motion.div>
+                  )}
+                </div>
+              )}
+
+              {errors.payment && (
+                <p className="text-red-600 text-xs font-bold flex items-center gap-1 pt-1">
+                  <AlertCircle className="h-4 w-4" /> {errors.payment}
+                </p>
+              )}
+            </div>
+
             {/* Card 6: Declaration & Signature */}
             <div className="bg-white rounded-3xl border border-gray-150 p-6 sm:p-8 shadow-3xs text-left space-y-6">
               <div className="border-b border-gray-100 pb-3">
@@ -1198,114 +1700,463 @@ export default function AdmissionForm({ lang, onBack }: AdmissionFormProps) {
           /* ======================================================= */
           /* SUCCESS STATE - HIGH FIDELITY ADMISSION RECEIPT         */
           /* ======================================================= */
-          <motion.div
-            initial={{ opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-3xl border border-gray-150 p-6 sm:p-10 text-center shadow-md max-w-2xl mx-auto space-y-6"
-          >
-            <div className="h-16 w-16 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-full flex items-center justify-center mx-auto shadow-3xs">
-              <CheckCircle className="h-9 w-9" />
-            </div>
+          <div className="max-w-2xl mx-auto space-y-6">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-white rounded-3xl border border-gray-150 p-6 sm:p-10 text-center shadow-md space-y-6"
+            >
+              <div className="h-16 w-16 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-full flex items-center justify-center mx-auto shadow-3xs">
+                <CheckCircle className="h-9 w-9" />
+              </div>
 
-            <div className="space-y-2">
-              <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-gray-900 tracking-tight">
-                {lang === 'bn' ? "ভর্তি আবেদন সফলভাবে গৃহীত হয়েছে!" : "Application Submitted Successfully!"}
-              </h2>
-              <p className="text-xs sm:text-sm text-gray-500 font-medium max-w-md mx-auto leading-relaxed">
-                {lang === 'bn' 
-                  ? "স্টুডেন্টস কেয়ার মডেল স্কুলে আবেদন করার জন্য ধন্যবাদ। আপনার সাময়িক নিবন্ধন সম্পন্ন হয়েছে এবং তথ্যগুলো ডাটাবেজে সংরক্ষণ করা হয়েছে।" 
-                  : "Thank you for choosing Students Care Model School. Your temporary registration has been verified and logged in our databases."}
-              </p>
-            </div>
+              <div className="space-y-2">
+                <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-gray-900 tracking-tight">
+                  {lang === 'bn' ? "ভর্তি আবেদন সফলভাবে গৃহীত হয়েছে!" : "Application Submitted Successfully!"}
+                </h2>
+                <p className="text-xs sm:text-sm text-gray-500 font-medium max-w-md mx-auto leading-relaxed">
+                  {lang === 'bn' 
+                    ? "স্টুডেন্টস কেয়ার মডেল স্কুলে আবেদন করার জন্য ধন্যবাদ। আপনার সাময়িক নিবন্ধন সম্পন্ন হয়েছে এবং তথ্যগুলো ডাটাবেজে সংরক্ষণ করা হয়েছে।" 
+                    : "Thank you for choosing Students Care Model School. Your temporary registration has been verified and logged in our databases."}
+                </p>
+              </div>
 
-            {/* Simulated Receipt Slip Card */}
-            <div className="bg-[#f0f9f8]/40 border border-emerald-100/60 rounded-3xl p-5 sm:p-6 text-left space-y-4">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-dashed border-emerald-100 pb-3 gap-2">
-                <div>
-                  <span className="text-[10px] font-extrabold text-emerald-800 uppercase tracking-wider">{lang === 'bn' ? "আবেদন আইডি নম্বর" : "Application ID"}</span>
-                  <p className="text-lg font-black text-[#025644] font-mono leading-none mt-1">{generatedAppId}</p>
+              {/* HIGH FIDELITY ADMISSION RECEIPT PRINT AREA */}
+              <div 
+                id="admission-receipt-print-area" 
+                className="bg-white border-2 border-emerald-800/10 rounded-3xl p-6 sm:p-8 text-left space-y-6 relative overflow-hidden"
+              >
+                {/* Simulated Watermark Background */}
+                <div className="absolute inset-0 flex items-center justify-center opacity-[0.02] pointer-events-none select-none rotate-12">
+                  <span className="text-5xl font-black text-[#025644] uppercase tracking-widest text-center">
+                    STUDENTS CARE<br />MODEL SCHOOL
+                  </span>
                 </div>
-                {photo && (
-                  <div className="h-14 w-12 rounded-lg border border-gray-200 overflow-hidden bg-white shadow-3xs shrink-0 self-start sm:self-auto">
-                    <img src={photo} alt="Receipt preview" className="h-full w-full object-cover" />
+
+                {/* Official School Header Header */}
+                <div className="border-b-2 border-emerald-800/40 pb-4 text-center space-y-1 relative z-10">
+                  <h1 className="text-xl sm:text-2xl font-black text-[#025644] tracking-tight uppercase">
+                    {lang === 'bn' ? "স্টুডেন্টস কেয়ার মডেল স্কুল" : "Students Care Model School"}
+                  </h1>
+                  <p className="text-[10px] sm:text-xs font-bold text-gray-500">
+                    {lang === 'bn' ? "প্রধান শাখা, ঢাকা, বাংলাদেশ | মোবাইল: +৮৮০১৯১১৮১৬০৮৩" : "Main Campus, Dhaka, Bangladesh | Phone: +8801911816083"}
+                  </p>
+                  <div className="bg-emerald-800 text-white text-[10px] font-extrabold px-4 py-1 rounded-full uppercase tracking-widest inline-block mt-2">
+                    {lang === 'bn' ? "ভর্তি আবেদন পত্র ও রশিদ" : "ADMISSION APPLICATION & FEE RECEIPT"}
+                  </div>
+                </div>
+
+                {/* Simulated Receipt Slip Card Header Details */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-dashed border-gray-200 pb-4 gap-3 relative z-10">
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-extrabold text-emerald-800 uppercase tracking-wider">{lang === 'bn' ? "আবেদন আইডি নম্বর" : "Application ID"}</span>
+                    <p className="text-xl font-black text-[#025644] font-mono leading-none">{generatedAppId}</p>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase">{lang === 'bn' ? "তারিখ:" : "Date:"} {new Date().toLocaleDateString('en-GB')}</p>
+                  </div>
+                  {photo ? (
+                    <div className="h-20 w-16 rounded-xl border border-gray-200 overflow-hidden bg-white shadow-3xs shrink-0 self-start sm:self-auto">
+                      <img src={photo} alt="Receipt preview" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
+                    </div>
+                  ) : (
+                    <div className="h-20 w-16 rounded-xl border border-dashed border-gray-200 bg-gray-50 flex items-center justify-center shrink-0 self-start sm:self-auto text-gray-400">
+                      <User className="h-6 w-6" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Main Student details Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 text-xs sm:text-sm border-b border-gray-100 pb-5 relative z-10">
+                  <div className="space-y-0.5">
+                    <span className="text-gray-400 font-bold block text-[10px] uppercase tracking-wider">{lang === 'bn' ? "শিক্ষার্থীর নাম:" : "Student Name:"}</span>
+                    <p className="font-extrabold text-gray-800">{formData.studentName}</p>
+                  </div>
+                  <div className="space-y-0.5">
+                    <span className="text-gray-400 font-bold block text-[10px] uppercase tracking-wider">{lang === 'bn' ? "আবেদিত শ্রেণী:" : "Applied Class:"}</span>
+                    <p className="font-extrabold text-emerald-800">{formData.selectedClass}</p>
+                  </div>
+                  <div className="space-y-0.5">
+                    <span className="text-gray-400 font-bold block text-[10px] uppercase tracking-wider">{lang === 'bn' ? "পিতার নাম:" : "Father's Name:"}</span>
+                    <p className="font-extrabold text-gray-800">{formData.fatherName || 'N/A'}</p>
+                  </div>
+                  <div className="space-y-0.5">
+                    <span className="text-gray-400 font-bold block text-[10px] uppercase tracking-wider">{lang === 'bn' ? "মাতার নাম:" : "Mother's Name:"}</span>
+                    <p className="font-extrabold text-gray-800">{formData.motherName || 'N/A'}</p>
+                  </div>
+                  <div className="space-y-0.5">
+                    <span className="text-gray-400 font-bold block text-[10px] uppercase tracking-wider">{lang === 'bn' ? "জন্ম তারিখ:" : "Date of Birth:"}</span>
+                    <p className="font-extrabold text-gray-800 font-mono">{formData.birthDate || 'N/A'}</p>
+                  </div>
+                  <div className="space-y-0.5">
+                    <span className="text-gray-400 font-bold block text-[10px] uppercase tracking-wider">{lang === 'bn' ? "লিঙ্গ:" : "Gender:"}</span>
+                    <p className="font-extrabold text-gray-800">{formData.gender}</p>
+                  </div>
+                  <div className="space-y-0.5">
+                    <span className="text-gray-400 font-bold block text-[10px] uppercase tracking-wider">{lang === 'bn' ? "মোবাইল নম্বর:" : "Contact Mobile:"}</span>
+                    <p className="font-extrabold text-gray-800 font-mono">{formData.phone}</p>
+                  </div>
+                  <div className="space-y-0.5">
+                    <span className="text-gray-400 font-bold block text-[10px] uppercase tracking-wider">{lang === 'bn' ? "রক্তের গ্রুপ:" : "Blood Group:"}</span>
+                    <p className="font-extrabold text-red-600 font-mono">{formData.bloodGroup || 'N/A'}</p>
+                  </div>
+                </div>
+
+                {/* Embedded Payment Verification Details Box */}
+                <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 space-y-3 text-xs relative z-10">
+                  <div className="flex justify-between items-center">
+                    <span className="text-emerald-800 font-extrabold uppercase text-[10px] tracking-wider">{lang === 'bn' ? "আবেদন ফি পরিশোধ স্ট্যাটাস" : "Application Fee Status"}</span>
+                    <span className="bg-emerald-500 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider shadow-3xs">
+                      {lang === 'bn' ? "পরিশোধিত" : "PAID"}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3 pt-2.5 border-t border-emerald-500/10 text-gray-600 font-semibold text-[11px]">
+                    <div>
+                      <span className="text-gray-400 block text-[9px] uppercase tracking-wider">{lang === 'bn' ? "পরিশোধ মাধ্যম" : "Gateway"}</span>
+                      <span className="font-extrabold text-gray-800 uppercase">{paymentMethod || 'BKASH'}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400 block text-[9px] uppercase tracking-wider">{lang === 'bn' ? "টাকার পরিমাণ" : "Amount Paid"}</span>
+                      <span className="font-extrabold text-gray-800">500.00 BDT</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400 block text-[9px] uppercase tracking-wider">{lang === 'bn' ? "লেনদেন আইডি (TxnID)" : "Transaction ID"}</span>
+                      <span className="font-extrabold font-mono text-emerald-800 text-left">{transactionId || `BKASH-TXN-${Math.floor(100000 + Math.random() * 900000)}`}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Admissions Evaluation Schedule Banner Box */}
+                <div className="border border-[#025644]/20 bg-[#025644]/5 p-4 rounded-2xl border-dashed text-center relative z-10">
+                  <span className="text-[10px] font-extrabold text-[#025644] uppercase tracking-wider block mb-1">
+                    {lang === 'bn' ? "ভর্তি পরীক্ষার সময়সূচী" : "Admission Evaluation Schedule"}
+                  </span>
+                  <p className="text-xs sm:text-sm font-extrabold text-gray-900">
+                    {lang === 'bn' ? "শনিবার, ২৫শে জুলাই, ২০২৬ @ সকাল ১০:০০ টা" : "Saturday, July 25th, 2026 @ 10:00 AM"}
+                  </p>
+                  <span className="text-[10px] text-gray-500 font-medium block mt-1">
+                    {lang === 'bn' ? "স্থান: স্টুডেন্টস কেয়ার প্রধান ক্যাম্পাস অডিটোরিয়াম" : "Venue: Students Care Main Campus Auditorium"}
+                  </span>
+                </div>
+
+                {/* Bottom Official stamp seal and principal sign mockups */}
+                <div className="pt-6 flex justify-between items-end border-t border-gray-100 text-[10px] text-gray-400 font-bold relative z-10">
+                  <div className="space-y-1.5">
+                    <p className="uppercase tracking-wider">{lang === 'bn' ? "অফিসিয়াল সিলমোহর" : "OFFICIAL SEAL"}</p>
+                    <div className="h-14 w-14 rounded-full border border-dashed border-emerald-600/30 bg-emerald-500/5 flex items-center justify-center text-center p-1 font-mono text-[6px] text-emerald-700 leading-none rotate-12 select-none">
+                      SCMS ADMISSION OFFICE APPROVED
+                    </div>
+                  </div>
+                  <div className="text-right space-y-1">
+                    <p className="font-serif italic text-emerald-800 text-lg leading-none select-none">Prof. Dr. Rahman</p>
+                    <div className="border-t border-gray-200 pt-1 w-28 text-right uppercase tracking-wider">
+                      {lang === 'bn' ? "অধ্যক্ষের স্বাক্ষর" : "PRINCIPAL SIGNATURE"}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Instruction Checklist of Documents */}
+              <div className="text-left space-y-2.5 p-1 border border-gray-100 rounded-2xl bg-gray-50/50 p-4">
+                <h4 className="text-xs font-bold uppercase text-gray-400 tracking-wider flex items-center gap-1.5">
+                  <Info className="h-4 w-4 text-emerald-600" />
+                  {lang === 'bn' ? "পরীক্ষার দিন প্রয়োজনীয় কাগজপত্রাদি (মূল কপি সঙ্গে আনবেন)" : "Required Documents (on Exam Day)"}
+                </h4>
+                <ul className="text-xs text-gray-600 space-y-1.5 list-disc pl-5 font-semibold">
+                  {lang === 'bn' ? (
+                    <>
+                      <li>শিক্ষার্থীর সাম্প্রতিক ৩ কপি পাসপোর্ট সাইজের রঙিন ছবি।</li>
+                      <li>অনলাইন জন্ম নিবন্ধন সনদের সত্যায়িত ফটোকপি।</li>
+                      <li>পূর্ববর্তী বিদ্যালয়ের ছাড়পত্র (TC) ও আসল প্রগতি পত্র (রিপোর্ট কার্ড)।</li>
+                      <li>এই অনলাইন আবেদন পত্রের প্রিন্ট বা ডাউনলোডকৃত PDF কপি।</li>
+                    </>
+                  ) : (
+                    <>
+                      <li>3 Copies of Passport-sized photograph of the candidate.</li>
+                      <li>Attested photocopy of candidate's Birth Registration Certificate.</li>
+                      <li>Transfer Certificate (TC) & original report card from the previous institution.</li>
+                      <li>Printout or downloaded PDF of this online application receipt.</li>
+                    </>
+                  )}
+                </ul>
+              </div>
+
+              {/* Receipt Screen Actions */}
+              <div className="flex flex-col sm:flex-row justify-center gap-3 pt-2 print:hidden">
+                <button
+                  onClick={() => window.print()}
+                  className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-extrabold text-xs sm:text-sm rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-2"
+                >
+                  {lang === 'bn' ? "রশিদ প্রিন্ট করুন" : "Print Receipt"}
+                </button>
+                
+                {/* Download Application Summary Button */}
+                <button
+                  onClick={() => window.print()}
+                  className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs sm:text-sm rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-3xs"
+                >
+                  <Download className="h-4 w-4" />
+                  {lang === 'bn' ? "আবেদন বিবরণী ডাউনলোড (PDF)" : "Download Application Summary"}
+                </button>
+                
+                {/* PDF Download Button */}
+                <button
+                  onClick={downloadPDF}
+                  disabled={isPdfDownloading}
+                  className="px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs sm:text-sm rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-3xs disabled:opacity-50"
+                >
+                  {isPdfDownloading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      {lang === 'bn' ? "পিডিএফ জেনারেট হচ্ছে..." : "Generating PDF..."}
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-4 w-4" />
+                      {lang === 'bn' ? "রশিদ ডাউনলোড করুন (PDF)" : "Download Receipt (PDF)"}
+                    </>
+                  )}
+                </button>
+
+                <button
+                  onClick={handleReset}
+                  className="px-6 py-2.5 bg-[#025644] hover:bg-[#013f32] text-white font-extrabold text-xs sm:text-sm rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-2"
+                >
+                  {lang === 'bn' ? "আরেকটি আবেদন করুন" : "Apply for Another Student"}
+                </button>
+              </div>
+            </motion.div>
+
+            {/* Print-only Full Application Summary Document */}
+            <div
+              id="printable-application-summary"
+              className="hidden print:block bg-white text-black text-left p-8 font-sans space-y-6 border border-gray-300 rounded-3xl"
+              style={{ color: '#000000', backgroundColor: '#ffffff', minHeight: '297mm' }}
+            >
+              {/* Header */}
+              <div className="border-b-4 border-emerald-950 pb-4 text-center space-y-1 relative">
+                <h1 className="text-2xl font-extrabold tracking-tight text-emerald-950 uppercase">
+                  Students Care Model School
+                </h1>
+                <p className="text-xs font-bold text-gray-700">
+                  Main Campus, Dhaka, Bangladesh | Phone: +8801911816083 | Email: info@scms.edu.bd
+                </p>
+                <p className="text-[10px] text-gray-600 font-bold uppercase tracking-wider">
+                  Established: 2012 | EIIN: 134567 | School Code: 2084
+                </p>
+                <div className="bg-emerald-900 text-white text-xs font-bold px-6 py-1 rounded-full uppercase tracking-widest inline-block mt-3">
+                  Official Admission Application Summary
+                </div>
+              </div>
+
+              {/* Watermark Logo Placeholder */}
+              <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none select-none rotate-12">
+                <span className="text-7xl font-black text-[#025644] uppercase tracking-widest text-center leading-normal">
+                  STUDENTS CARE<br />MODEL SCHOOL
+                </span>
+              </div>
+
+              {/* Document Meta Row */}
+              <div className="flex justify-between items-center bg-gray-100 p-4 rounded-xl border border-gray-200">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-gray-500 uppercase">Application ID:</span>
+                    <span className="text-base font-extrabold text-emerald-900 font-mono">{generatedAppId}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-gray-500 uppercase">Submission Date:</span>
+                    <span className="text-xs font-extrabold text-gray-800">{new Date().toLocaleDateString('en-GB')}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-gray-500 uppercase">Academic Year:</span>
+                    <span className="text-xs font-extrabold text-emerald-950">2025–2026</span>
+                  </div>
+                </div>
+
+                {photo ? (
+                  <div className="h-28 w-24 rounded-lg border border-gray-300 overflow-hidden bg-white shrink-0 shadow-sm">
+                    <img src={photo} alt="Student" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
+                  </div>
+                ) : (
+                  <div className="h-28 w-24 rounded-lg border border-dashed border-gray-300 bg-gray-50 flex flex-col items-center justify-center shrink-0 text-center p-2 text-gray-400">
+                    <User className="h-8 w-8 mb-1" />
+                    <span className="text-[8px] font-bold uppercase leading-none">Photo Here</span>
                   </div>
                 )}
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs sm:text-sm">
-                <div>
-                  <span className="text-gray-400 font-bold">{lang === 'bn' ? "শিক্ষার্থীর নাম:" : "Student Name:"}</span>
-                  <p className="font-extrabold text-gray-800 mt-0.5">{formData.studentName}</p>
-                </div>
-                <div>
-                  <span className="text-gray-400 font-bold">{lang === 'bn' ? "আবেদিত শ্রেণী:" : "Applied Class:"}</span>
-                  <p className="font-extrabold text-emerald-800 mt-0.5">{formData.selectedClass}</p>
-                </div>
-                <div>
-                  <span className="text-gray-400 font-bold">{lang === 'bn' ? "অভিভাবকের নাম:" : "Guardian Name:"}</span>
-                  <p className="font-extrabold text-gray-800 mt-0.5">{formData.fatherName}</p>
-                </div>
-                <div>
-                  <span className="text-gray-400 font-bold">{lang === 'bn' ? "মোবাইল নম্বর:" : "Contact Mobile:"}</span>
-                  <p className="font-extrabold text-gray-800 mt-0.5 font-mono">{formData.phone}</p>
+              {/* 1. Student Personal Details */}
+              <div className="space-y-3">
+                <h3 className="text-xs font-extrabold uppercase text-emerald-950 border-b border-emerald-900/30 pb-1 tracking-wider">
+                  1. Student Personal Details
+                </h3>
+                <table className="w-full text-xs text-left border-collapse">
+                  <tbody>
+                    <tr className="border-b border-gray-100">
+                      <td className="py-2 font-bold text-gray-500 w-1/3">Full Name:</td>
+                      <td className="py-2 font-extrabold text-gray-900 uppercase">{formData.studentName}</td>
+                    </tr>
+                    <tr className="border-b border-gray-100">
+                      <td className="py-2 font-bold text-gray-500">Applied Class:</td>
+                      <td className="py-2 font-extrabold text-emerald-900">{formData.selectedClass}</td>
+                    </tr>
+                    <tr className="border-b border-gray-100">
+                      <td className="py-2 font-bold text-gray-500">Date of Birth:</td>
+                      <td className="py-2 font-extrabold text-gray-800 font-mono">{formData.birthDate || 'N/A'}</td>
+                    </tr>
+                    <tr className="border-b border-gray-100">
+                      <td className="py-2 font-bold text-gray-500">Gender:</td>
+                      <td className="py-2 font-extrabold text-gray-800">{formData.gender}</td>
+                    </tr>
+                    <tr className="border-b border-gray-100">
+                      <td className="py-2 font-bold text-gray-500">Blood Group:</td>
+                      <td className="py-2 font-extrabold text-red-600 font-mono">{formData.bloodGroup || 'N/A'}</td>
+                    </tr>
+                    <tr className="border-b border-gray-100">
+                      <td className="py-2 font-bold text-gray-500">Religion:</td>
+                      <td className="py-2 font-extrabold text-gray-800">{formData.religion || 'N/A'}</td>
+                    </tr>
+                    <tr className="border-b border-gray-100">
+                      <td className="py-2 font-bold text-gray-500">Nationality:</td>
+                      <td className="py-2 font-extrabold text-gray-800">{formData.nationality || 'Bangladeshi'}</td>
+                    </tr>
+                    <tr className="border-b border-gray-100">
+                      <td className="py-2 font-bold text-gray-500">NID / Birth Reg No:</td>
+                      <td className="py-2 font-extrabold text-gray-800 font-mono">{formData.nidBirthReg || 'N/A'}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* 2. Parent & Guardian Information */}
+              <div className="space-y-3">
+                <h3 className="text-xs font-extrabold uppercase text-emerald-950 border-b border-emerald-900/30 pb-1 tracking-wider">
+                  2. Parent & Guardian Information
+                </h3>
+                <table className="w-full text-xs text-left border-collapse">
+                  <tbody>
+                    <tr className="border-b border-gray-100">
+                      <td className="py-2 font-bold text-gray-500 w-1/3">Father's Name:</td>
+                      <td className="py-2 font-extrabold text-gray-900">{formData.fatherName || 'N/A'}</td>
+                    </tr>
+                    <tr className="border-b border-gray-100">
+                      <td className="py-2 font-bold text-gray-500">Mother's Name:</td>
+                      <td className="py-2 font-extrabold text-gray-900">{formData.motherName || 'N/A'}</td>
+                    </tr>
+                    <tr className="border-b border-gray-100">
+                      <td className="py-2 font-bold text-gray-500">Guardian's Occupation:</td>
+                      <td className="py-2 font-extrabold text-gray-800">{formData.guardianOccupation || 'N/A'}</td>
+                    </tr>
+                    <tr className="border-b border-gray-100">
+                      <td className="py-2 font-bold text-gray-500">Contact Number:</td>
+                      <td className="py-2 font-extrabold text-gray-800 font-mono">{formData.phone}</td>
+                    </tr>
+                    <tr className="border-b border-gray-100">
+                      <td className="py-2 font-bold text-gray-500">Email Address:</td>
+                      <td className="py-2 font-extrabold text-gray-800 font-mono">{formData.email || 'N/A'}</td>
+                    </tr>
+                    <tr className="border-b border-gray-100">
+                      <td className="py-2 font-bold text-gray-500">Marital Status:</td>
+                      <td className="py-2 font-extrabold text-gray-800">{formData.maritalStatus || 'Single'}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* 3. Address Details */}
+              <div className="space-y-3">
+                <h3 className="text-xs font-extrabold uppercase text-emerald-950 border-b border-emerald-900/30 pb-1 tracking-wider">
+                  3. Address Details
+                </h3>
+                <table className="w-full text-xs text-left border-collapse">
+                  <tbody>
+                    <tr className="border-b border-gray-100">
+                      <td className="py-2 font-bold text-gray-500 w-1/3">Present Address:</td>
+                      <td className="py-2 font-extrabold text-gray-800">
+                        Division: {formData.presentDivision}, District: {formData.presentDistrict}, Address: {formData.presentFullAddress}
+                      </td>
+                    </tr>
+                    <tr className="border-b border-gray-100">
+                      <td className="py-2 font-bold text-gray-500">Permanent Address:</td>
+                      <td className="py-2 font-extrabold text-gray-800">
+                        {formData.sameAsPresent 
+                          ? "Same as Present Address" 
+                          : `Division: ${formData.permanentDivision}, District: ${formData.permanentDistrict}, Address: ${formData.permanentFullAddress}`}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* 4. Payment Verification */}
+              <div className="space-y-3">
+                <h3 className="text-xs font-extrabold uppercase text-emerald-950 border-b border-emerald-900/30 pb-1 tracking-wider">
+                  4. Payment & Fee Transaction Details
+                </h3>
+                <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-semibold">
+                  <div>
+                    <span className="text-gray-400 block text-[9px] uppercase tracking-wider">Application Fee</span>
+                    <span className="font-extrabold text-gray-800">500.00 BDT</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400 block text-[9px] uppercase tracking-wider">Payment Method</span>
+                    <span className="font-extrabold text-emerald-900 uppercase">{paymentMethod || 'BKASH'}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400 block text-[9px] uppercase tracking-wider">Transaction ID</span>
+                    <span className="font-extrabold font-mono text-emerald-900">{transactionId || 'N/A'}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400 block text-[9px] uppercase tracking-wider">Status</span>
+                    <span className="text-emerald-700 font-extrabold uppercase">SUCCESS / PAID</span>
+                  </div>
                 </div>
               </div>
 
-              {/* Admissions Schedule Banner Box */}
-              <div className="border border-[#025644]/20 bg-[#025644]/5 p-3.5 rounded-2xl border-dashed text-center">
-                <span className="text-[10px] font-extrabold text-[#025644] uppercase tracking-wider block mb-1">
-                  {lang === 'bn' ? "ভর্তি পরীক্ষার সাময়িক সময়সূচী" : "Admission Evaluation Schedule"}
-                </span>
-                <p className="text-xs sm:text-sm font-extrabold text-gray-900">
-                  {lang === 'bn' ? "শনিবার, ২৫শে জুলাই, ২০২৬ @ সকাল ১০:০০ টা" : "Saturday, July 25th, 2026 @ 10:00 AM"}
+              {/* 5. Declaration & Signature */}
+              <div className="space-y-4 pt-4 border-t border-gray-200">
+                <p className="text-[10px] text-gray-500 font-semibold italic leading-relaxed">
+                  Declaration: I hereby declare that the information provided in this application is correct and true to the best of my knowledge. I will abide by all rules and regulations of Students Care Model School.
                 </p>
-                <span className="text-[10px] text-gray-500 font-medium block mt-1">
-                  {lang === 'bn' ? "স্থান: স্টুডেন্টস কেয়ার প্রধান ক্যাম্পাস অডিটোরিয়াম" : "Venue: Students Care Main Campus Auditorium"}
-                </span>
+                <div className="flex justify-between items-end text-xs text-gray-500">
+                  <div>
+                    <p className="font-bold">Applicant's Signature:</p>
+                    {formData.signatureType === 'type' ? (
+                      <p className="font-serif italic text-xl text-emerald-900 mt-1 select-none border-b border-gray-200 pb-1 w-max">
+                        {formData.signatureText}
+                      </p>
+                    ) : (
+                      signatureDataUrl ? (
+                        <div className="h-12 w-48 border-b border-gray-200 mt-1">
+                          <img src={signatureDataUrl} alt="Signature" className="h-full object-contain" referrerPolicy="no-referrer" />
+                        </div>
+                      ) : (
+                        <p className="border-b border-gray-200 pb-1 w-48 mt-1 italic text-gray-400">Signed Electronically</p>
+                      )
+                    )}
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold">Date of Application:</p>
+                    <p className="font-extrabold text-gray-800 font-mono mt-1">{new Date().toLocaleDateString('en-GB')}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 6. Office Use Only Footer */}
+              <div className="pt-6 mt-8 border-t-2 border-dashed border-gray-300 flex justify-between items-center text-[10px] text-gray-500 font-bold">
+                <div className="space-y-1">
+                  <p className="uppercase tracking-wider">OFFICIAL ADMISSIONS SEAL</p>
+                  <div className="h-16 w-16 rounded-full border-2 border-dashed border-emerald-800/30 bg-emerald-50/50 flex items-center justify-center text-center p-1 font-mono text-[7px] text-emerald-800 leading-none rotate-6 select-none">
+                    SCMS OFFICE APPROVED
+                  </div>
+                </div>
+                <div className="text-center space-y-1">
+                  <p className="font-serif italic text-emerald-900 text-sm leading-none select-none">Prof. Dr. Rahman</p>
+                  <div className="border-t border-gray-200 pt-1 w-32 uppercase tracking-wider text-center">
+                    PRINCIPAL SIGNATURE
+                  </div>
+                </div>
               </div>
             </div>
-
-            {/* Instruction Checklist of Documents */}
-            <div className="text-left space-y-2.5 p-1 border border-gray-100 rounded-2xl bg-gray-50/50 p-4">
-              <h4 className="text-xs font-bold uppercase text-gray-400 tracking-wider flex items-center gap-1.5">
-                <Info className="h-4 w-4 text-emerald-600" />
-                {lang === 'bn' ? "পরীক্ষার দিন প্রয়োজনীয় কাগজপত্রাদি (মূল কপি সঙ্গে আনবেন)" : "Required Documents (on Exam Day)"}
-              </h4>
-              <ul className="text-xs text-gray-600 space-y-1.5 list-disc pl-5 font-semibold">
-                {lang === 'bn' ? (
-                  <>
-                    <li>শিক্ষার্থীর সাম্প্রতিক ৩ কপি পাসপোর্ট সাইজের রঙিন ছবি।</li>
-                    <li>অনলাইন জন্ম নিবন্ধন সনদের সত্যায়িত ফটোকপি।</li>
-                    <li>পূর্ববর্তী বিদ্যালয়ের ছাড়পত্র (TC) ও আসল প্রগতি পত্র (রিপোর্ট কার্ড)।</li>
-                    <li>এই অনলাইন আবেদন পত্রের প্রিন্ট কপি।</li>
-                  </>
-                ) : (
-                  <>
-                    <li>3 Copies of Passport-sized photograph of the candidate.</li>
-                    <li>Attested photocopy of candidate's Birth Registration Certificate.</li>
-                    <li>Transfer Certificate (TC) & original report card from the previous institution.</li>
-                    <li>Printout of this online application receipt page.</li>
-                  </>
-                )}
-              </ul>
-            </div>
-
-            {/* Receipt Screen Actions */}
-            <div className="flex flex-col sm:flex-row justify-center gap-3 pt-2">
-              <button
-                onClick={() => window.print()}
-                className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-extrabold text-xs sm:text-sm rounded-xl transition-colors cursor-pointer"
-              >
-                {lang === 'bn' ? "রশিদ প্রিন্ট করুন" : "Print Receipt"}
-              </button>
-              <button
-                onClick={handleReset}
-                className="px-6 py-2.5 bg-[#025644] hover:bg-[#013f32] text-white font-extrabold text-xs sm:text-sm rounded-xl transition-colors cursor-pointer"
-              >
-                {lang === 'bn' ? "আরেকটি আবেদন করুন" : "Apply for Another Student"}
-              </button>
-            </div>
-          </motion.div>
+          </div>
         )}
       </div>
 

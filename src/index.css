@@ -92,4 +92,42 @@
   animation-play-state: paused;
 }
 
+/* Bulletproof @media print styles for Application Summary */
+@media print {
+  /* Hide all standard web content, headers, navbars, footers, interactive buttons */
+  body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  /* Show ONLY the printable-application-summary element and its descendants */
+  #printable-application-summary,
+  #printable-application-summary * {
+    visibility: visible;
+  }
+
+  /* Position it perfectly for the print layout */
+  #printable-application-summary {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background: #ffffff !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Page margins and layout optimization */
+  @page {
+    size: A4 portrait;
+    margin: 15mm 15mm 15mm 15mm;
+  }
+}
+
 
