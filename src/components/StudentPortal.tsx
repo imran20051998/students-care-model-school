@@ -879,6 +879,43 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
     localStorage.setItem('school_mark_distributions', JSON.stringify(markDistributions));
   }, [markDistributions]);
 
+  // Dedicated states for Class & Section management
+  const [classSectionsList, setClassSectionsList] = useState<Array<{
+    id: string;
+    className: string;
+    numericName: string;
+    sections: string[];
+  }>>(() => {
+    const saved = localStorage.getItem('school_class_sections_list');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return [
+      { id: 'CS-1', className: 'Class 9', numericName: '9', sections: ['A', 'B'] },
+      { id: 'CS-2', className: 'Class 10', numericName: '10', sections: ['A', 'B', 'C'] },
+      { id: 'CS-3', className: 'Class 8', numericName: '8', sections: ['A', 'B'] },
+      { id: 'CS-4', className: 'Class 7', numericName: '7', sections: ['A'] }
+    ];
+  });
+
+  const [csFormClassName, setCsFormClassName] = useState('Class 9');
+  const [csFormNumericName, setCsFormNumericName] = useState('9');
+  const [csFormSections, setCsFormSections] = useState<string[]>(['A', 'B']);
+  const [editingCsId, setEditingCsId] = useState<string | null>(null);
+  const [customSectionInput, setCustomSectionInput] = useState('');
+
+  // Extra states for academic subtabs to avoid violating the Rules of Hooks
+  const [classSearchQuery, setClassSearchQuery] = useState('');
+  const [viewingSeatingId, setViewingSeatingId] = useState<string>('SA-001');
+  const [sourceClass, setSourceClass] = useState<string>('Class 8-A');
+  const [targetClass, setTargetClass] = useState<string>('Class 9-A');
+  const [minGPA, setMinGPA] = useState<number>(3.00);
+  const [promotionLogged, setPromotionLogged] = useState<boolean>(false);
+
+  useEffect(() => {
+    localStorage.setItem('school_class_sections_list', JSON.stringify(classSectionsList));
+  }, [classSectionsList]);
+
   // Settings State and Sub Tabs
   const [settingsSubTab, setSettingsSubTab] = useState<string>('login_banner');
   const [schoolSettings, setSchoolSettings] = useState(() => {
@@ -7531,686 +7568,456 @@ def approve_admission_application(request, pk):
                   {/* SUB-TAB 1: CLASS & SECTION                          */}
                   {/* =================================================== */}
                   {academicSubTab === 'class_section' && (() => {
-                    // Helper to get students for a class and section
-                    const getStudentsForClassSection = (clsName: string) => {
-                      // Normalize clsName, e.g., "Class 9-A" -> class: "9", section: "A"
-                      const clean = clsName.replace(/Class\s+/i, '').trim();
-                      let clsPart = '';
-                      let secPart = '';
-                      
-                      if (clean.includes('-')) {
-                        const parts = clean.split('-');
-                        clsPart = parts[0].trim();
-                        secPart = parts[1].trim();
-                      } else if (clean.includes(' ')) {
-                        const parts = clean.split(/\s+/);
-                        clsPart = parts[0].trim();
-                        secPart = parts[1].trim();
-                      } else {
-                        // match number followed by letters e.g. "9A"
-                        const match = clean.match(/^(\d+|[a-zA-Z]+)(.*)$/);
-                        if (match) {
-                          clsPart = match[1].trim();
-                          secPart = match[2].trim();
-                        } else {
-                          clsPart = clean;
-                        }
-                      }
+                    // Common default section presets
+                    const commonSections = ['A', 'B', 'C', 'D', 'E'];
 
-                      if (!clsPart) return [];
-
-                      return students.filter(student => {
-                        const sClass = String(student.class).trim().toLowerCase();
-                        const sSection = String(student.section).trim().toLowerCase();
-                        
-                        const matchesClass = sClass === clsPart.toLowerCase() || 
-                                             sClass === ('class ' + clsPart.toLowerCase()) ||
-                                             clsPart.toLowerCase() === ('class ' + sClass) ||
-                                             sClass === clsPart.replace(/\s+/g, '').toLowerCase();
-                                             
-                        const matchesSection = secPart ? (sSection === secPart.toLowerCase()) : true;
-                        
-                        return matchesClass && matchesSection;
-                      });
-                    };
-
-                    // Filtered Classes logic
-                    const filteredClasses = academicClasses.filter(cls => {
-                      const matchesSearch = !classFilterSearch.trim() || 
-                        cls.name.toLowerCase().includes(classFilterSearch.toLowerCase()) ||
-                        (cls.classTeacher && cls.classTeacher.toLowerCase().includes(classFilterSearch.toLowerCase()));
-                        
-                      const matchesShift = classFilterShift === 'All' || cls.shift === classFilterShift;
-                      const matchesGroup = classFilterGroup === 'All' || cls.group === classFilterGroup;
-                      
-                      return matchesSearch && matchesShift && matchesGroup;
+                    // Filtered list
+                    const filteredClassSections = classSectionsList.filter(item => {
+                      return !classSearchQuery.trim() || 
+                        item.className.toLowerCase().includes(classSearchQuery.toLowerCase()) ||
+                        item.numericName.toLowerCase().includes(classSearchQuery.toLowerCase()) ||
+                        item.sections.some(sec => sec.toLowerCase().includes(classSearchQuery.toLowerCase()));
                     });
 
-                    // Parse CSV data safely
-                    const parseCSVInput = (csvText: string) => {
-                      const lines = csvText.split('\n').map(l => l.trim()).filter(Boolean);
-                      if (lines.length === 0) return [];
-                      
-                      let startIndex = 0;
-                      const firstLine = lines[0].toLowerCase();
-                      const hasHeader = firstLine.includes('class') || firstLine.includes('shift') || firstLine.includes('group') || firstLine.includes('teacher') ||
-                                        firstLine.includes('ক্লাস') || firstLine.includes('শিফট') || firstLine.includes('গ্রুপ') || firstLine.includes('শিক্ষক');
-                      if (hasHeader) {
-                        startIndex = 1;
-                      }
+                    // Handle Form Submission
+                    const handleSaveClassSection = (e: React.FormEvent) => {
+                      e.preventDefault();
 
-                      const parsed: Array<{ name: string; shift: string; group: string; classTeacher: string; isValid: boolean; errorReason?: string }> = [];
-
-                      for (let i = startIndex; i < lines.length; i++) {
-                        const cols = lines[i].split(',').map(c => {
-                          let val = c.trim();
-                          if (val.startsWith('"') && val.endsWith('"')) {
-                            val = val.substring(1, val.length - 1).trim();
-                          }
-                          return val;
-                        });
-
-                        if (cols.length === 0 || !cols[0]) continue;
-
-                        const className = cols[0];
-                        
-                        // Shift validation & normalization
-                        let shiftVal = 'Morning';
-                        const rawShift = cols[1] ? cols[1].trim() : '';
-                        if (rawShift.toLowerCase().includes('day') || rawShift.includes('দিন') || rawShift.includes('বিকেল')) {
-                          shiftVal = 'Day';
-                        }
-
-                        // Group validation & normalization
-                        let groupVal = 'General';
-                        const rawGroup = cols[2] ? cols[2].trim() : '';
-                        if (rawGroup.toLowerCase().includes('sci') || rawGroup.includes('বিজ্ঞান')) {
-                          groupVal = 'Science';
-                        } else if (rawGroup.toLowerCase().includes('com') || rawGroup.includes('ব্যবসায়') || rawGroup.includes('বানিজ্য')) {
-                          groupVal = 'Commerce';
-                        } else if (rawGroup.toLowerCase().includes('art') || rawGroup.includes('মানবিক')) {
-                          groupVal = 'Arts';
-                        }
-
-                        const teacherVal = cols[3] || '';
-                        
-                        // Validation checks
-                        const existsInState = academicClasses.some(c => c.name.toLowerCase() === className.toLowerCase());
-                        const existsInImport = parsed.some(c => c.name.toLowerCase() === className.toLowerCase());
-                        
-                        let isValid = true;
-                        let errorReason = '';
-                        if (existsInState) {
-                          isValid = false;
-                          errorReason = lang === 'bn' ? 'ক্লাসটি ইতিমধ্যে ডাটাবেজে রয়েছে' : 'Class level already exists in database';
-                        } else if (existsInImport) {
-                          isValid = false;
-                          errorReason = lang === 'bn' ? 'সিএসভি ফাইলেই ডুপ্লিকেট রয়েছে' : 'Duplicate row in CSV file';
-                        }
-
-                        parsed.push({
-                          name: className,
-                          shift: shiftVal,
-                          group: groupVal,
-                          classTeacher: teacherVal,
-                          isValid,
-                          errorReason
-                        });
-                      }
-                      return parsed;
-                    };
-
-                    const previewRows = parseCSVInput(bulkImportInput);
-
-                    // Execute CSV/Text import
-                    const executeBulkImport = () => {
-                      const validRows = previewRows.filter(r => r.isValid);
-                      if (validRows.length === 0) {
-                        setAdminErrorMsg(lang === 'bn' ? 'ইম্পোর্ট করার মত কোনো বৈধ ক্লাস পাওয়া যায়নি!' : 'No valid classes found to import!');
-                        setTimeout(() => setAdminErrorMsg(''), 3000);
+                      if (!csFormClassName.trim()) {
+                        alert(lang === 'bn' ? 'অনুগ্রহ করে ক্লাসের নাম লিখুন!' : 'Please enter a Class Name!');
                         return;
                       }
 
-                      const newClasses = validRows.map((row, idx) => ({
-                        id: 'c' + (academicClasses.length + idx + 1),
-                        name: row.name,
-                        shift: row.shift,
-                        group: row.group,
-                        classTeacher: row.classTeacher
-                      }));
+                      if (!csFormNumericName.trim()) {
+                        alert(lang === 'bn' ? 'অনুগ্রহ করে নিউমেরিক নাম লিখুন!' : 'Please enter a Numeric Name!');
+                        return;
+                      }
 
-                      setAcademicClasses(prev => [...prev, ...newClasses]);
-                      setAdminSuccessMsg(lang === 'bn' 
-                        ? `সফলভাবে ${newClasses.length}টি ক্লাস বাল্ক ইম্পোর্ট করা হয়েছে!` 
-                        : `Successfully bulk imported ${newClasses.length} classes!`
-                      );
-                      setTimeout(() => setAdminSuccessMsg(''), 4000);
-                      setBulkImportInput('');
-                      setIsBulkImportOpen(false);
-                    };
+                      if (csFormSections.length === 0) {
+                        alert(lang === 'bn' ? 'অনুগ্রহ করে অন্তত একটি সেকশন সিলেক্ট বা টাইপ করুন!' : 'Please select or add at least one section!');
+                        return;
+                      }
 
-                    // Preset mock csv helper
-                    const loadMockCSV = () => {
-                      const mockText = "Class Name,Shift,Academic Group,Class Teacher\nClass 9-B,Morning,Science,Mr. Imran Hosen\nClass 10-B,Day,Commerce,Dr. Farhana Rahman\nClass 8-B,Morning,General,Mrs. Tasnim Jahan";
-                      setBulkImportInput(mockText);
-                    };
-
-                    // Handle file selection and parsing
-                    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-                      const file = e.target.files?.[0];
-                      if (!file) return;
-                      
-                      const reader = new FileReader();
-                      reader.onload = (evt) => {
-                        const text = evt.target?.result;
-                        if (typeof text === 'string') {
-                          setBulkImportInput(text);
+                      if (editingCsId) {
+                        // Update
+                        setClassSectionsList(prev => prev.map(item => item.id === editingCsId ? {
+                          ...item,
+                          className: csFormClassName.trim(),
+                          numericName: csFormNumericName.trim(),
+                          sections: [...csFormSections]
+                        } : item));
+                        addAuditLog(`Updated class and section details for ${csFormClassName}`);
+                        setAdminSuccessMsg(lang === 'bn' ? 'ক্লাস ও সেকশন বিবরণী সফলভাবে আপডেট করা হয়েছে!' : 'Class and Section details updated successfully!');
+                        setEditingCsId(null);
+                      } else {
+                        // Check for duplicate
+                        const isDuplicate = classSectionsList.some(item => 
+                          item.className.toLowerCase() === csFormClassName.trim().toLowerCase()
+                        );
+                        if (isDuplicate) {
+                          alert(lang === 'bn' ? 'এই ক্লাসের নাম ইতিমধ্যে সংরক্ষিত আছে!' : 'This Class Name already exists!');
+                          return;
                         }
-                      };
-                      reader.readAsText(file);
+
+                        // Create
+                        const newId = `CS-${Date.now()}`;
+                        const newItem = {
+                          id: newId,
+                          className: csFormClassName.trim(),
+                          numericName: csFormNumericName.trim(),
+                          sections: [...csFormSections]
+                        };
+                        setClassSectionsList(prev => [...prev, newItem]);
+                        addAuditLog(`Created class and section: ${csFormClassName}`);
+                        setAdminSuccessMsg(lang === 'bn' ? 'নতুন ক্লাস ও সেকশন সফলভাবে সংরক্ষণ করা হয়েছে!' : 'New Class and Section saved successfully!');
+                      }
+
+                      // Reset form
+                      setCsFormClassName('Class 9');
+                      setCsFormNumericName('9');
+                      setCsFormSections(['A', 'B']);
+                      setCustomSectionInput('');
+
+                      setTimeout(() => {
+                        setAdminSuccessMsg('');
+                      }, 4000);
+                    };
+
+                    const handleEditClassSection = (item: typeof classSectionsList[0]) => {
+                      setEditingCsId(item.id);
+                      setCsFormClassName(item.className);
+                      setCsFormNumericName(item.numericName);
+                      setCsFormSections([...item.sections]);
+                    };
+
+                    const handleDeleteClassSection = (id: string, className: string) => {
+                      if (confirm(lang === 'bn' 
+                        ? `আপনি কি নিশ্চিতভাবে "${className}" এবং এর সেকশন বিবরণী ডিলিট করতে চান?` 
+                        : `Are you sure you want to delete "${className}" and its section mapping?`
+                      )) {
+                        setClassSectionsList(prev => prev.filter(item => item.id !== id));
+                        addAuditLog(`Deleted class and section mapping for ${className}`);
+                        setAdminSuccessMsg(lang === 'bn' ? 'ক্লাস ও সেকশন বিবরণী মুছে ফেলা হয়েছে!' : 'Class and Section mapping deleted!');
+                        
+                        if (editingCsId === id) {
+                          setEditingCsId(null);
+                          setCsFormClassName('Class 9');
+                          setCsFormNumericName('9');
+                          setCsFormSections(['A', 'B']);
+                        }
+
+                        setTimeout(() => {
+                          setAdminSuccessMsg('');
+                        }, 4000);
+                      }
+                    };
+
+                    const handleToggleCheckboxSection = (sec: string) => {
+                      if (csFormSections.includes(sec)) {
+                        setCsFormSections(prev => prev.filter(s => s !== sec));
+                      } else {
+                        setCsFormSections(prev => [...prev, sec]);
+                      }
+                    };
+
+                    const handleAddCustomSection = () => {
+                      const trimmed = customSectionInput.trim();
+                      if (!trimmed) return;
+                      
+                      // Avoid duplicates
+                      if (csFormSections.some(s => s.toLowerCase() === trimmed.toLowerCase())) {
+                        setCustomSectionInput('');
+                        return;
+                      }
+
+                      setCsFormSections(prev => [...prev, trimmed]);
+                      setCustomSectionInput('');
                     };
 
                     return (
-                      <div className="bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs text-left space-y-6">
-                        {/* Tab Header */}
-                        <div className="border-b border-gray-100 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                          <div>
-                            <h3 className="font-extrabold text-gray-900 text-lg">
-                              {lang === 'bn' ? 'ক্লাস এবং সেকশন ব্যবস্থাপনা' : 'Class & Section Management'}
-                            </h3>
-                            <p className="text-xs text-gray-400 font-bold">
-                              {lang === 'bn' 
-                                ? 'সক্রিয় ক্লাস লেভেল, বিভাগ, শিফট ও ক্লাস টিচার নির্ধারণ করুন' 
-                                : 'Configure active class levels, academic divisions, shifts, and class teachers'}
-                            </p>
+                      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 text-left animate-fade-in">
+                        
+                        {/* Left Side: Create / Add Class & Section Form */}
+                        <div className="lg:col-span-5 bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs space-y-5">
+                          <div className="flex items-center gap-3 border-b border-gray-100 pb-4">
+                            <div className="p-2.5 bg-emerald-50 text-[#025644] rounded-xl">
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                              </svg>
+                            </div>
+                            <div>
+                              <h3 className="font-extrabold text-gray-950 text-base">
+                                {editingCsId 
+                                  ? (lang === 'bn' ? 'ক্লাস ও সেকশন সংশোধন করুন' : 'Edit Class & Section') 
+                                  : (lang === 'bn' ? 'ক্লাস ও সেকশন যোগ করুন' : 'Add Class & Section')}
+                              </h3>
+                              <p className="text-xs text-gray-400 font-bold">
+                                {lang === 'bn' ? 'নতুন শ্রেণী এবং তার অধীনে সেকশন নির্ধারণ করুন' : 'Define new class level and set up assigned sections'}
+                              </p>
+                            </div>
                           </div>
-                          
-                          {/* Smarter Action Controls */}
-                          <div className="flex items-center gap-2">
-                            {/* Layout Toggle Buttons */}
-                            <div className="bg-gray-100 p-0.5 rounded-xl border border-gray-200 flex items-center">
-                              <button
-                                onClick={() => setClassViewMode('grid')}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-black flex items-center gap-1 cursor-pointer transition-all ${
-                                  classViewMode === 'grid'
-                                    ? 'bg-white text-[#005c53] shadow-3xs'
-                                    : 'text-gray-500 hover:text-gray-800'
-                                }`}
-                              >
-                                <LayoutGrid className="h-3.5 w-3.5" />
-                                <span className="hidden md:inline">{lang === 'bn' ? 'গ্রিড ভিউ' : 'Grid'}</span>
-                              </button>
-                              <button
-                                onClick={() => setClassViewMode('table')}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-black flex items-center gap-1 cursor-pointer transition-all ${
-                                  classViewMode === 'table'
-                                    ? 'bg-white text-[#005c53] shadow-3xs'
-                                    : 'text-gray-500 hover:text-gray-800'
-                                }`}
-                              >
-                                <Table className="h-3.5 w-3.5" />
-                                <span className="hidden md:inline">{lang === 'bn' ? 'টেবিল ভিউ' : 'Table'}</span>
-                              </button>
+
+                          <form onSubmit={handleSaveClassSection} className="space-y-4">
+                            
+                            {/* Class Name Input */}
+                            <div className="space-y-1.5">
+                              <label className="block text-[11px] font-black text-gray-500 uppercase tracking-wider">
+                                {lang === 'bn' ? 'ক্লাসের নাম (Class Name)' : 'Class Name'} <span className="text-rose-500">*</span>
+                              </label>
+                              <input
+                                type="text"
+                                required
+                                value={csFormClassName}
+                                onChange={(e) => setCsFormClassName(e.target.value)}
+                                placeholder="e.g., Class 9, Class 10"
+                                className="w-full px-3.5 py-3 bg-gray-50 border border-gray-200 focus:bg-white text-gray-800 rounded-xl font-bold text-xs outline-none focus:border-[#025644] transition-all"
+                              />
                             </div>
 
-                            <button
-                              onClick={() => {
-                                setIsBulkImportOpen(!isBulkImportOpen);
-                                setBulkImportInput('');
-                                setClassViewMode('table');
-                              }}
-                              className={`px-4 py-2 text-xs font-black rounded-xl border transition-all flex items-center gap-2 cursor-pointer ${
-                                isBulkImportOpen 
-                                  ? 'bg-[#005c53]/10 text-[#005c53] border-[#005c53]' 
-                                  : 'bg-white text-gray-600 border-gray-250 hover:bg-gray-50'
-                              }`}
-                            >
-                              <FileSpreadsheet className="h-4 w-4" />
-                              <span>{isBulkImportOpen ? (lang === 'bn' ? 'ম্যানুয়াল ফরম' : 'Manual Form') : (lang === 'bn' ? 'বাল্ক ইম্পোর্ট' : 'Bulk Import')}</span>
-                            </button>
-                          </div>
-                        </div>
+                            {/* Numeric Name Input */}
+                            <div className="space-y-1.5">
+                              <label className="block text-[11px] font-black text-gray-500 uppercase tracking-wider">
+                                {lang === 'bn' ? 'নিউমেরিক নাম (Numeric Name)' : 'Numeric Name'} <span className="text-rose-500">*</span>
+                              </label>
+                              <input
+                                type="text"
+                                required
+                                value={csFormNumericName}
+                                onChange={(e) => setCsFormNumericName(e.target.value)}
+                                placeholder="e.g., 9, 10"
+                                className="w-full px-3.5 py-3 bg-gray-50 border border-gray-200 focus:bg-white text-gray-800 rounded-xl font-bold text-xs outline-none focus:border-[#025644] transition-all"
+                              />
+                            </div>
 
-                        {classViewMode === 'grid' ? (
-                          <ClassSections 
-                            classes={academicClasses} 
-                            students={students} 
-                            lang={lang} 
-                            onSelectClass={(className) => setSelectedClassForStudentList(className)} 
-                          />
-                        ) : (
-                          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                          {/* ==================================== */}
-                          {/* FORM PANEL (MANUAL / BULK IMPORT)    */}
-                          {/* ==================================== */}
-                          <div className="bg-gray-50 border border-gray-200 p-5 rounded-2xl space-y-4">
-                            {!isBulkImportOpen ? (
-                              /* MANUAL FORM */
-                              <>
-                                <h4 className="font-extrabold text-gray-800 text-sm flex items-center gap-2">
-                                  <PlusCircle className="h-4 w-4 text-[#005c53]" />
-                                  <span>{lang === 'bn' ? 'নতুন ক্লাস যোগ করুন' : 'Add New Class Level'}</span>
-                                </h4>
-                                
-                                <form onSubmit={(e) => {
-                                  e.preventDefault();
-                                  if (!academicNewClassForm.name.trim()) return;
-                                  const exists = academicClasses.some(c => c.name.toLowerCase() === academicNewClassForm.name.toLowerCase());
-                                  if (exists) {
-                                    setAdminErrorMsg(lang === 'bn' ? 'এই ক্লাস লেভেল ইতিমধ্যে বিদ্যমান!' : "This class level already exists!");
-                                    setTimeout(() => setAdminErrorMsg(''), 3000);
-                                    return;
-                                  }
-                                  setAcademicClasses(prev => [
-                                    ...prev,
-                                    { id: 'c' + (prev.length + 1), ...academicNewClassForm }
-                                  ]);
-                                  setAcademicNewClassForm({ name: '', shift: 'Morning', group: 'General', classTeacher: '' });
-                                  setAdminSuccessMsg(lang === 'bn' ? 'নতুন ক্লাস সফলভাবে তৈরি হয়েছে!' : "New academic class created successfully!");
-                                  setTimeout(() => setAdminSuccessMsg(''), 3000);
-                                }} className="space-y-4 text-xs">
-                                  <div className="space-y-1">
-                                    <label className="block font-bold text-gray-500">{lang === 'bn' ? 'ক্লাস ও সেকশনের নাম' : 'Class & Section Name'}</label>
-                                    <input
-                                      type="text"
-                                      placeholder="e.g. Class 9-B"
-                                      required
-                                      value={academicNewClassForm.name}
-                                      onChange={(e) => setAcademicNewClassForm(prev => ({ ...prev, name: e.target.value }))}
-                                      className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-[#005c53] font-bold text-gray-800 shadow-3xs"
-                                    />
-                                  </div>
-                                  <div className="grid grid-cols-2 gap-3">
-                                    <div className="space-y-1">
-                                      <label className="block font-bold text-gray-500">{lang === 'bn' ? 'শিফট' : 'Shift'}</label>
-                                      <select
-                                        value={academicNewClassForm.shift}
-                                        onChange={(e) => setAcademicNewClassForm(prev => ({ ...prev, shift: e.target.value }))}
-                                        className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-[#005c53] font-bold text-gray-700 cursor-pointer"
+                            {/* Multiple Sections Selection & Input */}
+                            <div className="space-y-3.5 border-t border-dashed border-gray-150 pt-4">
+                              <label className="block text-[11px] font-black text-gray-500 uppercase tracking-wider">
+                                {lang === 'bn' ? 'সেকশনসমূহ (Sections)' : 'Sections Selection'} <span className="text-rose-500">*</span>
+                              </label>
+
+                              {/* Standard Checkbox Selection */}
+                              <div className="space-y-2">
+                                <span className="text-[10px] text-gray-400 font-bold block">
+                                  {lang === 'bn' ? 'সাধারণ সেকশন নির্বাচন করুন:' : 'Select common sections:'}
+                                </span>
+                                <div className="flex flex-wrap gap-2">
+                                  {commonSections.map((sec) => {
+                                    const isChecked = csFormSections.includes(sec);
+                                    return (
+                                      <label
+                                        key={sec}
+                                        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-bold cursor-pointer transition-all ${
+                                          isChecked
+                                            ? 'bg-emerald-50 text-[#025644] border-emerald-300'
+                                            : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                                        }`}
                                       >
-                                        <option value="Morning">{lang === 'bn' ? 'সকাল (Morning)' : 'Morning'}</option>
-                                        <option value="Day">{lang === 'bn' ? 'দিন (Day)' : 'Day'}</option>
-                                      </select>
-                                    </div>
-                                    <div className="space-y-1">
-                                      <label className="block font-bold text-gray-500">{lang === 'bn' ? 'একাডেমিক গ্রুপ' : 'Academic Group'}</label>
-                                      <select
-                                        value={academicNewClassForm.group}
-                                        onChange={(e) => setAcademicNewClassForm(prev => ({ ...prev, group: e.target.value }))}
-                                        className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-[#005c53] font-bold text-gray-700 cursor-pointer"
-                                      >
-                                        <option value="General">{lang === 'bn' ? 'সাধারণ (General)' : 'General'}</option>
-                                        <option value="Science">{lang === 'bn' ? 'বিজ্ঞান (Science)' : 'Science'}</option>
-                                        <option value="Commerce">{lang === 'bn' ? 'ব্যবসায় শিক্ষা (Commerce)' : 'Commerce'}</option>
-                                        <option value="Arts">{lang === 'bn' ? 'মানবিক (Arts)' : 'Arts'}</option>
-                                      </select>
-                                    </div>
-                                  </div>
-                                  <div className="space-y-1">
-                                    <label className="block font-bold text-gray-500">{lang === 'bn' ? 'শ্রেণী শিক্ষক' : 'Assigned Class Teacher'}</label>
-                                    <select
-                                      value={academicNewClassForm.classTeacher}
-                                      onChange={(e) => setAcademicNewClassForm(prev => ({ ...prev, classTeacher: e.target.value }))}
-                                      className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-[#005c53] font-bold text-gray-700 cursor-pointer"
-                                    >
-                                      <option value="">{lang === 'bn' ? 'শিক্ষক নির্বাচন করুন' : 'Select Class Teacher'}</option>
-                                      {availableTeachers.filter(t => t !== 'Teacher').map(t => (
-                                        <option key={t} value={t}>{t}</option>
-                                      ))}
-                                    </select>
-                                  </div>
-                                  <button type="submit" className="w-full py-3 bg-[#005c53] hover:bg-[#004d44] text-white font-extrabold rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer">
-                                    <PlusCircle className="h-4 w-4" />
-                                    <span>{lang === 'bn' ? 'ক্লাস তৈরি করুন' : 'Create Class Level'}</span>
+                                        <input
+                                          type="checkbox"
+                                          checked={isChecked}
+                                          onChange={() => handleToggleCheckboxSection(sec)}
+                                          className="w-3.5 h-3.5 text-[#025644] focus:ring-[#025644] border-gray-300 rounded cursor-pointer"
+                                        />
+                                        <span>{sec}</span>
+                                      </label>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+
+                              {/* Tag / Custom Section Text Input */}
+                              <div className="p-3 bg-slate-50 border border-slate-150 rounded-xl space-y-2">
+                                <span className="block text-[10px] font-bold text-gray-500 uppercase">
+                                  {lang === 'bn' ? 'অন্যান্য কাস্টম সেকশন যোগ করুন:' : 'Add other custom section / group:'}
+                                </span>
+                                <div className="flex gap-2">
+                                  <input
+                                    type="text"
+                                    value={customSectionInput}
+                                    onChange={(e) => setCustomSectionInput(e.target.value)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        handleAddCustomSection();
+                                      }
+                                    }}
+                                    placeholder={lang === 'bn' ? 'যেমন: Science, Commerce' : 'e.g., Pink, Blue, Science'}
+                                    className="flex-1 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs outline-none font-semibold focus:border-[#025644] placeholder-gray-400"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={handleAddCustomSection}
+                                    className="px-3 py-1.5 bg-[#025644] hover:bg-[#013f31] text-white text-xs font-black rounded-lg transition-all flex items-center gap-1 cursor-pointer"
+                                  >
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
+                                    </svg>
+                                    {lang === 'bn' ? 'যোগ করুন' : 'Add'}
                                   </button>
-                                </form>
-                              </>
-                            ) : (
-                              /* BULK IMPORT PANEL */
-                              <div className="space-y-4 text-xs">
-                                <h4 className="font-extrabold text-gray-800 text-sm flex items-center justify-between">
-                                  <span className="flex items-center gap-2">
-                                    <FileSpreadsheet className="h-4 w-4 text-[#005c53]" />
-                                    <span>{lang === 'bn' ? 'ক্লাস বাল্ক ইম্পোর্ট' : 'Bulk Import Classes'}</span>
+                                </div>
+                              </div>
+
+                              {/* Selected Sections Active Chips */}
+                              {csFormSections.length > 0 && (
+                                <div className="space-y-1.5">
+                                  <span className="block text-[10px] font-bold text-gray-400 uppercase">
+                                    {lang === 'bn' ? 'নির্বাচিত সেকশনসমূহ:' : 'Currently Selected:'}
                                   </span>
-                                  <button
-                                    onClick={loadMockCSV}
-                                    className="text-[10px] text-[#005c53] hover:underline font-extrabold flex items-center gap-1 cursor-pointer"
-                                    title="Load sample test data"
-                                  >
-                                    <Sparkles className="h-3 w-3" />
-                                    <span>{lang === 'bn' ? 'নমুনা ডেটা দিন' : 'Sample Data'}</span>
-                                  </button>
-                                </h4>
-
-                                {/* Drag & Drop CSV Uploader */}
-                                <div className="border-2 border-dashed border-gray-250 hover:border-[#005c53] bg-white rounded-xl p-4 transition-all text-center relative group cursor-pointer">
-                                  <input 
-                                    type="file" 
-                                    accept=".csv,.txt"
-                                    onChange={handleFileChange}
-                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                                  />
-                                  <div className="flex flex-col items-center justify-center space-y-1 z-0 pointer-events-none">
-                                    <Upload className="h-7 w-7 text-gray-400 group-hover:text-[#005c53] transition-colors" />
-                                    <p className="font-extrabold text-gray-700 text-[11px]">
-                                      {lang === 'bn' ? 'সিএসভি ফাইল আপলোড করুন' : 'Upload CSV / Excel File'}
-                                    </p>
-                                    <p className="text-[9px] text-gray-400 font-semibold">
-                                      {lang === 'bn' ? 'ড্র্যাগ করে ছাড়ুন অথবা ক্লিক করুন' : 'Drag & drop here or click to browse'}
-                                    </p>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {csFormSections.map((sec) => (
+                                      <span
+                                        key={sec}
+                                        className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 text-[#025644] border border-emerald-100 rounded-full text-xs font-bold"
+                                      >
+                                        <span>{sec}</span>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleToggleCheckboxSection(sec)}
+                                          className="text-emerald-700 hover:text-rose-600 rounded-full p-0.5 hover:bg-emerald-100 transition-colors"
+                                          title={lang === 'bn' ? 'বাদ দিন' : 'Remove Section'}
+                                        >
+                                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
+                                          </svg>
+                                        </button>
+                                      </span>
+                                    ))}
                                   </div>
                                 </div>
-
-                                <div className="space-y-1">
-                                  <label className="block font-bold text-gray-500 flex justify-between">
-                                    <span>{lang === 'bn' ? 'অথবা সরাসরি CSV টেক্সট পেস্ট করুন' : 'Or Paste Raw CSV Data'}</span>
-                                    <span className="text-[10px] text-gray-400">Class, Shift, Group, Teacher</span>
-                                  </label>
-                                  <textarea
-                                    value={bulkImportInput}
-                                    onChange={(e) => setBulkImportInput(e.target.value)}
-                                    placeholder="e.g. Class 9-B, Morning, Science, Mr. Imran Hosen"
-                                    className="w-full h-28 px-3 py-2 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-[#005c53] font-mono text-[10px] text-gray-800 shadow-3xs resize-none"
-                                  />
-                                </div>
-
-                                {/* Live CSV Preview and Validator */}
-                                {previewRows.length > 0 && (
-                                  <div className="space-y-2">
-                                    <p className="font-extrabold text-[10px] text-gray-500 uppercase tracking-wider flex items-center justify-between">
-                                      <span>{lang === 'bn' ? 'আমদানি যোগ্য প্রিভিউ' : 'Import Preview'}</span>
-                                      <span className="text-[#005c53]">{previewRows.filter(r => r.isValid).length} / {previewRows.length} Valid</span>
-                                    </p>
-                                    <div className="max-h-28 overflow-y-auto border border-gray-200 rounded-lg bg-white divide-y divide-gray-100 text-[10px] font-bold">
-                                      {previewRows.map((row, i) => (
-                                        <div key={i} className="p-2 flex items-center justify-between gap-2">
-                                          <div className="truncate">
-                                            <span className={row.isValid ? "text-[#005c53] font-black" : "text-gray-400 line-through"}>{row.name}</span>
-                                            <span className="text-[9px] text-gray-400 font-semibold ml-2">({row.shift}, {row.group})</span>
-                                          </div>
-                                          {row.isValid ? (
-                                            <span className="px-1.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-700 text-[8px] font-extrabold flex items-center gap-0.5">
-                                              <Check className="h-2 w-2" /> Valid
-                                            </span>
-                                          ) : (
-                                            <span className="px-1.5 py-0.5 rounded-full bg-rose-50 border border-rose-100 text-rose-700 text-[8px] font-extrabold max-w-[100px] truncate" title={row.errorReason}>
-                                              {row.errorReason}
-                                            </span>
-                                          )}
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-
-                                <div className="grid grid-cols-2 gap-2 pt-1">
-                                  <button
-                                    type="button"
-                                    onClick={() => setBulkImportInput('')}
-                                    className="py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-extrabold rounded-xl transition-all text-center cursor-pointer"
-                                  >
-                                    {lang === 'bn' ? 'পরিষ্কার করুন' : 'Clear'}
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={executeBulkImport}
-                                    disabled={previewRows.filter(r => r.isValid).length === 0}
-                                    className="py-2.5 bg-[#005c53] hover:bg-[#004d44] disabled:opacity-40 text-white font-extrabold rounded-xl transition-all shadow-xs text-center flex items-center justify-center gap-1 cursor-pointer"
-                                  >
-                                    <CheckCircle className="h-3.5 w-3.5" />
-                                    <span>{lang === 'bn' ? 'আমদানি করুন' : 'Import'}</span>
-                                  </button>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* ==================================== */}
-                          {/* TABLE & FILTER PANEL (RIGHT)         */}
-                          {/* ==================================== */}
-                          <div className="lg:col-span-2 space-y-4">
-                            {/* Filter Bar */}
-                            <div className="bg-gray-50 border border-gray-150 p-4 rounded-2xl grid grid-cols-1 md:grid-cols-3 gap-3 items-center">
-                              {/* Search */}
-                              <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
-                                <input
-                                  type="text"
-                                  placeholder={lang === 'bn' ? 'ক্লাস বা শিক্ষক খুঁজুন...' : 'Search class or teacher...'}
-                                  value={classFilterSearch}
-                                  onChange={(e) => setClassFilterSearch(e.target.value)}
-                                  className="w-full pl-8.5 pr-3 py-2 bg-white border border-gray-250 rounded-xl focus:outline-none focus:border-[#005c53] font-bold text-xs text-gray-800 placeholder-gray-400 shadow-3xs"
-                                />
-                                {classFilterSearch && (
-                                  <button 
-                                    onClick={() => setClassFilterSearch('')} 
-                                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 hover:bg-gray-200 rounded-full text-gray-400 hover:text-gray-600 cursor-pointer"
-                                  >
-                                    <X className="h-3 w-3" />
-                                  </button>
-                                )}
-                              </div>
-
-                              {/* Shift Filter */}
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider">{lang === 'bn' ? 'শিফট:' : 'Shift:'}</span>
-                                <select
-                                  value={classFilterShift}
-                                  onChange={(e) => setClassFilterShift(e.target.value)}
-                                  className="grow px-2 py-1.5 bg-white border border-gray-250 rounded-xl focus:outline-none focus:border-[#005c53] font-bold text-xs text-gray-700 cursor-pointer"
-                                >
-                                  <option value="All">{lang === 'bn' ? 'সকল শিফট' : 'All Shifts'}</option>
-                                  <option value="Morning">{lang === 'bn' ? 'Morning' : 'Morning'}</option>
-                                  <option value="Day">{lang === 'bn' ? 'Day' : 'Day'}</option>
-                                </select>
-                              </div>
-
-                              {/* Group Filter */}
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider">{lang === 'bn' ? 'গ্রুপ:' : 'Group:'}</span>
-                                <select
-                                  value={classFilterGroup}
-                                  onChange={(e) => setClassFilterGroup(e.target.value)}
-                                  className="grow px-2 py-1.5 bg-white border border-gray-250 rounded-xl focus:outline-none focus:border-[#005c53] font-bold text-xs text-gray-700 cursor-pointer"
-                                >
-                                  <option value="All">{lang === 'bn' ? 'সকল গ্রুপ' : 'All Groups'}</option>
-                                  <option value="General">{lang === 'bn' ? 'General' : 'General'}</option>
-                                  <option value="Science">{lang === 'bn' ? 'Science' : 'Science'}</option>
-                                  <option value="Commerce">{lang === 'bn' ? 'Commerce' : 'Commerce'}</option>
-                                  <option value="Arts">{lang === 'bn' ? 'Arts' : 'Arts'}</option>
-                                </select>
-                              </div>
+                              )}
                             </div>
 
-                            {/* Filter Summary & Matching Stats */}
-                            <div className="flex items-center justify-between text-[11px] text-gray-400 font-bold px-1">
-                              <span>
-                                {lang === 'bn' 
-                                  ? `মোট ক্লাস: ${academicClasses.length}টি | ফিল্টারকৃত: ${filteredClasses.length}টি` 
-                                  : `Total Classes: ${academicClasses.length} | Filtered: ${filteredClasses.length}`}
-                              </span>
-                              {(classFilterSearch || classFilterShift !== 'All' || classFilterGroup !== 'All') && (
+                            {/* Submit Actions Button */}
+                            <div className="flex items-center gap-2.5 pt-3 border-t border-gray-100">
+                              <button
+                                type="submit"
+                                className="flex-1 py-3 bg-[#025644] hover:bg-[#01352a] text-white font-black text-xs rounded-xl shadow-xs transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer hover:translate-y-[-0.5px]"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                                </svg>
+                                {editingCsId 
+                                  ? (lang === 'bn' ? 'ক্লাস আপডেট করুন' : 'Update Class') 
+                                  : (lang === 'bn' ? 'ক্লাস সেভ করুন' : 'Save Class')}
+                              </button>
+
+                              {/* Reset / Cancel Button */}
+                              {(editingCsId || csFormClassName !== 'Class 9' || csFormNumericName !== '9' || csFormSections.length !== 2) && (
                                 <button
+                                  type="button"
                                   onClick={() => {
-                                    setClassFilterSearch('');
-                                    setClassFilterShift('All');
-                                    setClassFilterGroup('All');
+                                    setEditingCsId(null);
+                                    setCsFormClassName('Class 9');
+                                    setCsFormNumericName('9');
+                                    setCsFormSections(['A', 'B']);
+                                    setCustomSectionInput('');
                                   }}
-                                  className="text-[#005c53] hover:underline cursor-pointer flex items-center gap-0.5 animate-pulse"
+                                  className="px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900 text-xs font-bold rounded-xl transition-all cursor-pointer"
                                 >
-                                  {lang === 'bn' ? 'ফিল্টার রিসেট করুন' : 'Reset Filters'}
+                                  {lang === 'bn' ? 'রিসেট' : 'Reset'}
                                 </button>
                               )}
                             </div>
+                          </form>
+                        </div>
 
-                            {/* Class Table with Student Counter & Hover list */}
-                            <div className="border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-3xs">
-                              {filteredClasses.length === 0 ? (
-                                <div className="p-8 text-center text-gray-400 space-y-2">
-                                  <Sliders className="h-8 w-8 mx-auto text-gray-300" />
-                                  <p className="font-extrabold text-xs">
-                                    {lang === 'bn' ? 'কোন ম্যাচিং ক্লাস খুঁজে পাওয়া যায়নি!' : 'No matching classes found!'}
-                                  </p>
-                                  <p className="text-[10px] font-semibold text-gray-400">
-                                    {lang === 'bn' ? 'অনুগ্রহ করে ভিন্ন কোনো ফিল্টার বা অনুসন্ধান শব্দ ব্যবহার করুন।' : 'Please try searching or filtering for something else.'}
-                                  </p>
-                                </div>
-                              ) : (
-                                <table className="w-full text-left border-collapse text-xs">
-                                  <thead className="bg-gray-50 border-b border-gray-150 text-gray-500 font-bold uppercase tracking-wider">
-                                    <tr>
-                                      <th className="p-4">{lang === 'bn' ? 'ক্লাস লেভেল' : 'Class Level'}</th>
-                                      <th className="p-4">{lang === 'bn' ? 'শিফট' : 'Shift'}</th>
-                                      <th className="p-4">{lang === 'bn' ? 'একাডেমিক গ্রুপ' : 'Academic Group'}</th>
-                                      <th className="p-4">{lang === 'bn' ? 'শিক্ষার্থী সংখ্যা' : 'Students'}</th>
-                                      <th className="p-4">{lang === 'bn' ? 'শ্রেণী শিক্ষক' : 'Class Teacher'}</th>
-                                      <th className="p-4 text-center">{lang === 'bn' ? 'অ্যাকশন' : 'Action'}</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody className="divide-y divide-gray-150 text-gray-700 font-bold">
-                                    {filteredClasses.map((cls) => {
-                                      const matchingStudents = getStudentsForClassSection(cls.name);
-                                      const studentCount = matchingStudents.length;
-
-                                      return (
-                                        <tr key={cls.id} className="hover:bg-gray-50/50 transition-colors">
-                                          <td className="p-4 text-[#005c53] font-black">{cls.name}</td>
-                                          <td className="p-4">
-                                            <span className={`px-2.5 py-1 rounded-md text-[10px] font-extrabold ${cls.shift === 'Morning' ? 'bg-amber-50 text-amber-700 border border-amber-100' : 'bg-blue-50 text-blue-700 border border-blue-100'}`}>
-                                              {cls.shift}
-                                            </span>
-                                          </td>
-                                          <td className="p-4">{cls.group}</td>
-                                          <td className="p-4">
-                                            {/* Interactive Student Count Badge */}
-                                            <button
-                                              onClick={() => setSelectedClassForStudentList(cls.name)}
-                                              className={`px-2.5 py-1 rounded-xl text-[10px] font-black flex items-center gap-1.5 cursor-pointer hover:scale-105 active:scale-95 transition-all ${
-                                                studentCount > 0 
-                                                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100' 
-                                                  : 'bg-gray-100 text-gray-500 border border-gray-150 hover:bg-gray-200'
-                                              }`}
-                                              title={lang === 'bn' ? 'শিক্ষার্থী তালিকা দেখতে ক্লিক করুন' : 'Click to view active student list'}
-                                            >
-                                              <Users className="h-3 w-3 text-emerald-600" />
-                                              <span>{studentCount} {lang === 'bn' ? 'জন' : 'Students'}</span>
-                                            </button>
-                                          </td>
-                                          <td className="p-4 text-gray-500">{cls.classTeacher || (lang === 'bn' ? 'নির্ধারিত নেই' : 'Not Assigned')}</td>
-                                          <td className="p-4 text-center">
-                                            <button
-                                              onClick={() => {
-                                                setAcademicClasses(prev => prev.filter(c => c.id !== cls.id));
-                                                setAdminSuccessMsg(lang === 'bn' ? `${cls.name} ক্লাসটি সফলভাবে ডিলিট করা হয়েছে!` : `Class level ${cls.name} successfully deleted!`);
-                                                setTimeout(() => setAdminSuccessMsg(''), 3000);
-                                              }}
-                                              className="p-1.5 hover:bg-rose-50 text-gray-400 hover:text-rose-600 rounded-lg transition-all cursor-pointer"
-                                              title={lang === 'bn' ? 'ক্লাস মুছুন' : 'Delete Class'}
-                                            >
-                                              <Trash2 className="h-4 w-4" />
-                                            </button>
-                                          </td>
-                                        </tr>
-                                      );
-                                    })}
-                                  </tbody>
-                                </table>
+                        {/* Right Side: Class & Section List Table */}
+                        <div className="lg:col-span-7 bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs space-y-4">
+                          
+                          {/* Title & Search bar */}
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-4">
+                            <div>
+                              <h3 className="font-extrabold text-gray-950 text-base">
+                                {lang === 'bn' ? 'ক্লাস এবং সেকশন তালিকা' : 'Class & Section List'}
+                              </h3>
+                              <p className="text-xs text-gray-400 font-bold">
+                                {lang === 'bn' ? 'সিস্টেমের সক্রিয় শ্রেণী এবং নির্ধারিত সেকশন সমূহের বিবরণী' : 'Active classes and their mapped section divisions'}
+                              </p>
+                            </div>
+                            
+                            {/* Simple Quick Search */}
+                            <div className="relative w-full sm:w-48">
+                              <svg className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                              </svg>
+                              <input 
+                                type="text"
+                                value={classSearchQuery}
+                                onChange={(e) => setClassSearchQuery(e.target.value)}
+                                placeholder={lang === 'bn' ? 'অনুসন্ধান করুন...' : 'Search class/sec...'}
+                                className="w-full pl-8.5 pr-3 py-1.5 bg-gray-50 border border-gray-200 focus:bg-white text-gray-800 rounded-xl text-xs font-bold outline-none focus:border-[#025644] transition-all"
+                              />
+                              {classSearchQuery && (
+                                <button
+                                  onClick={() => setClassSearchQuery('')}
+                                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                >
+                                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
                               )}
                             </div>
                           </div>
-                        </div>
-                        )}
 
-                        {/* ==================================== */}
-                        {/* MODAL: STYLISH STUDENT LIST BY CLASS  */}
-                        {/* ==================================== */}
-                        <AnimatePresence>
-                          {selectedClassForStudentList && (() => {
-                            const matchingRoster = getStudentsForClassSection(selectedClassForStudentList);
-                            return (
-                              <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-[9999]">
-                                <motion.div 
-                                  initial={{ opacity: 0, scale: 0.95, y: 15 }} 
-                                  animate={{ opacity: 1, scale: 1, y: 0 }} 
-                                  exit={{ opacity: 0, scale: 0.95, y: 15 }}
-                                  className="bg-white rounded-3xl border border-gray-100 w-full max-w-xl overflow-hidden shadow-2xl text-left font-sans"
-                                >
-                                  {/* Header */}
-                                  <div className="bg-[#005c53] text-white p-5 flex items-center justify-between">
-                                    <div className="space-y-0.5">
-                                      <h4 className="font-extrabold text-base flex items-center gap-2">
-                                        <Users className="h-5 w-5 text-emerald-300" />
-                                        <span>{selectedClassForStudentList} - {lang === 'bn' ? 'শ্রেণী শিক্ষার্থী তালিকা' : 'Active Student Roster'}</span>
-                                      </h4>
-                                      <p className="text-[10px] text-emerald-100/80 font-bold">
-                                        {lang === 'bn' 
-                                          ? `মোট ${matchingRoster.length} জন সক্রিয় শিক্ষার্থী খুঁজে পাওয়া গিয়েছে` 
-                                          : `A total of ${matchingRoster.length} active students mapped to this section`}
-                                      </p>
-                                    </div>
-                                    <button 
-                                      onClick={() => setSelectedClassForStudentList(null)}
-                                      className="p-2 hover:bg-white/10 rounded-full text-white/80 hover:text-white transition-all cursor-pointer"
-                                    >
-                                      <X className="h-5 w-5" />
-                                    </button>
-                                  </div>
+                          {filteredClassSections.length > 0 ? (
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-xs text-left text-gray-700 whitespace-nowrap">
+                                <thead className="bg-slate-50 border-y border-gray-150 uppercase text-[10px] font-black text-gray-500 tracking-wider">
+                                  <tr>
+                                    <th className="py-3 px-3 text-center w-12">SL</th>
+                                    <th className="py-3 px-4">{lang === 'bn' ? 'শ্রেণী (Class Name)' : 'Class Name'}</th>
+                                    <th className="py-3 px-4">{lang === 'bn' ? 'নিউমেরিক নাম' : 'Numeric Name'}</th>
+                                    <th className="py-3 px-4">{lang === 'bn' ? 'নির্ধারিত সেকশন (Assigned Sections)' : 'Assigned Sections'}</th>
+                                    <th className="py-3 px-4 text-center w-24">{lang === 'bn' ? 'অ্যাকশন (Action)' : 'Action'}</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-150">
+                                  {filteredClassSections.map((item, index) => (
+                                    <tr key={item.id} className="hover:bg-slate-50/40 transition-colors">
+                                      
+                                      {/* SL Column */}
+                                      <td className="py-4 px-3 text-center font-mono font-black text-gray-400">
+                                        {(index + 1).toString().padStart(2, '0')}
+                                      </td>
 
-                                  {/* List Area */}
-                                  <div className="p-6 max-h-[350px] overflow-y-auto divide-y divide-gray-100">
-                                    {matchingRoster.length === 0 ? (
-                                      <div className="py-12 text-center text-gray-400 space-y-2">
-                                        <Users className="h-10 w-10 mx-auto text-gray-300" />
-                                        <p className="font-bold text-xs">{lang === 'bn' ? 'এই ক্লাসে কোনো শিক্ষার্থী এখনো রেজিস্টার করা নেই।' : 'No students registered in this class yet.'}</p>
-                                        <p className="text-[10px]">{lang === 'bn' ? 'শিক্ষার্থী তালিকা মডিউল থেকে এই ক্লাসে নতুন শিক্ষার্থী ভর্তি করান।' : 'Use the Students Admission module to register students for this class.'}</p>
-                                      </div>
-                                    ) : (
-                                      matchingRoster.map((student) => (
-                                        <div key={student.id} className="py-3 flex items-center justify-between gap-4 first:pt-0 last:pb-0">
-                                          <div className="flex items-center gap-3">
-                                            {/* Avatar circle */}
-                                            <div className="h-10 w-10 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center font-black text-xs text-[#005c53]">
-                                              {student.name.substring(0, 2).toUpperCase()}
-                                            </div>
-                                            <div className="space-y-0.5">
-                                              <p className="font-extrabold text-xs text-gray-900">{student.name}</p>
-                                              <div className="flex items-center gap-2 text-[10px] text-gray-400 font-bold">
-                                                <span>ID: {student.id}</span>
-                                                <span>•</span>
-                                                <span>Roll: {student.roll}</span>
-                                              </div>
-                                            </div>
-                                          </div>
-                                          <div className="text-right">
-                                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-black ${
-                                              student.status === 'Active' 
-                                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' 
-                                                : 'bg-rose-50 text-rose-700 border border-rose-100'
-                                            }`}>
-                                              {student.status}
+                                      {/* Class Name */}
+                                      <td className="py-4 px-4 font-extrabold text-gray-950">
+                                        {item.className}
+                                      </td>
+
+                                      {/* Numeric Name */}
+                                      <td className="py-4 px-4 font-mono font-black text-[#025644] text-center w-28">
+                                        {item.numericName}
+                                      </td>
+
+                                      {/* Assigned Sections (Badges) */}
+                                      <td className="py-4 px-4">
+                                        <div className="flex flex-wrap gap-1.5">
+                                          {item.sections.map((sec, secIdx) => (
+                                            <span 
+                                              key={secIdx} 
+                                              className="inline-flex items-center px-2.5 py-0.5 bg-emerald-50 text-[#025644] border border-emerald-100/70 rounded-md text-[11px] font-bold"
+                                            >
+                                              {sec}
                                             </span>
-                                            <p className="text-[9px] text-gray-400 font-semibold mt-1">{student.guardianPhone}</p>
-                                          </div>
+                                          ))}
                                         </div>
-                                      ))
-                                    )}
-                                  </div>
+                                      </td>
 
-                                  {/* Action Footer */}
-                                  <div className="p-5 bg-gray-50 border-t border-gray-100 flex justify-end">
-                                    <button
-                                      onClick={() => setSelectedClassForStudentList(null)}
-                                      className="px-5 py-2.5 bg-[#005c53] hover:bg-[#004d44] text-white font-extrabold rounded-xl text-xs shadow-3xs cursor-pointer transition-all"
-                                    >
-                                      {lang === 'bn' ? 'বন্ধ করুন' : 'Close Roster'}
-                                    </button>
-                                  </div>
-                                </motion.div>
+                                      {/* Actions */}
+                                      <td className="py-4 px-4 text-center">
+                                        <div className="flex items-center justify-center gap-2">
+                                          
+                                          {/* Edit Button */}
+                                          <button
+                                            type="button"
+                                            onClick={() => handleEditClassSection(item)}
+                                            title={lang === 'bn' ? 'সম্পাদনা করুন' : 'Edit Mapping'}
+                                            className="p-1.5 hover:bg-emerald-50 text-[#025644] hover:text-[#01352a] rounded-lg transition-colors cursor-pointer"
+                                          >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                            </svg>
+                                          </button>
+
+                                          {/* Delete Button */}
+                                          <button
+                                            type="button"
+                                            onClick={() => handleDeleteClassSection(item.id, item.className)}
+                                            title={lang === 'bn' ? 'মুছে ফেলুন' : 'Delete Mapping'}
+                                            className="p-1.5 hover:bg-rose-50 text-rose-500 hover:text-rose-700 rounded-lg transition-colors cursor-pointer"
+                                          >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                          </button>
+
+                                        </div>
+                                      </td>
+
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          ) : (
+                            <div className="py-16 text-center space-y-3">
+                              <div className="inline-flex p-4 bg-gray-50 text-gray-400 rounded-full border border-dashed border-gray-200">
+                                <svg className="w-8 h-8 text-[#025644]/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                </svg>
                               </div>
-                            );
-                          })()}
-                        </AnimatePresence>
+                              <h4 className="text-sm font-extrabold text-gray-950">
+                                {lang === 'bn' ? 'কোনো ক্লাস বা সেকশন পাওয়া যায়নি!' : 'No Class & Sections Mapped!'}
+                              </h4>
+                              <p className="text-xs text-gray-400 max-w-sm mx-auto leading-relaxed">
+                                {lang === 'bn' ? 'বাম পাশের ফর্মটি ব্যবহার করে আপনার প্রথম ক্লাস এবং সেকশন ম্যাপিং নির্ধারণ করুন।' : 'Please use the form on the left to set up and save your very first class mapping configurations.'}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
                       </div>
                     );
                   })()}
@@ -9727,7 +9534,6 @@ def approve_admission_application(request, pk):
                   {/* SUB-TAB 8: SEAT ARRANGEMENT                         */}
                   {/* =================================================== */}
                   {academicSubTab === 'seat_arrangement' && (() => {
-                    const [viewingSeatingId, setViewingSeatingId] = useState<string>('SA-001');
                     const selectedArrangement = seatArrangements.find(s => s.id === viewingSeatingId) || seatArrangements[0];
 
                     return (
@@ -9961,11 +9767,6 @@ def approve_admission_application(request, pk):
                   {/* SUB-TAB 10: STUDENT BATCH PROMOTION                 */}
                   {/* =================================================== */}
                   {academicSubTab === 'promotion' && (() => {
-                    const [sourceClass, setSourceClass] = useState<string>('Class 8-A');
-                    const [targetClass, setTargetClass] = useState<string>('Class 9-A');
-                    const [minGPA, setMinGPA] = useState<number>(3.00);
-                    const [promotionLogged, setPromotionLogged] = useState<boolean>(false);
-
                     return (
                       <div className="bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs text-left space-y-6">
                         <div className="border-b border-gray-100 pb-4">
