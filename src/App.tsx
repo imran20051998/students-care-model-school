@@ -109,6 +109,8 @@ export default function App() {
   // Zoomed gallery image state
   const [zoomedImage, setZoomedImage] = useState<string | null>(null);
   const [isHistoryExpanded, setIsHistoryExpanded] = useState<boolean>(false);
+  const [isHmSpeechExpanded, setIsHmSpeechExpanded] = useState<boolean>(false);
+  const [isAhmSpeechExpanded, setIsAhmSpeechExpanded] = useState<boolean>(false);
 
   // Image slider states
   const [currentSlide, setCurrentSlide] = useState<number>(0);
@@ -137,6 +139,13 @@ export default function App() {
         }
         
         const data = JSON.parse(text);
+        if (data && data.frontend_data) {
+          if (!currentData) {
+            currentData = data.frontend_data;
+          } else {
+            currentData = { ...currentData, ...data.frontend_data };
+          }
+        }
         if (data && data.settings) {
           setSettings(data.settings);
           if (!currentData) {
@@ -875,14 +884,14 @@ export default function App() {
                   <div className="animate-marquee-custom whitespace-nowrap flex items-center gap-8 pl-4">
                     <span className="text-gray-800 text-xs sm:text-sm font-bold">
                       {lang === 'bn' 
-                        ? (settings?.noticeTickerBn || 'অর্ধবার্ষিক পরীক্ষা ২৫শে জুন থেকে শুরু হবে। • আগামী ১লা জুলাই থেকে অর্ধবার্ষিক পরীক্ষা শুরু হতে যাচ্ছে। বিস্তারিত নোটিশ বোর্ডে দেখুন। • স্টুডেন্টস কেয়ার মডেল স্কুলের নতুন ভর্তি কার্যক্রম চলছে! অনলাইনের মাধ্যমে দ্রুত আবেদন করুন।')
-                        : (settings?.noticeTickerEn || 'Half-yearly exams will commence from July 15th, 2026. Please collect admit cards from office. • Admission is ongoing for the new session! Apply online today.')
+                        ? (frontendData?.noticeTickerBn || settings?.noticeTickerBn || 'অর্ধবার্ষিক পরীক্ষা ২৫শে জুন থেকে শুরু হবে। • আগামী ১লা জুলাই থেকে অর্ধবার্ষিক পরীক্ষা শুরু হতে যাচ্ছে। বিস্তারিত নোটিশ বোর্ডে দেখুন। • স্টুডেন্টস কেয়ার মডেল স্কুলের নতুন ভর্তি কার্যক্রম চলছে! অনলাইনের মাধ্যমে দ্রুত আবেদন করুন।')
+                        : (frontendData?.noticeTickerEn || settings?.noticeTickerEn || 'Half-yearly exams will commence from July 15th, 2026. Please collect admit cards from office. • Admission is ongoing for the new session! Apply online today.')
                       }
                     </span>
                     <span className="text-gray-800 text-xs sm:text-sm font-bold">
                       {lang === 'bn' 
-                        ? (settings?.noticeTickerBn || 'অর্ধবার্ষিক পরীক্ষা ২৫শে জুন থেকে শুরু হবে। • আগামী ১লা জুলাই থেকে অর্ধবার্ষিক পরীক্ষা শুরু হতে যাচ্ছে। বিস্তারিত নোটিশ বোর্ডে দেখুন। • স্টুডেন্টস কেয়ার মডেল স্কুলের নতুন ভর্তি কার্যক্রম চলছে! অনলাইনের মাধ্যমে দ্রুত আবেদন করুন।')
-                        : (settings?.noticeTickerEn || 'Half-yearly exams will commence from July 15th, 2026. Please collect admit cards from office. • Admission is ongoing for the new session! Apply online today.')
+                        ? (frontendData?.noticeTickerBn || settings?.noticeTickerBn || 'অর্ধবার্ষিক পরীক্ষা ২৫শে জুন থেকে শুরু হবে। • আগামী ১লা জুলাই থেকে অর্ধবার্ষিক পরীক্ষা শুরু হতে যাচ্ছে। বিস্তারিত নোটিশ বোর্ডে দেখুন। • স্টুডেন্টস কেয়ার মডেল স্কুলের নতুন ভর্তি কার্যক্রম চলছে! অনলাইনের মাধ্যমে দ্রুত আবেদন করুন।')
+                        : (frontendData?.noticeTickerEn || settings?.noticeTickerEn || 'Half-yearly exams will commence from July 15th, 2026. Please collect admit cards from office. • Admission is ongoing for the new session! Apply online today.')
                       }
                     </span>
                   </div>
@@ -1053,91 +1062,107 @@ export default function App() {
                         {
                           id: 'speech',
                           node: (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                              {/* Principal Speech Card */}
-                              <div className="bg-white rounded-2xl overflow-hidden border border-gray-200/90 shadow-xs flex flex-col justify-between">
-                                <div className="bg-[#0f172a] text-white font-extrabold text-sm sm:text-base px-5 py-3.5 flex items-center gap-2 text-left">
-                                  <User className="h-4 w-4 text-emerald-400" />
-                                  <span>{lang === 'bn' ? (frontendData?.sectionsList?.find((s: any) => s.id === 'speech')?.nameBn || 'প্রধান শিক্ষকের বাণী') : (frontendData?.sectionsList?.find((s: any) => s.id === 'speech')?.nameEn || 'Message from Headmaster')}</span>
-                                </div>
-                                
-                                <div className="p-5 flex flex-col justify-between grow text-left space-y-4">
-                                  <div className="flex items-center gap-4">
-                                    <div className="h-14 w-14 bg-[#dbeafe] text-[#2563eb] rounded-xl flex items-center justify-center shrink-0 border border-blue-150 shadow-xs">
-                                      <User className="h-6 w-6" />
-                                    </div>
-                                    <div>
-                                      <h4 className="font-extrabold text-[#0f172a] text-sm sm:text-base">
-                                        {lang === 'bn' ? t.headmasterName : 'Morshed Nur'}
-                                      </h4>
-                                      <p className="text-xs text-gray-400 font-bold">
-                                        {lang === 'bn' ? 'প্রধান শিক্ষক' : 'Headmaster'}
-                                      </p>
-                                    </div>
-                                  </div>
-                                  
-                                  <p className="text-gray-600 text-xs sm:text-sm leading-relaxed font-semibold text-left">
-                                    {lang === 'bn'
-                                      ? (frontendData?.sectionsList?.find((s: any) => s.id === 'speech')?.descriptionBn || 'আসসালামু আলাইকুম ওয়া রাহমাতুল্লাহ। চট্টগ্রাম জেলার কর্ণফুলী উপজেলার ঐতিহ্যবাহী চরলক্ষ্যা ইউনিয়নে ২০১৮ সালে প্রতিষ্ঠিত ‘স্টুডেন্টস কেয়ার মডেল স্কুল’ আজ এলাকার শিক্ষার উন্নয়নে অনন্য অবদান রেখে যাচ্ছে...')
-                                      : (frontendData?.sectionsList?.find((s: any) => s.id === 'speech')?.descriptionEn || 'Assalamu Alaikum. Established in 2018 in the traditional Charlakshya Union under Karnaphuli, Students Care Model School is making unique contributions to local educational advancements...')
-                                    }
-                                  </p>
-                                  
-                                  <div className="text-left">
-                                    <button
-                                      onClick={() => {
-                                        alert(lang === 'bn' ? `${t.headmasterName}\n${t.headmasterDesig}\n\n${t.headmasterText}` : `${t.headmasterName}\n${t.headmasterDesig}\n\n${t.headmasterText}`);
-                                      }}
-                                      className="text-[#0593dd] hover:text-blue-700 font-extrabold text-xs sm:text-sm cursor-pointer transition-colors hover:underline flex items-center gap-0.5"
-                                    >
-                                      {lang === 'bn' ? 'বিস্তারিত »' : 'Read More »'}
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
+                            (() => {
+                              const hmName = lang === 'bn' ? (frontendData?.speech?.speakerNameBn || t.headmasterName) : (frontendData?.speech?.speakerNameEn || 'Morshed Nur');
+                              const hmDesig = lang === 'bn' ? (frontendData?.speech?.designationBn || t.headmasterDesig) : (frontendData?.speech?.designationEn || 'Headmaster, Students Care Model School');
+                              const hmText = lang === 'bn' ? (frontendData?.speech?.contentBn || t.headmasterText) : (frontendData?.speech?.contentEn || t.headmasterText);
+                              const hmExcerpt = hmText && hmText.length > 200 ? hmText.substring(0, 200) + '...' : hmText;
 
-                              {/* Assistant Principal Speech Card */}
-                              <div className="bg-white rounded-2xl overflow-hidden border border-gray-200/90 shadow-xs flex flex-col justify-between">
-                                <div className="bg-[#0f172a] text-white font-extrabold text-sm sm:text-base px-5 py-3.5 flex items-center gap-2 text-left">
-                                  <User className="h-4 w-4 text-emerald-400" />
-                                  <span>{lang === 'bn' ? 'সহকারী প্রধান শিক্ষকের বাণী' : 'Message from Assistant Headmaster'}</span>
-                                </div>
-                                
-                                <div className="p-5 flex flex-col justify-between grow text-left space-y-4">
-                                  <div className="flex items-center gap-4">
-                                    <div className="h-14 w-14 bg-[#dbeafe] text-[#2563eb] rounded-xl flex items-center justify-center shrink-0 border border-blue-150 shadow-xs">
-                                      <User className="h-6 w-6" />
+                              const ahmName = lang === 'bn' ? (frontendData?.speech?.asstSpeakerNameBn || t.asstHeadmasterName) : (frontendData?.speech?.asstSpeakerNameEn || 'Md. Toyub Hosen');
+                              const ahmDesig = lang === 'bn' ? (frontendData?.speech?.asstDesignationBn || t.asstHeadmasterDesig) : (frontendData?.speech?.asstDesignationEn || 'Asst. Headmaster, Students Care Model School');
+                              const ahmText = lang === 'bn' ? (frontendData?.speech?.asstContentBn || t.asstHeadmasterText) : (frontendData?.speech?.asstContentEn || t.asstHeadmasterText);
+                              const ahmExcerpt = ahmText && ahmText.length > 200 ? ahmText.substring(0, 200) + '...' : ahmText;
+
+                              return (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                  {/* Principal Speech Card */}
+                                  <div className="bg-white rounded-2xl overflow-hidden border border-gray-200/90 shadow-xs flex flex-col justify-between">
+                                    <div className="bg-[#0f172a] text-white font-extrabold text-sm sm:text-base px-5 py-3.5 flex items-center gap-2 text-left">
+                                      <User className="h-4 w-4 text-emerald-400" />
+                                      <span>{lang === 'bn' ? 'প্রধান শিক্ষকের বাণী' : 'Message from Headmaster'}</span>
                                     </div>
-                                    <div>
-                                      <h4 className="font-extrabold text-[#0f172a] text-sm sm:text-base">
-                                        {lang === 'bn' ? t.asstHeadmasterName : 'Md. Toyub Hosen'}
-                                      </h4>
-                                      <p className="text-xs text-gray-400 font-bold">
-                                        {lang === 'bn' ? 'সহকারী প্রধান শিক্ষক' : 'Asst. Headmaster'}
+                                    
+                                    <div className="p-5 flex flex-col justify-between grow text-left space-y-4">
+                                      <div className="flex items-center gap-4">
+                                        <div className="h-14 w-14 bg-[#dbeafe] text-[#2563eb] rounded-xl overflow-hidden flex items-center justify-center shrink-0 border border-blue-150 shadow-xs">
+                                          {frontendData?.speech?.headmasterPhoto ? (
+                                            <img src={frontendData?.speech?.headmasterPhoto} alt="Headmaster" className="h-full w-full object-cover" />
+                                          ) : (
+                                            <User className="h-6 w-6" />
+                                          )}
+                                        </div>
+                                        <div>
+                                          <h4 className="font-extrabold text-[#0f172a] text-sm sm:text-base">
+                                            {hmName}
+                                          </h4>
+                                          <p className="text-xs text-gray-400 font-bold">
+                                            {hmDesig}
+                                          </p>
+                                        </div>
+                                      </div>
+                                      
+                                      <p className="text-gray-600 text-xs sm:text-sm leading-relaxed font-semibold text-left whitespace-pre-line">
+                                        {hmExcerpt}
                                       </p>
+                                      
+                                      <div className="text-left">
+                                        <button
+                                          onClick={() => {
+                                            setIsHmSpeechExpanded(true);
+                                          }}
+                                          className="text-[#0593dd] hover:text-blue-700 font-extrabold text-xs sm:text-sm cursor-pointer transition-colors hover:underline flex items-center gap-0.5"
+                                        >
+                                          {lang === 'bn' ? 'বিস্তারিত »' : 'Read More »'}
+                                        </button>
+                                      </div>
                                     </div>
                                   </div>
-                                  
-                                  <p className="text-gray-600 text-xs sm:text-sm leading-relaxed font-semibold text-left">
-                                    {lang === 'bn'
-                                      ? 'একটি আদর্শ ও আধুনিক শিক্ষাপ্রতিষ্ঠান হিসেবে স্টুডেন্টস কেয়ার মডেল স্কুল দীর্ঘ দিন ধরে এই অঞ্চলে শিক্ষার আলো ছড়িয়ে আসছে। বিদ্যালয়ে উন্নত পরিবেশ ও নিয়মশৃঙ্খলা বজায় রাখতে আমরা বদ্ধপরিকর...'
-                                      : 'As an ideal and modern educational institution, Students Care Model School has been spreading the light of education. We are strictly committed to premium discipline...'
-                                    }
-                                  </p>
-                                  
-                                  <div className="text-left">
-                                    <button
-                                      onClick={() => {
-                                        alert(lang === 'bn' ? `${t.asstHeadmasterName}\n${t.asstHeadmasterDesig}\n\n${t.asstHeadmasterText}` : `${t.asstHeadmasterName}\n${t.asstHeadmasterDesig}\n\n${t.asstHeadmasterText}`);
-                                      }}
-                                      className="text-[#0593dd] hover:text-blue-700 font-extrabold text-xs sm:text-sm cursor-pointer transition-colors hover:underline flex items-center gap-0.5"
-                                    >
-                                      {lang === 'bn' ? 'বিস্তারিত »' : 'Read More »'}
-                                    </button>
+
+                                  {/* Assistant Principal Speech Card */}
+                                  <div className="bg-white rounded-2xl overflow-hidden border border-gray-200/90 shadow-xs flex flex-col justify-between">
+                                    <div className="bg-[#0f172a] text-white font-extrabold text-sm sm:text-base px-5 py-3.5 flex items-center gap-2 text-left">
+                                      <User className="h-4 w-4 text-emerald-400" />
+                                      <span>{lang === 'bn' ? 'সহকারী প্রধান শিক্ষকের বাণী' : 'Message from Assistant Headmaster'}</span>
+                                    </div>
+                                    
+                                    <div className="p-5 flex flex-col justify-between grow text-left space-y-4">
+                                      <div className="flex items-center gap-4">
+                                        <div className="h-14 w-14 bg-[#dbeafe] text-[#2563eb] rounded-xl overflow-hidden flex items-center justify-center shrink-0 border border-blue-150 shadow-xs">
+                                          {frontendData?.speech?.asstHeadmasterPhoto ? (
+                                            <img src={frontendData?.speech?.asstHeadmasterPhoto} alt="Asst Headmaster" className="h-full w-full object-cover" />
+                                          ) : (
+                                            <User className="h-6 w-6" />
+                                          )}
+                                        </div>
+                                        <div>
+                                          <h4 className="font-extrabold text-[#0f172a] text-sm sm:text-base">
+                                            {ahmName}
+                                          </h4>
+                                          <p className="text-xs text-gray-400 font-bold">
+                                            {ahmDesig}
+                                          </p>
+                                        </div>
+                                      </div>
+                                      
+                                      <p className="text-gray-600 text-xs sm:text-sm leading-relaxed font-semibold text-left whitespace-pre-line">
+                                        {ahmExcerpt}
+                                      </p>
+                                      
+                                      <div className="text-left">
+                                        <button
+                                          onClick={() => {
+                                            setIsAhmSpeechExpanded(true);
+                                          }}
+                                          className="text-[#0593dd] hover:text-blue-700 font-extrabold text-xs sm:text-sm cursor-pointer transition-colors hover:underline flex items-center gap-0.5"
+                                        >
+                                          {lang === 'bn' ? 'বিস্তারিত »' : 'Read More »'}
+                                        </button>
+                                      </div>
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            </div>
+                              );
+                            })()
                           )
                         },
                         {
@@ -2225,6 +2250,156 @@ export default function App() {
                 )}
               </AnimatePresence>
 
+              {/* Headmaster Speech Modal */}
+              <AnimatePresence>
+                {isHmSpeechExpanded && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    {/* Backdrop */}
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      onClick={() => setIsHmSpeechExpanded(false)}
+                      className="absolute inset-0 bg-slate-950/60 backdrop-blur-xs"
+                    />
+
+                    {/* Modal Card */}
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95, y: 15 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95, y: 15 }}
+                      className="relative bg-white rounded-3xl shadow-2xl max-w-2xl w-full overflow-hidden border border-gray-100 z-10 flex flex-col max-h-[90vh] text-left"
+                    >
+                      {/* Modal header */}
+                      <div className="bg-[#025644] text-white px-6 py-4 flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                          <User className="h-5 w-5 text-emerald-400" />
+                          <span className="font-extrabold text-sm sm:text-base">
+                            {lang === 'bn' ? 'প্রধান শিক্ষকের বাণী' : "Headmaster's Message"}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => setIsHmSpeechExpanded(false)}
+                          className="text-white hover:text-gray-200 transition-colors text-lg font-bold cursor-pointer h-8 w-8 rounded-full bg-[#01352a] flex items-center justify-center"
+                        >
+                          ✕
+                        </button>
+                      </div>
+
+                      {/* Modal Content body */}
+                      <div className="p-6 overflow-y-auto space-y-6 text-slate-700 text-sm sm:text-base leading-relaxed font-semibold">
+                        <div className="flex flex-col sm:flex-row items-center gap-5 border-b border-gray-100 pb-5">
+                          <div className="h-24 w-24 bg-[#dbeafe] text-[#2563eb] rounded-2xl overflow-hidden shrink-0 border border-blue-150 shadow-xs flex items-center justify-center">
+                            {frontendData?.speech?.headmasterPhoto ? (
+                              <img src={frontendData?.speech?.headmasterPhoto} alt="Headmaster" className="h-full w-full object-cover" />
+                            ) : (
+                              <User className="h-10 w-10 text-[#2563eb]" />
+                            )}
+                          </div>
+                          <div className="text-center sm:text-left">
+                            <h4 className="font-extrabold text-[#0f172a] text-lg sm:text-xl">
+                              {lang === 'bn' ? (frontendData?.speech?.speakerNameBn || t.headmasterName) : (frontendData?.speech?.speakerNameEn || 'Morshed Nur')}
+                            </h4>
+                            <p className="text-xs sm:text-sm text-emerald-600 font-bold mt-1">
+                              {lang === 'bn' ? (frontendData?.speech?.designationBn || t.headmasterDesig) : (frontendData?.speech?.designationEn || 'Headmaster')}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="whitespace-pre-line text-slate-600 leading-relaxed font-semibold">
+                          {lang === 'bn' ? (frontendData?.speech?.contentBn || t.headmasterText) : (frontendData?.speech?.contentEn || t.headmasterText)}
+                        </div>
+                      </div>
+
+                      {/* Modal Footer */}
+                      <div className="border-t border-gray-100 px-6 py-4 flex justify-end bg-gray-50">
+                        <button
+                          onClick={() => setIsHmSpeechExpanded(false)}
+                          className="px-5 py-2 bg-[#025644] hover:bg-[#01352a] text-white font-extrabold text-sm rounded-xl cursor-pointer transition-colors"
+                        >
+                          {lang === 'bn' ? 'বন্ধ করুন' : 'Close'}
+                        </button>
+                      </div>
+                    </motion.div>
+                  </div>
+                )}
+              </AnimatePresence>
+
+              {/* Assistant Headmaster Speech Modal */}
+              <AnimatePresence>
+                {isAhmSpeechExpanded && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    {/* Backdrop */}
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      onClick={() => setIsAhmSpeechExpanded(false)}
+                      className="absolute inset-0 bg-slate-950/60 backdrop-blur-xs"
+                    />
+
+                    {/* Modal Card */}
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95, y: 15 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95, y: 15 }}
+                      className="relative bg-white rounded-3xl shadow-2xl max-w-2xl w-full overflow-hidden border border-gray-100 z-10 flex flex-col max-h-[90vh] text-left"
+                    >
+                      {/* Modal header */}
+                      <div className="bg-[#1e3a8a] text-white px-6 py-4 flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                          <User className="h-5 w-5 text-emerald-400" />
+                          <span className="font-extrabold text-sm sm:text-base">
+                            {lang === 'bn' ? 'সহকারী প্রধান শিক্ষকের বাণী' : "Assistant Headmaster's Message"}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => setIsAhmSpeechExpanded(false)}
+                          className="text-white hover:text-gray-200 transition-colors text-lg font-bold cursor-pointer h-8 w-8 rounded-full bg-[#172554] flex items-center justify-center"
+                        >
+                          ✕
+                        </button>
+                      </div>
+
+                      {/* Modal Content body */}
+                      <div className="p-6 overflow-y-auto space-y-6 text-slate-700 text-sm sm:text-base leading-relaxed font-semibold">
+                        <div className="flex flex-col sm:flex-row items-center gap-5 border-b border-gray-100 pb-5">
+                          <div className="h-24 w-24 bg-[#dbeafe] text-[#2563eb] rounded-2xl overflow-hidden shrink-0 border border-blue-150 shadow-xs flex items-center justify-center">
+                            {frontendData?.speech?.asstHeadmasterPhoto ? (
+                              <img src={frontendData?.speech?.asstHeadmasterPhoto} alt="Asst Headmaster" className="h-full w-full object-cover" />
+                            ) : (
+                              <User className="h-10 w-10 text-[#2563eb]" />
+                            )}
+                          </div>
+                          <div className="text-center sm:text-left">
+                            <h4 className="font-extrabold text-[#0f172a] text-lg sm:text-xl">
+                              {lang === 'bn' ? (frontendData?.speech?.asstSpeakerNameBn || t.asstHeadmasterName) : (frontendData?.speech?.asstSpeakerNameEn || 'Md. Toyub Hosen')}
+                            </h4>
+                            <p className="text-xs sm:text-sm text-blue-600 font-bold mt-1">
+                              {lang === 'bn' ? (frontendData?.speech?.asstDesignationBn || t.asstHeadmasterDesig) : (frontendData?.speech?.asstDesignationEn || 'Assistant Headmaster')}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="whitespace-pre-line text-slate-600 leading-relaxed font-semibold">
+                          {lang === 'bn' ? (frontendData?.speech?.asstContentBn || t.asstHeadmasterText) : (frontendData?.speech?.asstContentEn || t.asstHeadmasterText)}
+                        </div>
+                      </div>
+
+                      {/* Modal Footer */}
+                      <div className="border-t border-gray-100 px-6 py-4 flex justify-end bg-gray-50">
+                        <button
+                          onClick={() => setIsAhmSpeechExpanded(false)}
+                          className="px-5 py-2 bg-[#1e3a8a] hover:bg-[#172554] text-white font-extrabold text-sm rounded-xl cursor-pointer transition-colors"
+                        >
+                          {lang === 'bn' ? 'বন্ধ করুন' : 'Close'}
+                        </button>
+                      </div>
+                    </motion.div>
+                  </div>
+                )}
+              </AnimatePresence>
+
               {/* Notice Detail Modal for Home View Slider */}
               <AnimatePresence>
                 {homeSelectedNotice && (
@@ -2940,7 +3115,7 @@ export default function App() {
 
       {/* Shared Footer */}
       {activeTab !== 'portal' && (
-        <Footer setActiveTab={setActiveTab} lang={lang} settings={settings} />
+        <Footer setActiveTab={setActiveTab} lang={lang} settings={settings} frontendData={frontendData} />
       )}
 
     </div>

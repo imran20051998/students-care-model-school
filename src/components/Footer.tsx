@@ -11,9 +11,10 @@ interface FooterProps {
   setActiveTab: (tab: string) => void;
   lang: 'bn' | 'en';
   settings?: any;
+  frontendData?: any;
 }
 
-export default function Footer({ setActiveTab, lang, settings }: FooterProps) {
+export default function Footer({ setActiveTab, lang, settings, frontendData }: FooterProps) {
   const t = translations[lang];
 
   const handleHistoryClick = () => {
@@ -270,7 +271,7 @@ export default function Footer({ setActiveTab, lang, settings }: FooterProps) {
       <div className="bg-[#060b18] border-t border-slate-950 text-slate-400 font-bold py-5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs">
           <div>
-            © 2026 {lang === 'bn' ? (settings?.siteNameBn || 'স্টুডেন্টস কেয়ার মডেল স্কুল') : (settings?.siteNameEn || 'Students Care Model School')} — All rights reserved
+            {frontendData?.footerCopyright || (lang === 'bn' ? `© 2026 ${settings?.siteNameBn || 'স্টুডেন্টস কেয়ার মডেল স্কুল'} — সর্বস্বত্ব সংরক্ষিত` : `© 2026 ${settings?.siteNameEn || 'Students Care Model School'} — All rights reserved`)}
           </div>
           <div className="text-right">
             {lang === 'bn' 

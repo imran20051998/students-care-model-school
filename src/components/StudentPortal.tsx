@@ -162,6 +162,12 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
         }
         
         const data = JSON.parse(text);
+        if (data && data.frontend_data) {
+          setFrontendData((prev: any) => ({
+            ...prev,
+            ...data.frontend_data
+          }));
+        }
         if (data && data.settings) {
           setFrontendData((prev: any) => ({
             ...prev,
@@ -1317,12 +1323,20 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
         { id: '3', name: 'Zakir Hosen', designationBn: 'কমিটি সদস্য', designationEn: 'Governing Body Member', photo: '' }
       ],
       speech: {
-        speakerNameBn: "প্রধান শিক্ষক মো. জাকির হোসেন",
-        speakerNameEn: "Headmaster Md. Zakir Hosen",
-        designationBn: "প্রধান শিক্ষক বার্তা",
-        designationEn: "Headmaster's Message",
-        contentBn: "স্টুডেন্টস কেয়ার মডেল স্কুলের পক্ষ থেকে সবাইকে শুভেচ্ছা। আমরা প্রতিটি শিক্ষার্থীর মেধার সর্বোচ্চ বিকাশ ঘটাতে প্রতিশ্রুতিবদ্ধ। সুশৃঙ্খল পরিবেশ এবং আধুনিক শিক্ষাদান পদ্ধতির মাধ্যমে আমরা ভবিষ্যৎ কর্ণধারদের গড়ে তুলছি।",
-        contentEn: "Welcome to Students Care Model School. We are dedicated to nurturing the unique talent within every student. Through disciplined learning and modern pedagogy, we empower future leaders."
+        speakerNameBn: "মোরশেদ নূর",
+        speakerNameEn: "Morshed Nur",
+        designationBn: "প্রধান শিক্ষক, স্টুডেন্টস কেয়ার মডেল স্কুল",
+        designationEn: "Headmaster, Students Care Model School",
+        contentBn: "আসসালামু আলাইকুম। স্টুডেন্টস কেয়ার মডেল স্কুলের পক্ষ থেকে সকলকে শুভেচ্ছা। আমরা শুধু পাঠ্যপুস্তকের শিক্ষাতেই সীমাবদ্ধ নই, আমাদের লক্ষ্য প্রতিটি শিক্ষার্থীকে একজন দেশপ্রেমিক, নৈতিকতাসম্পন্ন এবং আইটি-দক্ষ বৈশ্বিক নাগরিক হিসেবে গড়ে তোলা। আধুনিক শিক্ষার আলো ঘরে ঘরে পৌঁছে দিতে আমাদের এই ক্ষুদ্র প্রয়াস। সকলের সহযোগিতা কামনা করছি।",
+        contentEn: "Assalamu Alaikum. Warm greetings from Students Care Model School. We do not believe in rote learning or textbooks alone. Our ultimate vision is to build every student into a patriotic, morally upright, and IT-skilled global citizen. We strive to spread the light of quality education in every household. We seek your prayer and support.",
+        headmasterPhoto: "",
+        asstSpeakerNameBn: "মো: তৈয়ব হোসেন",
+        asstSpeakerNameEn: "Md. Toyub Hosen",
+        asstDesignationBn: "সহকারী প্রধান শিক্ষক, স্টুডেন্টস কেয়ার মডেল স্কুল",
+        asstDesignationEn: "Asst. Headmaster, Students Care Model School",
+        asstContentBn: "শৃঙ্খলা ও কঠোর পরিশ্রমই সাফল্যের মূল চাবিকাঠি। আমাদের শিক্ষাপ্রতিষ্ঠানে শিক্ষার্থীদের পাঠদানের পাশাপাশি নিয়মানুবর্তিতা, নৈতিকতা ও সৃজনশীল কার্যক্রমের উপর বিশেষ গুরুত্ব দেওয়া হয়। আধুনিক সুযোগ-সুবিধা ও মনোরম পরিবেশে পাঠদানের মাধ্যমে আমরা শিক্ষার্থীদের ভবিষ্যৎ গড়তে সদা প্রস্তুত।",
+        asstContentEn: "Discipline and hard work are the fundamental keys to success. In our school, alongside regular academic syllabus learning, we emphasize discipline, ethics, and co-curricular creativity. With modern campus facilities and an encouraging environment, we are always prepared to build the future of our candidates.",
+        asstHeadmasterPhoto: ""
       },
       testimonial: [
         { id: '1', author: 'Dr. Rafiqul Islam', roleBn: 'অভিভাবক', roleEn: 'Guardian', textBn: 'স্কুলের পড়াশোনার মান ও শৃঙ্খলা সত্যিই প্রশংসনীয়। আমার সন্তান পড়াশোনায় অনেক উন্নতি করেছে।', textEn: 'The educational quality and strict discipline are commendable. My child has improved immensely.' },
@@ -1387,6 +1401,35 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
       window.dispatchEvent(new Event('school_settings_updated'));
     }
   }, [frontendData]);
+
+  const saveFrontendDataToServer = async (customMsgBn?: string, customMsgEn?: string) => {
+    if (!frontendData) return;
+    try {
+      const response = await fetch('/public/php_backend/save_frontend_data.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ frontend_data: frontendData })
+      });
+      const result = await response.json();
+      if (result && result.status === 'success') {
+        setAdminSuccessMsg(lang === 'bn' 
+          ? (customMsgBn || "তথ্য সফলভাবে সার্ভার ডাটাবেজে সংরক্ষিত হয়েছে!") 
+          : (customMsgEn || "Settings successfully saved to server database!"));
+      } else {
+        setAdminSuccessMsg(lang === 'bn' 
+          ? "ভুল: সার্ভারে সংরক্ষণ করা যায়নি।" 
+          : "Error: " + (result.message || "Failed to save settings on server"));
+      }
+    } catch (err: any) {
+      console.error('Save frontend data to server error:', err);
+      setAdminSuccessMsg(lang === 'bn' 
+        ? "ভুল: নেটওয়ার্ক সংযোগ ব্যর্থ হয়েছে।" 
+        : "Network error saving settings: " + err.message);
+    }
+    setTimeout(() => setAdminSuccessMsg(''), 4000);
+  };
 
   // States for Manage Custom Pages
   const [pageTitleBn, setPageTitleBn] = useState('');
@@ -11969,9 +12012,11 @@ async function buildAttendanceExcelSheet(monthName, className, section, students
                 {frontendSubTab === 'setting' && (
                   <form onSubmit={(e) => {
                     e.preventDefault();
-                    setAdminSuccessMsg("Homepage generic settings saved!");
+                    saveFrontendDataToServer(
+                      "সাধারণ সেটিংস সফলভাবে সংরক্ষিত হয়েছে!",
+                      "General settings saved successfully to server!"
+                    );
                     addAuditLog("Admin changed general homepage parameters.");
-                    setTimeout(() => setAdminSuccessMsg(''), 4000);
                   }} className="space-y-4 text-xs font-bold text-gray-700">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-1">
@@ -13008,41 +13053,326 @@ class PageSectionController extends Controller {
                 {frontendSubTab === 'speech' && (
                   <form onSubmit={(e) => {
                     e.preventDefault();
-                    setAdminSuccessMsg("Headmaster's Speech Updated!");
-                    addAuditLog("Admin edited Headmasters welcoming note parameters.");
-                    setTimeout(() => setAdminSuccessMsg(''), 4000);
-                  }} className="space-y-4 text-xs font-bold text-gray-700">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <label className="text-gray-400">Speaker Name (Bangla)</label>
-                        <input 
-                          type="text" 
-                          value={frontendData.speech.speakerNameBn} 
-                          onChange={(e) => setFrontendData(prev => ({ ...prev, speech: { ...prev.speech, speakerNameBn: e.target.value } }))}
-                          className="w-full px-3 py-2 border bg-gray-50 focus:bg-white rounded-lg focus:outline-none" 
-                        />
+                    saveFrontendDataToServer(
+                      "প্রধান শিক্ষক ও সহকারী প্রধান শিক্ষকের বাণী সফলভাবে সংরক্ষিত হয়েছে!",
+                      "Headmaster & Assistant Headmaster speeches saved successfully to server!"
+                    );
+                    addAuditLog("Admin edited Headmaster and Assistant Headmaster speech parameters.");
+                  }} className="space-y-6 text-xs font-bold text-gray-700">
+                    
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                      
+                      {/* Headmaster Speech Card */}
+                      <div className="bg-white p-5 rounded-2xl border border-gray-200/90 shadow-xs space-y-4">
+                        <div className="border-b border-gray-100 pb-3 flex items-center justify-between">
+                          <h4 className="text-sm font-black text-slate-800 flex items-center gap-2">
+                            <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
+                            {lang === 'bn' ? 'প্রধান শিক্ষকের বাণী সেটিংস' : 'Headmaster Speech Settings'}
+                          </h4>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <label className="text-gray-400">Headmaster Name (Bangla)</label>
+                            <input 
+                              type="text" 
+                              value={frontendData.speech.speakerNameBn || ''} 
+                              onChange={(e) => setFrontendData(prev => ({ 
+                                ...prev, 
+                                speech: { ...prev.speech, speakerNameBn: e.target.value } 
+                              }))}
+                              className="w-full px-3 py-2 border bg-gray-50 focus:bg-white rounded-lg focus:outline-none font-semibold text-gray-800" 
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-gray-400">Headmaster Name (English)</label>
+                            <input 
+                              type="text" 
+                              value={frontendData.speech.speakerNameEn || ''} 
+                              onChange={(e) => setFrontendData(prev => ({ 
+                                ...prev, 
+                                speech: { ...prev.speech, speakerNameEn: e.target.value } 
+                              }))}
+                              className="w-full px-3 py-2 border bg-gray-50 focus:bg-white rounded-lg focus:outline-none" 
+                            />
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-gray-400">Headmaster Designation (Bangla)</label>
+                            <input 
+                              type="text" 
+                              value={frontendData.speech.designationBn || ''} 
+                              onChange={(e) => setFrontendData(prev => ({ 
+                                ...prev, 
+                                speech: { ...prev.speech, designationBn: e.target.value } 
+                              }))}
+                              className="w-full px-3 py-2 border bg-gray-50 focus:bg-white rounded-lg focus:outline-none font-semibold text-gray-800" 
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-gray-400">Headmaster Designation (English)</label>
+                            <input 
+                              type="text" 
+                              value={frontendData.speech.designationEn || ''} 
+                              onChange={(e) => setFrontendData(prev => ({ 
+                                ...prev, 
+                                speech: { ...prev.speech, designationEn: e.target.value } 
+                              }))}
+                              className="w-full px-3 py-2 border bg-gray-50 focus:bg-white rounded-lg focus:outline-none" 
+                            />
+                          </div>
+
+                          <div className="space-y-1 md:col-span-2">
+                            <label className="text-gray-400">Message Content (Bangla)</label>
+                            <textarea 
+                              rows={4}
+                              value={frontendData.speech.contentBn || ''} 
+                              onChange={(e) => setFrontendData(prev => ({ 
+                                ...prev, 
+                                speech: { ...prev.speech, contentBn: e.target.value } 
+                              }))}
+                              className="w-full px-3 py-2 border bg-gray-50 focus:bg-white rounded-lg focus:outline-none font-semibold text-gray-800 leading-relaxed" 
+                            />
+                          </div>
+
+                          <div className="space-y-1 md:col-span-2">
+                            <label className="text-gray-400">Message Content (English)</label>
+                            <textarea 
+                              rows={4}
+                              value={frontendData.speech.contentEn || ''} 
+                              onChange={(e) => setFrontendData(prev => ({ 
+                                ...prev, 
+                                speech: { ...prev.speech, contentEn: e.target.value } 
+                              }))}
+                              className="w-full px-3 py-2 border bg-gray-50 focus:bg-white rounded-lg focus:outline-none leading-relaxed" 
+                            />
+                          </div>
+
+                          {/* Headmaster Image Upload & URL */}
+                          <div className="space-y-2 md:col-span-2 border-t border-gray-100 pt-3">
+                            <label className="text-gray-400 block">{lang === 'bn' ? 'প্রধান শিক্ষকের ছবি' : 'Headmaster Photo'}</label>
+                            <div className="flex flex-col sm:flex-row items-center gap-4">
+                              <div className="h-20 w-20 bg-gray-100 rounded-xl overflow-hidden shrink-0 border border-gray-200 flex items-center justify-center">
+                                {frontendData.speech.headmasterPhoto ? (
+                                  <img src={frontendData.speech.headmasterPhoto} alt="Headmaster" className="h-full w-full object-cover" />
+                                ) : (
+                                  <User className="h-8 w-8 text-gray-400" />
+                                )}
+                              </div>
+                              <div className="grow space-y-2 w-full">
+                                <div className="flex gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => document.getElementById('hm-photo-input')?.click()}
+                                    className="px-3 py-1.5 bg-[#025644] hover:bg-[#01352a] text-white rounded-lg font-bold text-[10px] cursor-pointer inline-flex items-center gap-1 shadow-xs transition-colors"
+                                  >
+                                    <Upload className="h-3 w-3" /> {lang === 'bn' ? 'ছবি আপলোড করুন' : 'Upload Image'}
+                                  </button>
+                                  {frontendData.speech.headmasterPhoto && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setFrontendData(prev => ({ ...prev, speech: { ...prev.speech, headmasterPhoto: "" } }))}
+                                      className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-bold text-[10px] cursor-pointer transition-colors"
+                                    >
+                                      {lang === 'bn' ? 'বাদ দিন' : 'Remove'}
+                                    </button>
+                                  )}
+                                </div>
+                                <input 
+                                  type="text"
+                                  placeholder="Or paste direct image URL here..."
+                                  value={frontendData.speech.headmasterPhoto || ''}
+                                  onChange={(e) => setFrontendData(prev => ({ ...prev, speech: { ...prev.speech, headmasterPhoto: e.target.value } }))}
+                                  className="w-full px-3 py-1.5 border bg-gray-50 focus:bg-white rounded-lg focus:outline-none text-[11px]"
+                                />
+                                <input 
+                                  type="file"
+                                  id="hm-photo-input"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      const reader = new FileReader();
+                                      reader.onload = (event) => {
+                                        if (event.target?.result) {
+                                          setFrontendData(prev => ({
+                                            ...prev,
+                                            speech: {
+                                              ...prev.speech,
+                                              headmasterPhoto: event.target.result as string
+                                            }
+                                          }));
+                                        }
+                                      };
+                                      reader.readAsDataURL(file);
+                                    }
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <div className="space-y-1">
-                        <label className="text-gray-400">Speaker Name (English)</label>
-                        <input 
-                          type="text" 
-                          value={frontendData.speech.speakerNameEn} 
-                          onChange={(e) => setFrontendData(prev => ({ ...prev, speech: { ...prev.speech, speakerNameEn: e.target.value } }))}
-                          className="w-full px-3 py-2 border bg-gray-50 focus:bg-white rounded-lg focus:outline-none" 
-                        />
+
+                      {/* Assistant Headmaster Speech Card */}
+                      <div className="bg-white p-5 rounded-2xl border border-gray-200/90 shadow-xs space-y-4">
+                        <div className="border-b border-gray-100 pb-3 flex items-center justify-between">
+                          <h4 className="text-sm font-black text-slate-800 flex items-center gap-2">
+                            <span className="h-2 w-2 rounded-full bg-blue-500"></span>
+                            {lang === 'bn' ? 'সহকারী প্রধান শিক্ষকের বাণী সেটিংস' : 'Assistant Headmaster Speech Settings'}
+                          </h4>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <label className="text-gray-400">Asst. Headmaster Name (Bangla)</label>
+                            <input 
+                              type="text" 
+                              value={frontendData.speech.asstSpeakerNameBn || ''} 
+                              onChange={(e) => setFrontendData(prev => ({ 
+                                ...prev, 
+                                speech: { ...prev.speech, asstSpeakerNameBn: e.target.value } 
+                              }))}
+                              className="w-full px-3 py-2 border bg-gray-50 focus:bg-white rounded-lg focus:outline-none font-semibold text-gray-800" 
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-gray-400">Asst. Headmaster Name (English)</label>
+                            <input 
+                              type="text" 
+                              value={frontendData.speech.asstSpeakerNameEn || ''} 
+                              onChange={(e) => setFrontendData(prev => ({ 
+                                ...prev, 
+                                speech: { ...prev.speech, asstSpeakerNameEn: e.target.value } 
+                              }))}
+                              className="w-full px-3 py-2 border bg-gray-50 focus:bg-white rounded-lg focus:outline-none" 
+                            />
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-gray-400">Asst. Designation (Bangla)</label>
+                            <input 
+                              type="text" 
+                              value={frontendData.speech.asstDesignationBn || ''} 
+                              onChange={(e) => setFrontendData(prev => ({ 
+                                ...prev, 
+                                speech: { ...prev.speech, asstDesignationBn: e.target.value } 
+                              }))}
+                              className="w-full px-3 py-2 border bg-gray-50 focus:bg-white rounded-lg focus:outline-none font-semibold text-gray-800" 
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-gray-400">Asst. Designation (English)</label>
+                            <input 
+                              type="text" 
+                              value={frontendData.speech.asstDesignationEn || ''} 
+                              onChange={(e) => setFrontendData(prev => ({ 
+                                ...prev, 
+                                speech: { ...prev.speech, asstDesignationEn: e.target.value } 
+                              }))}
+                              className="w-full px-3 py-2 border bg-gray-50 focus:bg-white rounded-lg focus:outline-none" 
+                            />
+                          </div>
+
+                          <div className="space-y-1 md:col-span-2">
+                            <label className="text-gray-400">Message Content (Bangla)</label>
+                            <textarea 
+                              rows={4}
+                              value={frontendData.speech.asstContentBn || ''} 
+                              onChange={(e) => setFrontendData(prev => ({ 
+                                ...prev, 
+                                speech: { ...prev.speech, asstContentBn: e.target.value } 
+                              }))}
+                              className="w-full px-3 py-2 border bg-gray-50 focus:bg-white rounded-lg focus:outline-none font-semibold text-gray-800 leading-relaxed" 
+                            />
+                          </div>
+
+                          <div className="space-y-1 md:col-span-2">
+                            <label className="text-gray-400">Message Content (English)</label>
+                            <textarea 
+                              rows={4}
+                              value={frontendData.speech.asstContentEn || ''} 
+                              onChange={(e) => setFrontendData(prev => ({ 
+                                ...prev, 
+                                speech: { ...prev.speech, asstContentEn: e.target.value } 
+                              }))}
+                              className="w-full px-3 py-2 border bg-gray-50 focus:bg-white rounded-lg focus:outline-none leading-relaxed" 
+                            />
+                          </div>
+
+                          {/* Assistant Headmaster Image Upload & URL */}
+                          <div className="space-y-2 md:col-span-2 border-t border-gray-100 pt-3">
+                            <label className="text-gray-400 block">{lang === 'bn' ? 'সহকারী প্রধান শিক্ষকের ছবি' : 'Assistant Headmaster Photo'}</label>
+                            <div className="flex flex-col sm:flex-row items-center gap-4">
+                              <div className="h-20 w-20 bg-gray-100 rounded-xl overflow-hidden shrink-0 border border-gray-200 flex items-center justify-center">
+                                {frontendData.speech.asstHeadmasterPhoto ? (
+                                  <img src={frontendData.speech.asstHeadmasterPhoto} alt="Asst Headmaster" className="h-full w-full object-cover" />
+                                ) : (
+                                  <User className="h-8 w-8 text-gray-400" />
+                                )}
+                              </div>
+                              <div className="grow space-y-2 w-full">
+                                <div className="flex gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => document.getElementById('ahm-photo-input')?.click()}
+                                    className="px-3 py-1.5 bg-[#025644] hover:bg-[#01352a] text-white rounded-lg font-bold text-[10px] cursor-pointer inline-flex items-center gap-1 shadow-xs transition-colors"
+                                  >
+                                    <Upload className="h-3 w-3" /> {lang === 'bn' ? 'ছবি আপলোড করুন' : 'Upload Image'}
+                                  </button>
+                                  {frontendData.speech.asstHeadmasterPhoto && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setFrontendData(prev => ({ ...prev, speech: { ...prev.speech, asstHeadmasterPhoto: "" } }))}
+                                      className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-bold text-[10px] cursor-pointer transition-colors"
+                                    >
+                                      {lang === 'bn' ? 'বাদ দিন' : 'Remove'}
+                                    </button>
+                                  )}
+                                </div>
+                                <input 
+                                  type="text"
+                                  placeholder="Or paste direct image URL here..."
+                                  value={frontendData.speech.asstHeadmasterPhoto || ''}
+                                  onChange={(e) => setFrontendData(prev => ({ ...prev, speech: { ...prev.speech, asstHeadmasterPhoto: e.target.value } }))}
+                                  className="w-full px-3 py-1.5 border bg-gray-50 focus:bg-white rounded-lg focus:outline-none text-[11px]"
+                                />
+                                <input 
+                                  type="file"
+                                  id="ahm-photo-input"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      const reader = new FileReader();
+                                      reader.onload = (event) => {
+                                        if (event.target?.result) {
+                                          setFrontendData(prev => ({
+                                            ...prev,
+                                            speech: {
+                                              ...prev.speech,
+                                              asstHeadmasterPhoto: event.target.result as string
+                                            }
+                                          }));
+                                        }
+                                      };
+                                      reader.readAsDataURL(file);
+                                    }
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <div className="space-y-1 md:col-span-2">
-                        <label className="text-gray-400">Message Content (Bangla)</label>
-                        <textarea 
-                          rows={3}
-                          value={frontendData.speech.contentBn} 
-                          onChange={(e) => setFrontendData(prev => ({ ...prev, speech: { ...prev.speech, contentBn: e.target.value } }))}
-                          className="w-full px-3 py-2 border bg-gray-50 focus:bg-white rounded-lg focus:outline-none" 
-                        />
-                      </div>
+
                     </div>
-                    <button type="submit" className="w-full py-2.5 bg-[#025644] hover:bg-[#01352a] text-white font-black rounded-xl shadow-xs cursor-pointer">
-                      Publish Message Updates
+
+                    <button type="submit" className="w-full py-3 bg-[#025644] hover:bg-[#01352a] text-white font-black rounded-xl shadow-xs cursor-pointer text-xs flex items-center justify-center gap-2 transition-colors">
+                      <Save className="h-4 w-4" />
+                      {lang === 'bn' ? 'সকল বাণী সেটিংস সংরক্ষণ করুন' : 'Save All Speech Settings'}
                     </button>
                   </form>
                 )}
@@ -13051,9 +13381,11 @@ class PageSectionController extends Controller {
                 {frontendSubTab === 'history' && (
                   <form onSubmit={(e) => {
                     e.preventDefault();
-                    setAdminSuccessMsg("Legacy details published!");
+                    saveFrontendDataToServer(
+                      "ইতিহাস সফলভাবে সংরক্ষিত হয়েছে!",
+                      "School History saved successfully to server!"
+                    );
                     addAuditLog("Admin edited school history block.");
-                    setTimeout(() => setAdminSuccessMsg(''), 4000);
                   }} className="space-y-4 text-xs font-bold text-gray-700">
                     <div className="space-y-4">
                       <div className="space-y-1">
@@ -13092,17 +13424,36 @@ class PageSectionController extends Controller {
                           : 'Edit the marquee scrollable banner text that rotates live below hero images.'}
                       </p>
                     </div>
-                    <textarea 
-                      rows={3}
-                      defaultValue="Admissions Open for academic sessions 2026. Submit online registry forms today!"
-                      className="w-full px-3.5 py-2.5 border bg-white rounded-xl focus:outline-none focus:border-[#025644]" 
-                    />
+                    
+                    <div className="space-y-1 text-left">
+                      <label className="text-gray-400 font-bold block">Notice Announcement Text (Bangla)</label>
+                      <textarea 
+                        rows={3}
+                        value={frontendData.noticeTickerBn || ''}
+                        onChange={(e) => setFrontendData(prev => ({ ...prev, noticeTickerBn: e.target.value }))}
+                        className="w-full px-3.5 py-2.5 border bg-white rounded-xl focus:outline-none focus:border-[#025644] font-semibold text-gray-800" 
+                      />
+                    </div>
+
+                    <div className="space-y-1 text-left">
+                      <label className="text-gray-400 font-bold block">Notice Announcement Text (English)</label>
+                      <textarea 
+                        rows={3}
+                        value={frontendData.noticeTickerEn || ''}
+                        onChange={(e) => setFrontendData(prev => ({ ...prev, noticeTickerEn: e.target.value }))}
+                        className="w-full px-3.5 py-2.5 border bg-white rounded-xl focus:outline-none focus:border-[#025644]" 
+                      />
+                    </div>
+
                     <button
                       onClick={() => {
-                        setAdminSuccessMsg("Emergency notice ticker published!");
-                        setTimeout(() => setAdminSuccessMsg(''), 3000);
+                        saveFrontendDataToServer(
+                          "জরুরী নোটিশ সফলভাবে সার্ভারে সংরক্ষিত হয়েছে!",
+                          "Emergency announcement notice saved successfully to server!"
+                        );
+                        addAuditLog("Admin edited homepage emergency ticker.");
                       }}
-                      className="px-5 py-2.5 bg-[#025644] text-white rounded-xl cursor-pointer font-black"
+                      className="px-5 py-2.5 bg-[#025644] hover:bg-[#01352a] text-white rounded-xl cursor-pointer font-black transition-colors"
                     >
                       Publish Urgent Announcement Notice
                     </button>
@@ -13119,10 +13470,18 @@ class PageSectionController extends Controller {
                           <span>{cat}</span>
                           <button
                             onClick={() => {
-                              setFrontendData(prev => ({ ...prev, galleryCategories: prev.galleryCategories.filter(c => c !== cat) }));
+                              const updatedCats = frontendData.galleryCategories.filter(c => c !== cat);
+                              setFrontendData(prev => ({ ...prev, galleryCategories: updatedCats }));
                               addAuditLog(`Admin removed photo category: ${cat}`);
+                              // Call save after updating state
+                              setTimeout(() => {
+                                saveFrontendDataToServer(
+                                  "ক্যাটাগরি সফলভাবে ডিলিট করা হয়েছে এবং সার্ভারে সংরক্ষিত হয়েছে!",
+                                  "Category deleted and saved successfully to server!"
+                                );
+                              }, 150);
                             }}
-                            className="text-rose-600 hover:text-rose-800 font-extrabold"
+                            className="text-rose-600 hover:text-rose-800 font-extrabold cursor-pointer"
                           >
                             &times;
                           </button>
@@ -13135,10 +13494,19 @@ class PageSectionController extends Controller {
                         onClick={() => {
                           const val = (document.getElementById('new-cat-input') as HTMLInputElement)?.value;
                           if (!val) return;
-                          setFrontendData(prev => ({ ...prev, galleryCategories: [...prev.galleryCategories, val] }));
+                          const updatedCats = [...frontendData.galleryCategories, val];
+                          setFrontendData(prev => ({ ...prev, galleryCategories: updatedCats }));
                           (document.getElementById('new-cat-input') as HTMLInputElement).value = '';
+                          addAuditLog(`Admin added photo category: ${val}`);
+                          // Call save after updating state
+                          setTimeout(() => {
+                            saveFrontendDataToServer(
+                              "নতুন ক্যাটাগরি সফলভাবে যুক্ত ও সার্ভারে সংরক্ষিত হয়েছে!",
+                              "New Category added and saved successfully to server!"
+                            );
+                          }, 150);
                         }}
-                        className="px-4 py-2 bg-[#025644] text-white rounded-lg"
+                        className="px-4 py-2 bg-[#025644] text-white rounded-lg cursor-pointer"
                       >
                         Add Category
                       </button>
@@ -13150,14 +13518,21 @@ class PageSectionController extends Controller {
                 {frontendSubTab === 'footer_settings' && (
                   <form onSubmit={(e) => {
                     e.preventDefault();
-                    setAdminSuccessMsg("Footer generic copywritings updated!");
+                    saveFrontendDataToServer(
+                      "ফুটার সেটিংস সফলভাবে সংরক্ষিত হয়েছে!",
+                      "Footer settings saved successfully to server!"
+                    );
                     addAuditLog("Admin edited page footer social credentials.");
-                    setTimeout(() => setAdminSuccessMsg(''), 4000);
                   }} className="space-y-4 text-xs font-bold text-gray-700">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-1">
                         <label className="text-gray-400">Copyright text line</label>
-                        <input type="text" defaultValue="&copy; 2026 Students Care Model School. All Rights Reserved." className="w-full px-3 py-2 border bg-gray-50 focus:bg-white rounded-lg focus:outline-none" />
+                        <input 
+                          type="text" 
+                          value={frontendData.footerCopyright || '© 2026 Students Care Model School. All Rights Reserved.'} 
+                          onChange={(e) => setFrontendData(prev => ({ ...prev, footerCopyright: e.target.value }))}
+                          className="w-full px-3 py-2 border bg-gray-50 focus:bg-white rounded-lg focus:outline-none" 
+                        />
                       </div>
                     </div>
                     <button type="submit" className="w-full py-2.5 bg-[#025644] hover:bg-[#01352a] text-white font-black rounded-xl shadow-xs cursor-pointer">
@@ -13781,9 +14156,22 @@ class PageSectionController extends Controller {
                               });
                               addAuditLog("Admin added a new core feature.");
                             }}
-                            className="px-4 py-2.5 bg-[#025644] hover:bg-[#01352a] text-white rounded-xl cursor-pointer font-black inline-flex items-center gap-1.5 shadow-xs transition-colors"
+                            className="px-4 py-2.5 bg-[#025644] hover:bg-[#01352a] text-white rounded-xl cursor-pointer font-black inline-flex items-center gap-1.5 shadow-xs transition-colors text-xs"
                           >
                             <Plus className="h-4 w-4" /> Add New Feature
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              saveFrontendDataToServer(
+                                "বৈশিষ্ট্যসমূহ সফলভাবে সার্ভারে সংরক্ষিত হয়েছে!",
+                                "Core Features configuration saved successfully to server!"
+                              );
+                            }}
+                            className="px-5 py-2.5 bg-[#1e63d3] hover:bg-blue-700 text-white rounded-xl cursor-pointer font-black inline-flex items-center gap-1.5 shadow-xs transition-colors text-xs"
+                          >
+                            <Save className="h-4 w-4" /> Save Changes
                           </button>
                         </div>
                       </div>
@@ -13848,29 +14236,43 @@ class PageSectionController extends Controller {
                         ))}
                       </div>
 
-                      <button
-                        onClick={() => {
-                          const templateItem: any = { id: Date.now().toString() };
-                          if (listItems.length > 0) {
-                            Object.keys(listItems[0]).forEach((key) => {
-                              if (key !== 'id') {
-                                templateItem[key] = key.toLowerCase().includes('bn') ? 'নতুন এন্ট্রি' : 'New Entry';
-                              }
-                            });
-                          } else {
-                            templateItem.titleBn = 'নতুন এন্ট্রি';
-                            templateItem.titleEn = 'New Entry';
-                          }
-                          setFrontendData(prev => ({
-                            ...prev,
-                            [listKey]: [...(prev as any)[listKey], templateItem]
-                          }));
-                          addAuditLog(`Admin appended a new custom item in ${frontendSubTab}.`);
-                        }}
-                        className="px-4 py-2.5 bg-[#025644] hover:bg-[#01352a] text-white rounded-xl cursor-pointer font-black inline-flex items-center gap-1.5 shadow-xs"
-                      >
-                        <Plus className="h-4 w-4" /> Add New Item
-                      </button>
+                      <div className="flex gap-3 pt-2">
+                        <button
+                          onClick={() => {
+                            const templateItem: any = { id: Date.now().toString() };
+                            if (listItems.length > 0) {
+                              Object.keys(listItems[0]).forEach((key) => {
+                                if (key !== 'id') {
+                                  templateItem[key] = key.toLowerCase().includes('bn') ? 'নতুন এন্ট্রি' : 'New Entry';
+                                }
+                              });
+                            } else {
+                              templateItem.titleBn = 'নতুন এন্ট্রি';
+                              templateItem.titleEn = 'New Entry';
+                            }
+                            setFrontendData(prev => ({
+                              ...prev,
+                              [listKey]: [...(prev as any)[listKey], templateItem]
+                            }));
+                            addAuditLog(`Admin appended a new custom item in ${frontendSubTab}.`);
+                          }}
+                          className="px-4 py-2.5 bg-[#025644] hover:bg-[#01352a] text-white rounded-xl cursor-pointer font-black inline-flex items-center gap-1.5 shadow-xs"
+                        >
+                          <Plus className="h-4 w-4" /> Add New Item
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            saveFrontendDataToServer(
+                              `${frontendSubTab} সংক্রান্ত পরিবর্তনসমূহ সফলভাবে সার্ভারে সংরক্ষিত হয়েছে!`,
+                              `${frontendSubTab} settings saved successfully to server!`
+                            );
+                          }}
+                          className="px-5 py-2.5 bg-[#1e63d3] hover:bg-blue-700 text-white rounded-xl cursor-pointer font-black inline-flex items-center gap-1.5 shadow-xs"
+                        >
+                          <Save className="h-4 w-4" /> Save Changes
+                        </button>
+                      </div>
                     </div>
                   );
                 })()}

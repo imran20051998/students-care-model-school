@@ -20,6 +20,13 @@ if ($settings_res && $settings_res->num_rows > 0) {
     $settings['bannerFontSize'] = intval($settings['bannerFontSize']);
     $settings['bannerGradient'] = (bool)$settings['bannerGradient'];
     $response['settings'] = $settings;
+    
+    // De-serialize the bulk frontend data settings
+    if (!empty($settings['frontend_data'])) {
+        $response['frontend_data'] = json_decode($settings['frontend_data'], true);
+    } else {
+        $response['frontend_data'] = null;
+    }
 } else {
     // Return hardcoded default if something fails
     $response['settings'] = [

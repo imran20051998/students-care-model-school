@@ -48,8 +48,12 @@ $conn->query("CREATE TABLE IF NOT EXISTS `settings` (
     `bannerColor` VARCHAR(50) DEFAULT '#025644',
     `bannerFontSize` INT DEFAULT 32,
     `bannerGradient` TINYINT(1) DEFAULT 1,
-    `logoUrl` VARCHAR(255) DEFAULT ''
+    `logoUrl` VARCHAR(255) DEFAULT '',
+    `frontend_data` LONGTEXT DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+
+// Alter table if the column is missing in an already existing database
+$conn->query("ALTER TABLE `settings` ADD COLUMN IF NOT EXISTS `frontend_data` LONGTEXT DEFAULT NULL;");
 
 // Seed default settings row if empty
 $res = $conn->query("SELECT COUNT(*) as count FROM `settings`");
