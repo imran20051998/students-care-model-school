@@ -213,15 +213,22 @@ export default function App() {
     : [];
 
   const sliderSlides = mappedSlides.length > 0 ? mappedSlides : defaultSlides;
+  const safeSlideIdx = (currentSlide < sliderSlides.length && currentSlide >= 0) ? currentSlide : 0;
 
   // Auto play the slider
   React.useEffect(() => {
     if (activeTab !== 'home') return;
     const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % sliderSlides.length);
+      setCurrentSlide((prev) => (sliderSlides.length > 0 ? (prev + 1) % sliderSlides.length : 0));
     }, 5000);
     return () => clearInterval(interval);
-  }, [activeTab]);
+  }, [activeTab, sliderSlides.length]);
+
+  React.useEffect(() => {
+    if (currentSlide >= sliderSlides.length) {
+      setCurrentSlide(0);
+    }
+  }, [sliderSlides.length, currentSlide]);
 
   // Director Panel Data
   const directorsList = [
@@ -760,8 +767,8 @@ export default function App() {
                         className="absolute inset-0 w-full h-full"
                       >
                         <img
-                          src={sliderSlides[currentSlide].image}
-                          alt={lang === 'bn' ? sliderSlides[currentSlide].titleBn : sliderSlides[currentSlide].titleEn}
+                          src={sliderSlides[safeSlideIdx]?.image}
+                          alt={lang === 'bn' ? sliderSlides[safeSlideIdx]?.titleBn : sliderSlides[safeSlideIdx]?.titleEn}
                           className="w-full h-full object-cover"
                           referrerPolicy="no-referrer"
                         />
@@ -803,30 +810,30 @@ export default function App() {
                         {lang === 'bn' ? "ক্যাম্পাস গ্যালারি" : "Campus Gallery"}
                       </span>
                       <h2 className="text-base xs:text-xl sm:text-2xl md:text-3xl font-black text-white leading-tight drop-shadow-md">
-                        {lang === 'bn' ? sliderSlides[currentSlide].titleBn : sliderSlides[currentSlide].titleEn}
+                        {lang === 'bn' ? sliderSlides[safeSlideIdx]?.titleBn : sliderSlides[safeSlideIdx]?.titleEn}
                       </h2>
                       <p className="text-[11px] xs:text-xs sm:text-sm md:text-base text-gray-200/90 font-medium max-w-xl leading-relaxed drop-shadow-xs hidden xs:block">
-                        {lang === 'bn' ? sliderSlides[currentSlide].subtitleBn : sliderSlides[currentSlide].subtitleEn}
+                        {lang === 'bn' ? sliderSlides[safeSlideIdx]?.subtitleBn : sliderSlides[safeSlideIdx]?.subtitleEn}
                       </p>
-                      {sliderSlides[currentSlide].btnLink && (
+                      {sliderSlides[safeSlideIdx]?.btnLink && (
                         <div className="pt-2">
                           <a
-                            href={sliderSlides[currentSlide].btnLink}
-                            target={sliderSlides[currentSlide].btnLink.startsWith('http') ? '_blank' : '_self'}
+                            href={sliderSlides[safeSlideIdx]?.btnLink}
+                            target={sliderSlides[safeSlideIdx]?.btnLink.startsWith('http') ? '_blank' : '_self'}
                             rel="noopener noreferrer"
                             onClick={(e) => {
                               // If it is an internal tab link, click inside the app instead of default anchor jump
-                              if (!sliderSlides[currentSlide].btnLink.startsWith('http')) {
+                              if (sliderSlides[safeSlideIdx]?.btnLink && !sliderSlides[safeSlideIdx].btnLink.startsWith('http')) {
                                 e.preventDefault();
-                                setActiveTab(sliderSlides[currentSlide].btnLink);
+                                setActiveTab(sliderSlides[safeSlideIdx].btnLink);
                               }
                             }}
                             className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-[10px] sm:text-xs font-black rounded-xl shadow-md transition-all cursor-pointer hover:scale-[1.03] active:scale-[0.98]"
                           >
                             <span>
                               {lang === 'bn' 
-                                ? (sliderSlides[currentSlide].btnTextBn || 'বিস্তারিত দেখুন') 
-                                : (sliderSlides[currentSlide].btnTextEn || 'Learn More')}
+                                ? (sliderSlides[safeSlideIdx]?.btnTextBn || 'বিস্তারিত দেখুন') 
+                                : (sliderSlides[safeSlideIdx]?.btnTextEn || 'Learn More')}
                             </span>
                             <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                           </a>
