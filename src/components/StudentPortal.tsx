@@ -759,6 +759,126 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
     localStorage.setItem('school_exam_halls', JSON.stringify(examHalls));
   }, [examHalls]);
 
+  // Dedicated states for Exam Routine Management
+  const [examRoutinesList, setExamRoutinesList] = useState<Array<{
+    id: string;
+    termId: string;
+    className: string;
+    section: string;
+    date: string;
+    day: string;
+    subjectCode: string;
+    subjectName: string;
+    time: string;
+    room: string;
+  }>>(() => {
+    const saved = localStorage.getItem('school_exam_routines_list');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return [
+      // Class 9, Section A (Mid Term)
+      { id: 'R-1', termId: 'T-2', className: 'Class 9', section: 'Section A', date: '2026-07-12', day: 'Sunday', subjectCode: 'CHE-101', subjectName: 'Chemistry', time: '10:00 AM - 01:00 PM', room: 'Room 101' },
+      { id: 'R-2', termId: 'T-2', className: 'Class 9', section: 'Section A', date: '2026-07-14', day: 'Tuesday', subjectCode: 'PHY-102', subjectName: 'Physics & Lab Practice', time: '10:00 AM - 01:00 PM', room: 'Room 202' },
+      { id: 'R-3', termId: 'T-2', className: 'Class 9', section: 'Section A', date: '2026-07-16', day: 'Thursday', subjectCode: 'HMA-103', subjectName: 'Higher Mathematics', time: '10:00 AM - 01:00 PM', room: 'Main Hall' },
+      { id: 'R-4', termId: 'T-2', className: 'Class 9', section: 'Section A', date: '2026-07-19', day: 'Sunday', subjectCode: 'BEN-104', subjectName: 'Bengali Literature', time: '10:00 AM - 01:00 PM', room: 'Room 101' },
+      { id: 'R-5', termId: 'T-2', className: 'Class 9', section: 'Section A', date: '2026-07-21', day: 'Tuesday', subjectCode: 'ENG-105', subjectName: 'English Language', time: '10:00 AM - 01:00 PM', room: 'Room 202' },
+
+      // Class 9, Section B (Mid Term)
+      { id: 'R-6', termId: 'T-2', className: 'Class 9', section: 'Section B', date: '2026-07-12', day: 'Sunday', subjectCode: 'CHE-101', subjectName: 'Chemistry', time: '10:00 AM - 01:00 PM', room: 'Room 202' },
+      { id: 'R-7', termId: 'T-2', className: 'Class 9', section: 'Section B', date: '2026-07-14', day: 'Tuesday', subjectCode: 'PHY-102', subjectName: 'Physics & Lab Practice', time: '10:00 AM - 01:00 PM', room: 'Room 101' },
+      { id: 'R-8', termId: 'T-2', className: 'Class 9', section: 'Section B', date: '2026-07-16', day: 'Thursday', subjectCode: 'HMA-103', subjectName: 'Higher Mathematics', time: '10:00 AM - 01:00 PM', room: 'Room 202' },
+
+      // Class 8, Section A (Mid Term)
+      { id: 'R-9', termId: 'T-2', className: 'Class 8', section: 'Section A', date: '2026-07-12', day: 'Sunday', subjectCode: 'MAT-201', subjectName: 'General Mathematics', time: '10:00 AM - 01:00 PM', room: 'Main Hall' },
+      { id: 'R-10', termId: 'T-2', className: 'Class 8', section: 'Section A', date: '2026-07-14', day: 'Tuesday', subjectCode: 'SCI-202', subjectName: 'General Science', time: '10:00 AM - 01:00 PM', room: 'Room 101' },
+      { id: 'R-11', termId: 'T-2', className: 'Class 8', section: 'Section A', date: '2026-07-16', day: 'Thursday', subjectCode: 'ENG-203', subjectName: 'English Reading', time: '10:00 AM - 01:00 PM', room: 'Room 202' },
+
+      // Class 7, Section A (Mid Term)
+      { id: 'R-12', termId: 'T-2', className: 'Class 7', section: 'Section A', date: '2026-07-12', day: 'Sunday', subjectCode: 'BGS-301', subjectName: 'Bangladesh & Global Studies', time: '10:00 AM - 01:00 PM', room: 'Room 101' },
+      { id: 'R-13', termId: 'T-2', className: 'Class 7', section: 'Section A', date: '2026-07-14', day: 'Tuesday', subjectCode: 'REL-302', subjectName: 'Religion & Moral Education', time: '10:00 AM - 01:00 PM', room: 'Room 202' },
+
+      // First Term (T-1) routines
+      { id: 'R-14', termId: 'T-1', className: 'Class 9', section: 'Section A', date: '2026-03-02', day: 'Monday', subjectCode: 'CHE-101', subjectName: 'Chemistry (Theoretical)', time: '10:00 AM - 01:00 PM', room: 'Room 101' },
+      { id: 'R-15', termId: 'T-1', className: 'Class 9', section: 'Section A', date: '2026-03-04', day: 'Wednesday', subjectCode: 'PHY-102', subjectName: 'Physics (Theoretical)', time: '10:00 AM - 01:00 PM', room: 'Room 202' },
+    ];
+  });
+
+  const [routineFormTermId, setRoutineFormTermId] = useState('T-2');
+  const [routineFormClass, setRoutineFormClass] = useState('Class 9');
+  const [routineFormSection, setRoutineFormSection] = useState('Section A');
+  const [isRoutineSearched, setIsRoutineSearched] = useState(true);
+
+  // States for routine editing
+  const [routineNewDate, setRoutineNewDate] = useState('');
+  const [routineNewDay, setRoutineNewDay] = useState('Sunday');
+  const [routineNewCode, setRoutineNewCode] = useState('');
+  const [routineNewSubject, setRoutineNewSubject] = useState('');
+  const [routineNewTime, setRoutineNewTime] = useState('10:00 AM - 01:00 PM');
+  const [routineNewRoom, setRoutineNewRoom] = useState('Room 101');
+  const [editingRoutineId, setEditingRoutineId] = useState<string | null>(null);
+  const [isAddingRoutineRow, setIsAddingRoutineRow] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem('school_exam_routines_list', JSON.stringify(examRoutinesList));
+  }, [examRoutinesList]);
+
+  // Dedicated states for Exam Mark Distribution
+  const [markDistributions, setMarkDistributions] = useState<Array<{
+    id: string;
+    className: string;
+    assessmentName: string;
+    terms: Array<{ name: string; percentage: number }>;
+  }>>(() => {
+    const saved = localStorage.getItem('school_mark_distributions');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return [
+      {
+        id: 'D-1',
+        className: 'Class 9',
+        assessmentName: 'Final Result 2026',
+        terms: [
+          { name: 'Mid Term Exam', percentage: 30 },
+          { name: 'Final Exam', percentage: 70 }
+        ]
+      },
+      {
+        id: 'D-2',
+        className: 'Class 8',
+        assessmentName: 'Academic Session 2026',
+        terms: [
+          { name: 'Mid Term Exam', percentage: 40 },
+          { name: 'Final Exam', percentage: 60 }
+        ]
+      },
+      {
+        id: 'D-3',
+        className: 'Class 7',
+        assessmentName: 'Annual Promotion 2026',
+        terms: [
+          { name: 'First Term Exam', percentage: 20 },
+          { name: 'Mid Term Exam', percentage: 30 },
+          { name: 'Final Exam', percentage: 50 }
+        ]
+      }
+    ];
+  });
+
+  const [distFormClass, setDistFormClass] = useState('Class 9');
+  const [distFormAssessmentName, setDistFormAssessmentName] = useState('Final Result 2026');
+  const [distFormTerms, setDistFormTerms] = useState<Array<{ name: string; percentage: number }>>([
+    { name: 'Mid Term Exam', percentage: 30 },
+    { name: 'Final Exam', percentage: 70 }
+  ]);
+  const [editingDistId, setEditingDistId] = useState<string | null>(null);
+  const [newCustomTermName, setNewCustomTermName] = useState('');
+
+  useEffect(() => {
+    localStorage.setItem('school_mark_distributions', JSON.stringify(markDistributions));
+  }, [markDistributions]);
+
   // Settings State and Sub Tabs
   const [settingsSubTab, setSettingsSubTab] = useState<string>('login_banner');
   const [schoolSettings, setSchoolSettings] = useState(() => {
@@ -10987,22 +11107,697 @@ def approve_admission_application(request, pk):
                   </>
                 )}
 
-                {/* Other standard Exam subtabs rendering placeholder with mock structures or direct links */}
-                {examSubTab === 'exam_routine' && (
-                  <div className="bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs text-left space-y-6">
-                    <div>
-                      <h3 className="font-extrabold text-gray-900 text-lg">{lang === 'bn' ? 'পরীক্ষার সময়সূচী ও রুটিন তালিকা' : 'Active Exam Timetable Registries'}</h3>
-                      <p className="text-xs text-gray-400 font-bold">{lang === 'bn' ? 'সংশ্লিষ্ট পরীক্ষার রুটিন ডিরেক্টরি' : 'Choose an active Exam Term above to design, edit, and print highly customized class-wise timetables.'}</p>
+                {examSubTab === 'exam_routine' && (() => {
+                  const termOptions = examTerms && examTerms.length > 0 ? examTerms : [
+                    { id: 'T-1', name: 'First Term' },
+                    { id: 'T-2', name: 'Mid Term' },
+                    { id: 'T-3', name: 'Final Term' }
+                  ];
+
+                  const classOptions = academicClasses && academicClasses.length > 0 ? academicClasses : [
+                    { id: 'C-1', name: 'Class 9' },
+                    { id: 'C-2', name: 'Class 8' },
+                    { id: 'C-3', name: 'Class 7' },
+                    { id: 'C-4', name: 'Class 6' }
+                  ];
+
+                  const sectionOptions = [
+                    { id: 'S-A', name: 'Section A' },
+                    { id: 'S-B', name: 'Section B' },
+                    { id: 'S-C', name: 'Section C' }
+                  ];
+
+                  // Filter routines matching the criteria
+                  const matchedRoutines = examRoutinesList.filter(r => {
+                    const termMatches = r.termId === routineFormTermId;
+                    
+                    // Normalize and compare class names
+                    const formClassClean = routineFormClass.toLowerCase().replace('class ', '').trim();
+                    const routineClassClean = r.className.toLowerCase().replace('class ', '').trim();
+                    const classMatches = routineClassClean.includes(formClassClean) || formClassClean.includes(routineClassClean);
+                    
+                    // Check section match
+                    const sectionMatches = r.section.toLowerCase().trim() === routineFormSection.toLowerCase().trim();
+                    
+                    return termMatches && classMatches && sectionMatches;
+                  });
+
+                  // Handle adding / saving a routine item
+                  const handleSaveRoutineItem = (e: React.FormEvent) => {
+                    e.preventDefault();
+                    if (!routineNewDate || !routineNewSubject.trim()) {
+                      alert(lang === 'bn' ? 'অনুগ্রহ করে তারিখ ও বিষয়ের নাম প্রদান করুন!' : 'Please specify a date and subject name!');
+                      return;
+                    }
+
+                    if (editingRoutineId) {
+                      // Update existing
+                      setExamRoutinesList(prev => prev.map(r => r.id === editingRoutineId ? {
+                        ...r,
+                        date: routineNewDate,
+                        day: routineNewDay,
+                        subjectCode: routineNewCode || 'N/A',
+                        subjectName: routineNewSubject,
+                        time: routineNewTime,
+                        room: routineNewRoom
+                      } : r));
+                      addAuditLog(`Updated routine exam for ${routineNewSubject}`);
+                      setAdminSuccessMsg(lang === 'bn' ? 'পরীক্ষার রুটিন আইটেম সফলভাবে সংশোধন করা হয়েছে!' : 'Exam routine item updated successfully!');
+                    } else {
+                      // Create new
+                      const newId = `R-${Date.now()}`;
+                      const newItem = {
+                        id: newId,
+                        termId: routineFormTermId,
+                        className: routineFormClass,
+                        section: routineFormSection,
+                        date: routineNewDate,
+                        day: routineNewDay,
+                        subjectCode: routineNewCode || 'N/A',
+                        subjectName: routineNewSubject,
+                        time: routineNewTime,
+                        room: routineNewRoom
+                      };
+                      setExamRoutinesList(prev => [...prev, newItem]);
+                      addAuditLog(`Added routine exam "${routineNewSubject}" to ${routineFormClass}`);
+                      setAdminSuccessMsg(lang === 'bn' ? 'পরীক্ষার রুটিনে নতুন বিষয় সফলভাবে যুক্ত হয়েছে!' : 'New exam subject successfully added to routine!');
+                    }
+
+                    // Reset sub-form
+                    setRoutineNewDate('');
+                    setRoutineNewDay('Sunday');
+                    setRoutineNewCode('');
+                    setRoutineNewSubject('');
+                    setRoutineNewTime('10:00 AM - 01:00 PM');
+                    setRoutineNewRoom('Room 101');
+                    setEditingRoutineId(null);
+                    setIsAddingRoutineRow(false);
+
+                    setTimeout(() => {
+                      setAdminSuccessMsg('');
+                    }, 4000);
+                  };
+
+                  const handleEditRoutineItem = (r: typeof examRoutinesList[0]) => {
+                    setEditingRoutineId(r.id);
+                    setRoutineNewDate(r.date);
+                    setRoutineNewDay(r.day);
+                    setRoutineNewCode(r.subjectCode);
+                    setRoutineNewSubject(r.subjectName);
+                    setRoutineNewTime(r.time);
+                    setRoutineNewRoom(r.room);
+                    setIsAddingRoutineRow(true);
+                  };
+
+                  const handleDeleteRoutineItem = (id: string, subject: string) => {
+                    if (confirm(lang === 'bn' ? `আপনি কি নিশ্চিতভাবে "${subject}" পরীক্ষার রুটিনটি মুছে ফেলতে চান?` : `Are you sure you want to delete the exam schedule for "${subject}"?`)) {
+                      setExamRoutinesList(prev => prev.filter(r => r.id !== id));
+                      addAuditLog(`Deleted routine exam for ${subject}`);
+                      setAdminSuccessMsg(lang === 'bn' ? 'পরীক্ষার রুটিন মুছে ফেলা হয়েছে!' : 'Exam routine schedule deleted!');
+                      
+                      if (editingRoutineId === id) {
+                        setEditingRoutineId(null);
+                        setIsAddingRoutineRow(false);
+                      }
+
+                      setTimeout(() => {
+                        setAdminSuccessMsg('');
+                      }, 4000);
+                    }
+                  };
+
+                  // HTML Notice Print Handler
+                  const handlePrintRoutine = () => {
+                    const printWindow = window.open('', '_blank');
+                    if (!printWindow) return;
+                    
+                    const termDetail = termOptions.find(t => t.id === routineFormTermId);
+                    const termName = termDetail ? (lang === 'bn' ? (termDetail.name === 'First Term' ? 'প্রথম সাময়িক পরীক্ষা' : termDetail.name === 'Mid Term' ? 'অর্ধ-বার্ষিক পরীক্ষা' : 'বার্ষিক পরীক্ষা') : termDetail.name) : routineFormTermId;
+                    
+                    const rowsHtml = matchedRoutines.map((r, i) => `
+                      <tr>
+                        <td style="border: 1px solid #cbd5e1; padding: 12px 10px; text-align: center; font-family: monospace; font-weight: bold; color: #475569;">${String(i+1).padStart(2, '0')}</td>
+                        <td style="border: 1px solid #cbd5e1; padding: 12px 15px; font-weight: bold; color: #0f172a;">${r.date}<br><span style="font-size: 11px; color: #64748b; font-weight: normal;">${r.day}</span></td>
+                        <td style="border: 1px solid #cbd5e1; padding: 12px 15px;">
+                          <span style="display: block; font-weight: 800; color: #025644; font-size: 14px;">${r.subjectName}</span>
+                          <span style="font-size: 11px; color: #64748b; font-weight: bold; font-family: monospace; background-color: #f1f5f9; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 4px;">Code: ${r.subjectCode}</span>
+                        </td>
+                        <td style="border: 1px solid #cbd5e1; padding: 12px 15px; text-align: center; font-weight: 700; color: #1e293b;">${r.time}</td>
+                        <td style="border: 1px solid #cbd5e1; padding: 12px 15px; text-align: center; font-weight: 800; color: #025644; background-color: #f0fdf4;">${r.room}</td>
+                      </tr>
+                    `).join('');
+
+                    printWindow.document.write(`
+                      <html>
+                        <head>
+                          <title>Official Timetable - ${routineFormClass}</title>
+                          <style>
+                            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+                            body { font-family: 'Inter', sans-serif; padding: 40px; color: #1e293b; background-color: #ffffff; line-height: 1.5; }
+                            .outer-container { border: 2px solid #025644; padding: 4px; border-radius: 16px; max-width: 850px; margin: 0 auto; }
+                            .border-container { border: 4px double #025644; padding: 35px; border-radius: 12px; }
+                            .header { text-align: center; border-bottom: 3px double #cbd5e1; padding-bottom: 24px; margin-bottom: 25px; position: relative; }
+                            .school-logo-placeholder { font-size: 32px; margin-bottom: 8px; display: block; }
+                            .school-title { font-size: 26px; font-weight: 900; color: #025644; margin: 0; text-transform: uppercase; letter-spacing: 0.5px; }
+                            .school-subtitle { font-size: 12px; color: #475569; margin: 6px 0 0 0; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+                            .notice-title { display: inline-block; background-color: #025644; color: white; padding: 8px 24px; font-weight: 900; font-size: 13px; border-radius: 9999px; margin-top: 18px; text-transform: uppercase; letter-spacing: 1.5px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); }
+                            .meta-grid { display: grid; grid-template-cols: 1.2fr 1fr; gap: 20px; margin-bottom: 30px; font-size: 13px; font-weight: bold; background-color: #f8fafc; padding: 18px 22px; border-radius: 12px; border: 1px solid #e2e8f0; }
+                            .meta-item { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dashed #e2e8f0; }
+                            .meta-item:last-child { border-bottom: none; }
+                            .meta-label { color: #64748b; font-weight: 600; }
+                            .meta-value { color: #0f172a; font-weight: 800; }
+                            table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+                            th { background-color: #f8fafc; border: 1px solid #cbd5e1; padding: 14px 10px; font-weight: 900; color: #334155; text-transform: uppercase; font-size: 11px; letter-spacing: 0.75px; text-align: center; }
+                            .footer { margin-top: 70px; display: flex; justify-content: space-between; align-items: flex-end; font-size: 12px; }
+                            .sig-line { border-top: 2px solid #025644; width: 220px; text-align: center; padding-top: 8px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px; }
+                            @media print {
+                              body { padding: 0; background: white; }
+                              .outer-container { border: none; max-width: 100%; }
+                              .border-container { border: 4px double #025644; padding: 20px; }
+                            }
+                          </style>
+                        </head>
+                        <body>
+                          <div class="outer-container">
+                            <div class="border-container">
+                              <div class="header">
+                                <span class="school-logo-placeholder">🏫</span>
+                                <h1 class="school-title">${schoolSettings?.schoolNameEn || 'STUDENTS CARE MODEL SCHOOL'}</h1>
+                                <p class="school-subtitle">${schoolSettings?.addressEn || 'Charlakshya, Karnaphuli, Chittagong'}</p>
+                                <div class="notice-title">EXAMINATION TIMETABLE</div>
+                              </div>
+                              <div class="meta-grid">
+                                <div>
+                                  <div class="meta-item"><span class="meta-label">Exam Term:</span><span class="meta-value">${termName}</span></div>
+                                  <div class="meta-item" style="margin-top: 4px;"><span class="meta-label">Academic Session:</span><span class="meta-value">2026</span></div>
+                                </div>
+                                <div>
+                                  <div class="meta-item"><span class="meta-label">Class & Section:</span><span class="meta-value">${routineFormClass} (${routineFormSection})</span></div>
+                                  <div class="meta-item" style="margin-top: 4px;"><span class="meta-label">Published On:</span><span class="meta-value">July 16, 2026</span></div>
+                                </div>
+                              </div>
+                              <table>
+                                <thead>
+                                  <tr>
+                                    <th style="width: 50px;">SL</th>
+                                    <th style="text-align: left; width: 140px;">Date & Day</th>
+                                    <th style="text-align: left;">Subject Name & Course Code</th>
+                                    <th style="width: 180px;">Exam Timings</th>
+                                    <th style="width: 110px;">Room / Hall No</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  ${rowsHtml || `<tr><td colspan="5" style="padding: 40px; text-align: center; color: #64748b; font-weight: bold; font-size: 14px; background-color: #fafafa;">No examinations scheduled for this class and division.</td></tr>`}
+                                </tbody>
+                              </table>
+                              <div class="footer">
+                                <div>
+                                  <p style="color: #64748b; margin: 0; font-size: 11px; font-weight: bold;">Ref No: SCMS/ER-NOTICE-2026/104</p>
+                                  <p style="color: #cbd5e1; margin: 4px 0 0 0; font-size: 9px; font-weight: bold;">System Generated Official Notice Document</p>
+                                </div>
+                                <div class="sig-line">
+                                  Controller of Exams
+                                  <div style="font-size: 10px; color: #64748b; font-weight: bold; margin-top: 4px; text-transform: none; letter-spacing: 0;">Students Care Model School</div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <script>
+                            window.onload = function() {
+                              window.print();
+                            }
+                          </script>
+                        </body>
+                      </html>
+                    `);
+                    printWindow.document.close();
+                  };
+
+                  // Official CSV Schedule download handler
+                  const handleDownloadCSV = () => {
+                    const headers = ['SL', 'Date & Day', 'Subject Name', 'Subject Code', 'Exam Time', 'Room No'];
+                    const rows = matchedRoutines.map((r, i) => [
+                      String(i + 1),
+                      `"${r.date} (${r.day})"`,
+                      `"${r.subjectName}"`,
+                      `"${r.subjectCode}"`,
+                      `"${r.time}"`,
+                      `"${r.room}"`
+                    ]);
+                    
+                    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" 
+                      + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+                    const encodedUri = encodeURI(csvContent);
+                    const link = document.createElement("a");
+                    link.setAttribute("href", encodedUri);
+                    link.setAttribute("download", `Exam_Routine_${routineFormClass}_${routineFormSection}.csv`);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                  };
+
+                  return (
+                    <div className="space-y-8 text-left">
+                      
+                      {/* Select Criteria Card */}
+                      <div className="bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs space-y-5 transition-all">
+                        <div className="flex items-center gap-3 border-b border-gray-100 pb-4">
+                          <div className="p-2 bg-emerald-50 text-[#025644] rounded-xl">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <h3 className="font-extrabold text-gray-950 text-base">
+                              {lang === 'bn' ? 'ক্রাইটেরিয়া নির্বাচন করুন (Select Criteria)' : 'Select Criteria'}
+                            </h3>
+                            <p className="text-xs text-gray-400 font-bold">
+                              {lang === 'bn' ? 'পরীক্ষার রুটিন দেখতে পরীক্ষার টার্ম, ক্লাস এবং শাখা ফিল্টার করুন' : 'Filter examination routines by term, class level, and division'}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {/* 1. Exam Term Dropdown */}
+                          <div className="space-y-1.5">
+                            <label className="block text-[11px] font-black text-gray-500 uppercase tracking-wider">
+                              {lang === 'bn' ? 'পরীক্ষার টার্ম (Exam Term)' : 'Exam Term'}
+                            </label>
+                            <select 
+                              value={routineFormTermId}
+                              onChange={(e) => {
+                                setRoutineFormTermId(e.target.value);
+                                setIsRoutineSearched(false);
+                              }}
+                              className="w-full px-3.5 py-3 bg-gray-50 border border-gray-200 focus:bg-white text-gray-800 rounded-xl font-bold text-xs outline-none focus:border-[#025644] transition-all cursor-pointer"
+                            >
+                              {termOptions.map(t => (
+                                <option key={t.id} value={t.id}>
+                                  {lang === 'bn' 
+                                    ? (t.name === 'First Term' ? 'প্রথম সাময়িক পরীক্ষা' : t.name === 'Mid Term' ? 'অর্ধ-বার্ষিক পরীক্ষা' : 'বার্ষিক পরীক্ষা') 
+                                    : t.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          {/* 2. Class Dropdown */}
+                          <div className="space-y-1.5">
+                            <label className="block text-[11px] font-black text-gray-500 uppercase tracking-wider">
+                              {lang === 'bn' ? 'শ্রেণী (Class)' : 'Class'}
+                            </label>
+                            <select 
+                              value={routineFormClass}
+                              onChange={(e) => {
+                                setRoutineFormClass(e.target.value);
+                                setIsRoutineSearched(false);
+                              }}
+                              className="w-full px-3.5 py-3 bg-gray-50 border border-gray-200 focus:bg-white text-gray-800 rounded-xl font-bold text-xs outline-none focus:border-[#025644] transition-all cursor-pointer"
+                            >
+                              {classOptions.map(c => (
+                                <option key={c.id} value={c.name.includes('Class') ? c.name : `Class ${c.name}`}>
+                                  {c.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          {/* 3. Section Dropdown */}
+                          <div className="space-y-1.5">
+                            <label className="block text-[11px] font-black text-gray-500 uppercase tracking-wider">
+                              {lang === 'bn' ? 'শাখা (Section)' : 'Section'}
+                            </label>
+                            <select 
+                              value={routineFormSection}
+                              onChange={(e) => {
+                                setRoutineFormSection(e.target.value);
+                                setIsRoutineSearched(false);
+                              }}
+                              className="w-full px-3.5 py-3 bg-gray-50 border border-gray-200 focus:bg-white text-gray-800 rounded-xl font-bold text-xs outline-none focus:border-[#025644] transition-all cursor-pointer"
+                            >
+                              {sectionOptions.map(s => (
+                                <option key={s.id} value={s.name}>
+                                  {s.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* Button Action */}
+                        <div className="flex justify-start pt-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsRoutineSearched(true);
+                              addAuditLog(`Viewed exam routine for ${routineFormClass} (${routineFormSection})`);
+                            }}
+                            className="px-6 py-3 bg-[#025644] hover:bg-[#013f31] text-white font-extrabold rounded-xl shadow-sm text-xs transition-all duration-200 flex items-center gap-2 hover:translate-y-[-1px] cursor-pointer animate-fade-in"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            {lang === 'bn' ? 'রুটিন দেখুন (View Routine)' : 'View Routine'}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Display Routine notice-board-container once viewed */}
+                      {isRoutineSearched && (
+                        <div className="space-y-6">
+                          
+                          {/* Notice Board Styled Panel */}
+                          <div className="bg-white border-2 border-[#025644] rounded-2xl p-1 shadow-xs overflow-hidden">
+                            <div className="border-[3px] border-double border-[#025644] rounded-xl p-6 space-y-6 bg-white">
+                              
+                              {/* Table Upper Header Control Buttons (Print / Download) */}
+                              <div className="flex flex-wrap justify-between items-center gap-4 pb-4 border-b border-gray-100 no-print">
+                                <div className="space-y-0.5">
+                                  <span className="px-2.5 py-0.5 bg-[#025644]/10 text-[#025644] font-black text-[10px] rounded uppercase tracking-wider">
+                                    {lang === 'bn' ? 'পরীক্ষার সময়সূচী নোটিশ' : 'OFFICIAL TIMETABLE REGISTRY'}
+                                  </span>
+                                  <h4 className="font-extrabold text-gray-950 text-sm mt-1">
+                                    {routineFormClass} — {routineFormSection} ({termOptions.find(t => t.id === routineFormTermId)?.name})
+                                  </h4>
+                                </div>
+
+                                <div className="flex items-center gap-2.5">
+                                  {/* Print Routine */}
+                                  <button
+                                    onClick={handlePrintRoutine}
+                                    className="px-4 py-2 bg-[#025644] hover:bg-[#013f31] text-white font-extrabold text-xs rounded-xl transition-all flex items-center gap-1.5 shadow-3xs cursor-pointer hover:translate-y-[-0.5px]"
+                                  >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                    </svg>
+                                    {lang === 'bn' ? 'রুটিন প্রিন্ট (Print Routine)' : 'Print Routine'}
+                                  </button>
+
+                                  {/* Download PDF / CSV */}
+                                  <button
+                                    onClick={handleDownloadCSV}
+                                    className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-extrabold text-xs rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
+                                  >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                    </svg>
+                                    {lang === 'bn' ? 'ডাউনলোড করুন (Download PDF/CSV)' : 'Download PDF/CSV'}
+                                  </button>
+
+                                  {/* Add routine exam row trigger */}
+                                  <button
+                                    onClick={() => {
+                                      setEditingRoutineId(null);
+                                      setRoutineNewDate('');
+                                      setRoutineNewCode('');
+                                      setRoutineNewSubject('');
+                                      setRoutineNewTime('10:00 AM - 01:00 PM');
+                                      setRoutineNewRoom('Room 101');
+                                      setIsAddingRoutineRow(!isAddingRoutineRow);
+                                    }}
+                                    className={`px-3.5 py-2 ${isAddingRoutineRow ? 'bg-amber-50 text-amber-800 hover:bg-amber-100' : 'bg-emerald-50 text-[#025644] hover:bg-emerald-100'} font-bold text-xs rounded-xl transition-all flex items-center gap-1 cursor-pointer`}
+                                  >
+                                    {isAddingRoutineRow ? (
+                                      <span>{lang === 'bn' ? 'ফর্ম বন্ধ করুন' : 'Close Form'}</span>
+                                    ) : (
+                                      <>
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
+                                        </svg>
+                                        <span>{lang === 'bn' ? 'পরীক্ষা যুক্ত করুন' : 'Add Subject'}</span>
+                                      </>
+                                    )}
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Interactive Form for adding / editing routine entries */}
+                              {isAddingRoutineRow && (
+                                <div className="p-5 bg-slate-50 border border-slate-200 rounded-xl space-y-4 no-print transition-all">
+                                  <h5 className="font-extrabold text-xs text-gray-900 flex items-center gap-1.5 uppercase tracking-wider text-slate-600">
+                                    <svg className="w-4 h-4 text-[#025644]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                    {editingRoutineId 
+                                      ? (lang === 'bn' ? 'পরীক্ষার রুটিন সংশোধন করুন' : 'Edit Exam Schedule Entry') 
+                                      : (lang === 'bn' ? 'রুটিনে নতুন বিষয় যোগ করুন' : 'Add New Exam Schedule Entry')}
+                                  </h5>
+
+                                  <form onSubmit={handleSaveRoutineItem} className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3 text-[11px]">
+                                    {/* Date */}
+                                    <div className="space-y-1">
+                                      <label className="block font-bold text-gray-500 uppercase">{lang === 'bn' ? 'তারিখ *' : 'Date *'}</label>
+                                      <input 
+                                        type="date" 
+                                        required 
+                                        value={routineNewDate} 
+                                        onChange={e => setRoutineNewDate(e.target.value)}
+                                        className="w-full p-2.5 bg-white border border-gray-200 rounded-lg outline-none focus:border-[#025644] font-bold text-gray-800" 
+                                      />
+                                    </div>
+
+                                    {/* Day of the week */}
+                                    <div className="space-y-1">
+                                      <label className="block font-bold text-gray-500 uppercase">{lang === 'bn' ? 'বার' : 'Day'}</label>
+                                      <select 
+                                        value={routineNewDay} 
+                                        onChange={e => setRoutineNewDay(e.target.value)}
+                                        className="w-full p-2.5 bg-white border border-gray-200 rounded-lg outline-none focus:border-[#025644] font-bold text-gray-800 cursor-pointer"
+                                      >
+                                        {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map(day => (
+                                          <option key={day} value={day}>{day}</option>
+                                        ))}
+                                      </select>
+                                    </div>
+
+                                    {/* Subject Name */}
+                                    <div className="space-y-1 col-span-1 md:col-span-2 lg:col-span-1">
+                                      <label className="block font-bold text-gray-500 uppercase">{lang === 'bn' ? 'বিষয়ের নাম *' : 'Subject *'}</label>
+                                      <input 
+                                        type="text" 
+                                        required 
+                                        value={routineNewSubject} 
+                                        onChange={e => setRoutineNewSubject(e.target.value)}
+                                        placeholder={lang === 'bn' ? 'যেমন: Chemistry' : 'e.g., Chemistry'}
+                                        className="w-full p-2.5 bg-white border border-gray-200 rounded-lg outline-none focus:border-[#025644] font-bold text-gray-800" 
+                                      />
+                                    </div>
+
+                                    {/* Subject Code */}
+                                    <div className="space-y-1">
+                                      <label className="block font-bold text-gray-500 uppercase">{lang === 'bn' ? 'কোড' : 'Code'}</label>
+                                      <input 
+                                        type="text" 
+                                        value={routineNewCode} 
+                                        onChange={e => setRoutineNewCode(e.target.value)}
+                                        placeholder="CHE-101"
+                                        className="w-full p-2.5 bg-white border border-gray-200 rounded-lg outline-none focus:border-[#025644] font-bold text-gray-800" 
+                                      />
+                                    </div>
+
+                                    {/* Exam Timings */}
+                                    <div className="space-y-1">
+                                      <label className="block font-bold text-gray-500 uppercase">{lang === 'bn' ? 'সময়' : 'Exam Timing'}</label>
+                                      <input 
+                                        type="text" 
+                                        value={routineNewTime} 
+                                        onChange={e => setRoutineNewTime(e.target.value)}
+                                        placeholder="10:00 AM - 01:00 PM"
+                                        className="w-full p-2.5 bg-white border border-gray-200 rounded-lg outline-none focus:border-[#025644] font-bold text-gray-800" 
+                                      />
+                                    </div>
+
+                                    {/* Hall Room No */}
+                                    <div className="space-y-1">
+                                      <label className="block font-bold text-gray-500 uppercase">{lang === 'bn' ? 'রুম নাম্বার' : 'Room No'}</label>
+                                      <input 
+                                        type="text" 
+                                        value={routineNewRoom} 
+                                        onChange={e => setRoutineNewRoom(e.target.value)}
+                                        placeholder="Room 101"
+                                        className="w-full p-2.5 bg-white border border-gray-200 rounded-lg outline-none focus:border-[#025644] font-bold text-gray-800" 
+                                      />
+                                    </div>
+
+                                    {/* Submit Action */}
+                                    <div className="md:col-span-3 lg:col-span-6 flex justify-end gap-2 pt-2.5 border-t border-slate-100">
+                                      <button 
+                                        type="button" 
+                                        onClick={() => setIsAddingRoutineRow(false)}
+                                        className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold rounded-lg cursor-pointer"
+                                      >
+                                        {lang === 'bn' ? 'বাতিল' : 'Cancel'}
+                                      </button>
+                                      <button 
+                                        type="submit" 
+                                        className="px-5 py-2 bg-[#025644] hover:bg-[#013f31] text-white font-black rounded-lg cursor-pointer"
+                                      >
+                                        {editingRoutineId ? (lang === 'bn' ? 'হালনাগাদ করুন' : 'Update Item') : (lang === 'bn' ? 'সংরক্ষণ করুন' : 'Save Entry')}
+                                      </button>
+                                    </div>
+                                  </form>
+                                </div>
+                              )}
+
+                              {/* Official Notice Board Header */}
+                              <div className="text-center space-y-2 border-b-2 border-double border-slate-200 pb-5">
+                                <div className="text-3xl select-none">🏫</div>
+                                <h2 className="text-xl md:text-2xl font-black text-[#025644] tracking-tight uppercase">
+                                  {lang === 'bn' ? schoolSettings.schoolNameBn : schoolSettings.schoolNameEn}
+                                </h2>
+                                <p className="text-[11px] md:text-xs text-gray-500 font-bold uppercase tracking-wider">
+                                  {lang === 'bn' ? schoolSettings.addressBn : schoolSettings.addressEn}
+                                </p>
+                                <div className="inline-block px-5 py-1.5 bg-[#025644] text-white text-xs font-black rounded-full tracking-wider shadow-3xs uppercase">
+                                  {lang === 'bn' ? 'পরীক্ষার সময়সূচী ও রুটিন' : 'OFFICIAL EXAMINATION TIMETABLE'}
+                                </div>
+                              </div>
+
+                              {/* Notice board metadata */}
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-bold text-gray-600 bg-slate-50 border border-gray-150 p-4 rounded-xl">
+                                <div className="space-y-1.5">
+                                  <p className="flex justify-between border-b border-dashed border-gray-200 pb-1">
+                                    <span>{lang === 'bn' ? 'পরীক্ষার নাম' : 'Examination'}:</span>
+                                    <strong className="text-gray-900 font-black">
+                                      {termOptions.find(t => t.id === routineFormTermId)?.[lang === 'bn' ? 'name' : 'name'] || routineFormTermId}
+                                    </strong>
+                                  </p>
+                                  <p className="flex justify-between">
+                                    <span>{lang === 'bn' ? 'শিক্ষাবর্ষ' : 'Academic Year'}:</span>
+                                    <strong className="text-gray-900 font-black">2026</strong>
+                                  </p>
+                                </div>
+                                <div className="space-y-1.5">
+                                  <p className="flex justify-between border-b border-dashed border-gray-200 pb-1">
+                                    <span>{lang === 'bn' ? 'শ্রেণী ও শাখা' : 'Class & Section'}:</span>
+                                    <strong className="text-gray-900 font-black">{routineFormClass} ({routineFormSection})</strong>
+                                  </p>
+                                  <p className="flex justify-between">
+                                    <span>{lang === 'bn' ? 'প্রকাশের তারিখ' : 'Date of Publish'}:</span>
+                                    <strong className="text-gray-900 font-black">July 16, 2026</strong>
+                                  </p>
+                                </div>
+                              </div>
+
+                              {/* Routine Table */}
+                              {matchedRoutines.length > 0 ? (
+                                <div className="overflow-x-auto">
+                                  <table className="w-full text-xs text-left text-gray-700 whitespace-nowrap">
+                                    <thead className="bg-slate-50/80 border-y border-gray-200 uppercase text-[10px] font-black text-gray-500 tracking-wider text-center">
+                                      <tr>
+                                        <th className="py-4 px-3 text-center w-12">#</th>
+                                        <th className="py-4 px-4 text-left">{lang === 'bn' ? 'তারিখ ও বার' : 'Date & Day'}</th>
+                                        <th className="py-4 px-4 text-left">{lang === 'bn' ? 'বিষয় ও কোড' : 'Subject & Code'}</th>
+                                        <th className="py-4 px-3 w-44">{lang === 'bn' ? 'সময়' : 'Exam Timing'}</th>
+                                        <th className="py-4 px-4 w-32 text-center">{lang === 'bn' ? 'হল / রুম নম্বর' : 'Room / Hall No'}</th>
+                                        <th className="py-4 px-4 text-center w-20 no-print">{lang === 'bn' ? 'অ্যাকশন' : 'Action'}</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-150">
+                                      {matchedRoutines.map((routine, index) => (
+                                        <tr key={routine.id} className="hover:bg-slate-50/50 transition-colors">
+                                          {/* SL */}
+                                          <td className="py-4.5 px-3 text-center font-mono font-black text-gray-400">
+                                            {(index + 1).toString().padStart(2, '0')}
+                                          </td>
+
+                                          {/* Date & Day */}
+                                          <td className="py-4.5 px-4 text-left">
+                                            <div className="font-extrabold text-gray-900">{routine.date}</div>
+                                            <div className="text-[10px] text-gray-400 font-bold mt-0.5">{routine.day}</div>
+                                          </td>
+
+                                          {/* Subject & Code */}
+                                          <td className="py-4.5 px-4 text-left">
+                                            <div className="font-black text-[#025644] text-sm">{routine.subjectName}</div>
+                                            <div className="inline-block mt-1 px-1.5 py-0.5 bg-slate-100 text-gray-500 text-[9px] font-mono font-black rounded border border-gray-200">
+                                              {lang === 'bn' ? 'কোড' : 'Code'}: {routine.subjectCode}
+                                            </div>
+                                          </td>
+
+                                          {/* Time */}
+                                          <td className="py-4.5 px-3 text-center">
+                                            <span className="inline-block px-3 py-1 bg-slate-50 border border-gray-200 rounded-lg text-[11px] font-black font-mono text-slate-700">
+                                              {routine.time}
+                                            </span>
+                                          </td>
+
+                                          {/* Room */}
+                                          <td className="py-4.5 px-4 text-center">
+                                            <span className="inline-block px-3 py-1 bg-emerald-50 text-[#025644] border border-emerald-100 font-extrabold rounded-lg text-[11px]">
+                                              {routine.room}
+                                            </span>
+                                          </td>
+
+                                          {/* Actions */}
+                                          <td className="py-4.5 px-4 text-center no-print">
+                                            <div className="flex items-center justify-center gap-2">
+                                              <button
+                                                onClick={() => handleEditRoutineItem(routine)}
+                                                title={lang === 'bn' ? 'সম্পাদনা' : 'Edit'}
+                                                className="p-1.5 hover:bg-slate-100 text-slate-600 hover:text-slate-900 rounded-lg transition-all cursor-pointer"
+                                              >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                </svg>
+                                              </button>
+                                              <button
+                                                onClick={() => handleDeleteRoutineItem(routine.id, routine.subjectName)}
+                                                title={lang === 'bn' ? 'মুছে ফেলুন' : 'Delete'}
+                                                className="p-1.5 hover:bg-rose-50 text-rose-500 hover:text-rose-700 rounded-lg transition-all cursor-pointer"
+                                              >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                              </button>
+                                            </div>
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              ) : (
+                                <div className="p-12 text-center space-y-3 bg-slate-50/50 rounded-xl border border-dashed border-gray-200">
+                                  <div className="inline-flex p-4 bg-emerald-50 text-emerald-600 rounded-full">
+                                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                  </div>
+                                  <h4 className="text-sm font-extrabold text-gray-950">
+                                    {lang === 'bn' ? 'কোনো রুটিন পাওয়া যায়নি!' : 'No Routine Found!'}
+                                  </h4>
+                                  <p className="text-xs text-gray-400 max-w-sm mx-auto leading-relaxed">
+                                    {lang === 'bn' 
+                                      ? `${routineFormClass} (${routineFormSection}) এর জন্য এই টার্মে কোনো পরীক্ষা রুটিন নির্ধারিত নেই। অনুগ্রহ করে উপরের "বিষয় যুক্ত করুন" বাটন চেপে একটি যুক্ত করুন।`
+                                      : `There is currently no exam routine listed for ${routineFormClass} (${routineFormSection}) in this term. Please use the "Add Subject" button above to insert one.`}
+                                  </p>
+                                </div>
+                              )}
+
+                              {/* Stamp / Signature placeholder footer */}
+                              <div className="pt-8 border-t border-dashed border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 text-[11px] font-bold text-gray-400">
+                                <div>
+                                  <p>{lang === 'bn' ? 'স্মারক নং: এসসিএমএস/রুটিন-২০২৬/১০৪' : 'Ref No: SCMS/ROUTINE-2026/104'}</p>
+                                  <p className="mt-1">{lang === 'bn' ? 'স্টুডেন্টস কেয়ার মডেল স্কুল প্রশাসন' : 'Students Care Model School Administration'}</p>
+                                </div>
+                                <div className="text-center sm:text-right w-full sm:w-auto">
+                                  <div className="inline-block text-center border-t border-slate-300 pt-1.5 min-w-48 text-gray-700 font-extrabold">
+                                    {lang === 'bn' ? 'পরীক্ষা নিয়ন্ত্রক' : 'Controller of Examinations'}
+                                    <div className="text-[9px] text-gray-400 font-bold mt-0.5">{lang === 'bn' ? 'স্টুডেন্টস কেয়ার মডেল স্কুল' : 'Students Care Model School'}</div>
+                                  </div>
+                                </div>
+                              </div>
+
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                     </div>
-                    <div className="flex flex-col items-center justify-center py-12 border border-dashed border-gray-200 rounded-xl bg-slate-50 text-gray-400 space-y-3">
-                      <Calendar className="h-10 w-10 text-emerald-600 animate-bounce" />
-                      <p className="font-bold text-xs">{lang === 'bn' ? 'রুটিন তৈরি ও প্রিন্ট করতে দয়া করে পরীক্ষা টার্মের ওভারভিউ প্যানেলে প্রবেশ করুন।' : 'Please navigate to the Exam Term subtab and click "Overview Hub" to configure or print routines.'}</p>
-                      <button onClick={() => setExamSubTab('exam_term')} className="px-4 py-2 bg-[#025644] hover:bg-[#01352a] text-white text-[11px] font-black rounded-xl transition-all cursor-pointer shadow-3xs">
-                        {lang === 'bn' ? 'পরীক্ষা টার্ম তালিকা' : 'Go to Exam Terms'}
-                      </button>
-                    </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {examSubTab === 'exam_hall' && (() => {
                   const handleSaveHall = (e: React.FormEvent) => {
@@ -11319,28 +12114,458 @@ def approve_admission_application(request, pk):
                   );
                 })()}
 
-                {examSubTab === 'exam_distribution' && (
-                  <div className="bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs text-left space-y-4">
-                    <div>
-                      <h3 className="font-extrabold text-gray-900 text-lg">{lang === 'bn' ? 'নম্বর বণ্টন ও কাঠামো বিন্যাস' : 'Marks Weightage & Theory Distribution'}</h3>
-                      <p className="text-xs text-gray-400 font-bold">{lang === 'bn' ? 'লিখিত ও এমসিকিউ অংশের অনুপাত' : 'Establish ratios of written, objective, and laboratory parts in grades'}</p>
+                {examSubTab === 'exam_distribution' && (() => {
+                  const classOptions = academicClasses && academicClasses.length > 0 ? academicClasses : [
+                    { id: 'C-1', name: 'Class 9' },
+                    { id: 'C-2', name: 'Class 8' },
+                    { id: 'C-3', name: 'Class 7' },
+                    { id: 'C-4', name: 'Class 6' }
+                  ];
+
+                  const assessmentPresets = [
+                    'Final Result 2026',
+                    'Academic Session 2026',
+                    'Secondary Board Prep 2026',
+                    'Annual Evaluation 2026',
+                    'First Term Assessment 2026'
+                  ];
+
+                  // Calculate total percentage dynamically
+                  const totalPercent = distFormTerms.reduce((sum, item) => sum + (Number(item.percentage) || 0), 0);
+
+                  const handleSaveDistribution = (e: React.FormEvent) => {
+                    e.preventDefault();
+                    if (totalPercent !== 100) {
+                      alert(lang === 'bn' 
+                        ? `ভুল! পার্সেন্টেজের সর্বমোট যোগফল অবশ্যই ১০০% হতে হবে (বর্তমান: ${totalPercent}%)` 
+                        : `Error! The total percentage sum must be exactly 100% (Current: ${totalPercent}%)`
+                      );
+                      return;
+                    }
+
+                    if (editingDistId) {
+                      // Update existing
+                      setMarkDistributions(prev => prev.map(item => item.id === editingDistId ? {
+                        ...item,
+                        className: distFormClass,
+                        assessmentName: distFormAssessmentName,
+                        terms: [...distFormTerms]
+                      } : item));
+                      addAuditLog(`Updated mark distribution for ${distFormClass} - ${distFormAssessmentName}`);
+                      setAdminSuccessMsg(lang === 'bn' ? 'নম্বর বণ্টন নিয়ম সফলভাবে আপডেট করা হয়েছে!' : 'Mark distribution rules updated successfully!');
+                      setEditingDistId(null);
+                    } else {
+                      // Create new
+                      const newId = `D-${Date.now()}`;
+                      const newItem = {
+                        id: newId,
+                        className: distFormClass,
+                        assessmentName: distFormAssessmentName,
+                        terms: [...distFormTerms]
+                      };
+                      setMarkDistributions(prev => [...prev, newItem]);
+                      addAuditLog(`Created mark distribution for ${distFormClass} - ${distFormAssessmentName}`);
+                      setAdminSuccessMsg(lang === 'bn' ? 'নতুন নম্বর বণ্টন নিয়ম সফলভাবে সংরক্ষণ করা হয়েছে!' : 'New mark distribution rules saved successfully!');
+                    }
+
+                    // Reset Form to initial default state
+                    setDistFormClass('Class 9');
+                    setDistFormAssessmentName('Final Result 2026');
+                    setDistFormTerms([
+                      { name: 'Mid Term Exam', percentage: 30 },
+                      { name: 'Final Exam', percentage: 70 }
+                    ]);
+                    setNewCustomTermName('');
+
+                    setTimeout(() => {
+                      setAdminSuccessMsg('');
+                    }, 4000);
+                  };
+
+                  const handleEditDistribution = (item: typeof markDistributions[0]) => {
+                    setEditingDistId(item.id);
+                    setDistFormClass(item.className);
+                    setDistFormAssessmentName(item.assessmentName);
+                    setDistFormTerms(item.terms.map(t => ({ ...t })));
+                  };
+
+                  const handleDeleteDistribution = (id: string, className: string, assessmentName: string) => {
+                    if (confirm(lang === 'bn' 
+                      ? `আপনি কি নিশ্চিতভাবে ${className} এর "${assessmentName}" বণ্টন নিয়মটি মুছে ফেলতে চান?` 
+                      : `Are you sure you want to delete the distribution rules for ${className} - "${assessmentName}"?`
+                    )) {
+                      setMarkDistributions(prev => prev.filter(item => item.id !== id));
+                      addAuditLog(`Deleted mark distribution for ${className} - ${assessmentName}`);
+                      setAdminSuccessMsg(lang === 'bn' ? 'নম্বর বণ্টন নিয়ম মুছে ফেলা হয়েছে!' : 'Mark distribution rule deleted!');
+                      
+                      if (editingDistId === id) {
+                        setEditingDistId(null);
+                        setDistFormClass('Class 9');
+                        setDistFormAssessmentName('Final Result 2026');
+                        setDistFormTerms([
+                          { name: 'Mid Term Exam', percentage: 30 },
+                          { name: 'Final Exam', percentage: 70 }
+                        ]);
+                      }
+
+                      setTimeout(() => {
+                        setAdminSuccessMsg('');
+                      }, 4000);
+                    }
+                  };
+
+                  const handleAddTermInput = () => {
+                    if (!newCustomTermName.trim()) {
+                      alert(lang === 'bn' ? 'অনুগ্রহ করে পরীক্ষা টার্ম বা অপশনের নাম লিখুন!' : 'Please enter an exam term or option name!');
+                      return;
+                    }
+                    const exists = distFormTerms.some(t => t.name.toLowerCase() === newCustomTermName.trim().toLowerCase());
+                    if (exists) {
+                      alert(lang === 'bn' ? 'এই টার্মটি ইতিমধ্যে যুক্ত আছে!' : 'This term is already added!');
+                      return;
+                    }
+                    setDistFormTerms(prev => [...prev, { name: newCustomTermName.trim(), percentage: 0 }]);
+                    setNewCustomTermName('');
+                  };
+
+                  const handleRemoveTermInput = (index: number) => {
+                    setDistFormTerms(prev => prev.filter((_, idx) => idx !== index));
+                  };
+
+                  const handlePercentageChange = (index: number, val: number) => {
+                    setDistFormTerms(prev => prev.map((item, idx) => idx === index ? { ...item, percentage: val } : item));
+                  };
+
+                  return (
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 text-left animate-fade-in">
+                      
+                      {/* Left Side: Create Mark Distribution Form Card */}
+                      <div className="lg:col-span-5 bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs space-y-5 transition-all">
+                        <div className="flex items-center gap-3 border-b border-gray-100 pb-4">
+                          <div className="p-2.5 bg-emerald-50 text-[#025644] rounded-xl">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <h3 className="font-extrabold text-gray-950 text-base">
+                              {editingDistId 
+                                ? (lang === 'bn' ? 'নম্বর বণ্টন নিয়ম পরিবর্তন করুন' : 'Edit Mark Distribution') 
+                                : (lang === 'bn' ? 'নম্বর বণ্টন নিয়ম তৈরি করুন' : 'Create Mark Distribution')}
+                            </h3>
+                            <p className="text-xs text-gray-400 font-bold">
+                              {lang === 'bn' ? 'পরীক্ষা টার্ম ভিত্তিক চূড়ান্ত নম্বরের অনুপাত বিন্যাস করুন' : 'Configure term weightage ratio towards final scores'}
+                            </p>
+                          </div>
+                        </div>
+
+                        <form onSubmit={handleSaveDistribution} className="space-y-4">
+                          {/* Class Select Dropdown */}
+                          <div className="space-y-1.5">
+                            <label className="block text-[11px] font-black text-gray-500 uppercase tracking-wider">
+                              {lang === 'bn' ? 'শ্রেণী (Class)' : 'Class'}
+                            </label>
+                            <select
+                              value={distFormClass}
+                              onChange={(e) => setDistFormClass(e.target.value)}
+                              className="w-full px-3.5 py-3 bg-gray-50 border border-gray-200 focus:bg-white text-gray-800 rounded-xl font-bold text-xs outline-none focus:border-[#025644] transition-all cursor-pointer"
+                            >
+                              {classOptions.map(c => (
+                                <option key={c.id} value={c.name.includes('Class') ? c.name : `Class ${c.name}`}>
+                                  {c.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          {/* Final Assessment / Session Name */}
+                          <div className="space-y-1.5">
+                            <label className="block text-[11px] font-black text-gray-500 uppercase tracking-wider">
+                              {lang === 'bn' ? 'চূড়ান্ত মূল্যায়ন / শিক্ষাবর্ষের নাম' : 'Final Assessment / Session Name'}
+                            </label>
+                            <div className="relative">
+                              <select
+                                value={distFormAssessmentName}
+                                onChange={(e) => setDistFormAssessmentName(e.target.value)}
+                                className="w-full px-3.5 py-3 bg-gray-50 border border-gray-200 focus:bg-white text-gray-800 rounded-xl font-bold text-xs outline-none focus:border-[#025644] transition-all cursor-pointer"
+                              >
+                                {assessmentPresets.map((preset, idx) => (
+                                  <option key={idx} value={preset}>{preset}</option>
+                                ))}
+                                {!assessmentPresets.includes(distFormAssessmentName) && (
+                                  <option value={distFormAssessmentName}>{distFormAssessmentName}</option>
+                                )}
+                              </select>
+                            </div>
+                            {/* Manual entry fallback */}
+                            <input 
+                              type="text"
+                              value={distFormAssessmentName}
+                              onChange={(e) => setDistFormAssessmentName(e.target.value)}
+                              placeholder={lang === 'bn' ? 'অথবা কাস্টম মূল্যায়ন নাম লিখুন...' : 'Or type a custom assessment name...'}
+                              className="w-full mt-1.5 px-3.5 py-2.5 bg-gray-50 border border-gray-150 focus:bg-white text-gray-800 rounded-xl text-xs outline-none focus:border-[#025644] font-medium placeholder-gray-400"
+                            />
+                          </div>
+
+                          {/* Dynamic Term Percentages Section */}
+                          <div className="space-y-3.5 border-t border-dashed border-gray-150 pt-4">
+                            <div className="flex justify-between items-center">
+                              <span className="block text-[11px] font-black text-gray-500 uppercase tracking-wider">
+                                {lang === 'bn' ? 'পরীক্ষার টার্মসমূহ ও শতাংশ (%)' : 'Exam Term Weightages (%)'}
+                              </span>
+                              <span className="text-[10px] text-gray-400 font-bold">
+                                {lang === 'bn' ? 'সর্বমোট ১০০% হতে হবে' : 'Must add up to 100%'}
+                              </span>
+                            </div>
+
+                            {/* List of active term inputs */}
+                            <div className="space-y-2.5">
+                              {distFormTerms.map((term, index) => (
+                                <div key={index} className="flex items-center gap-2 bg-slate-50 border border-slate-150 p-2.5 rounded-xl">
+                                  <span className="text-xs font-bold text-gray-800 flex-1 truncate">
+                                    {term.name}
+                                  </span>
+                                  <div className="flex items-center gap-1.5">
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      max="100"
+                                      required
+                                      value={term.percentage}
+                                      onChange={(e) => handlePercentageChange(index, parseInt(e.target.value) || 0)}
+                                      className="w-20 px-2 py-1.5 bg-white border border-gray-200 text-gray-800 rounded-lg text-center font-bold text-xs focus:border-[#025644] outline-none"
+                                    />
+                                    <span className="text-xs font-black text-gray-400">%</span>
+                                    
+                                    {/* Remove option button if more than 1 term exists */}
+                                    {distFormTerms.length > 1 && (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleRemoveTermInput(index)}
+                                        title={lang === 'bn' ? 'মুছে ফেলুন' : 'Remove Option'}
+                                        className="p-1 text-gray-400 hover:text-rose-500 hover:bg-rose-50 rounded-md transition-colors cursor-pointer"
+                                      >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Add custom term sub-form inside card */}
+                            <div className="p-3 bg-slate-100/60 rounded-xl space-y-2 border border-slate-200/55">
+                              <span className="block text-[10px] font-bold text-gray-500 uppercase">
+                                {lang === 'bn' ? 'নতুন কাস্টম পরীক্ষা টার্ম যোগ করুন:' : 'Add Custom Exam Term / Component:'}
+                              </span>
+                              <div className="flex gap-2">
+                                <input
+                                  type="text"
+                                  value={newCustomTermName}
+                                  onChange={(e) => setNewCustomTermName(e.target.value)}
+                                  placeholder={lang === 'bn' ? 'যেমন: Class Test, Assignment' : 'e.g., Class Test, Attendance'}
+                                  className="flex-1 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs outline-none font-semibold focus:border-[#025644] placeholder-gray-400"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={handleAddTermInput}
+                                  className="px-3.5 py-1.5 bg-[#025644] hover:bg-[#013f31] text-white text-xs font-black rounded-lg transition-all flex items-center gap-1 cursor-pointer"
+                                >
+                                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
+                                  </svg>
+                                  {lang === 'bn' ? 'যুক্ত করুন' : 'Add'}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Total Percentage Read-Only Output Field */}
+                          <div className="space-y-1.5 pt-1">
+                            <label className="block text-[11px] font-black text-gray-500 uppercase tracking-wider">
+                              {lang === 'bn' ? 'সর্বমোট পার্সেন্টেজ (Total Percentage)' : 'Total Percentage'}
+                            </label>
+                            <div className="flex items-center justify-between px-3.5 py-3 bg-slate-50 border border-gray-200 rounded-xl">
+                              <span className="text-xs font-black text-gray-500 uppercase">
+                                {lang === 'bn' ? 'হিসাবকৃত যোগফল' : 'Calculated Sum'}:
+                              </span>
+                              
+                              <div className="flex items-center gap-2">
+                                <span className={`text-base font-black ${totalPercent === 100 ? 'text-emerald-700' : 'text-amber-600 animate-pulse'}`}>
+                                  {totalPercent}%
+                                </span>
+                                
+                                {totalPercent === 100 ? (
+                                  <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[9px] font-black uppercase rounded">
+                                    {lang === 'bn' ? 'সঠিক (100%)' : 'Valid (100%)'}
+                                  </span>
+                                ) : (
+                                  <span className="px-2 py-0.5 bg-amber-100 text-amber-800 text-[9px] font-black uppercase rounded">
+                                    {lang === 'bn' ? '১০০% প্রয়োজন' : 'Needs 100%'}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Submit Actions */}
+                          <div className="flex items-center gap-2.5 pt-2">
+                            <button
+                              type="submit"
+                              disabled={totalPercent !== 100}
+                              className={`flex-1 py-3 text-white font-black text-xs rounded-xl shadow-xs transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer ${
+                                totalPercent === 100 
+                                  ? 'bg-[#025644] hover:bg-[#01352a] hover:translate-y-[-0.5px]' 
+                                  : 'bg-gray-300 cursor-not-allowed opacity-75'
+                              }`}
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                              </svg>
+                              {editingDistId 
+                                ? (lang === 'bn' ? 'বণ্টন নিয়ম আপডেট করুন' : 'Update Distribution') 
+                                : (lang === 'bn' ? 'বণ্টন নিয়ম সংরক্ষণ করুন' : 'Save Distribution')}
+                            </button>
+
+                            {/* Reset Form button */}
+                            {(editingDistId || distFormClass !== 'Class 9' || distFormAssessmentName !== 'Final Result 2026' || distFormTerms.length !== 2) && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingDistId(null);
+                                  setDistFormClass('Class 9');
+                                  setDistFormAssessmentName('Final Result 2026');
+                                  setDistFormTerms([
+                                    { name: 'Mid Term Exam', percentage: 30 },
+                                    { name: 'Final Exam', percentage: 70 }
+                                  ]);
+                                  setNewCustomTermName('');
+                                }}
+                                className="px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900 text-xs font-bold rounded-xl transition-all cursor-pointer"
+                              >
+                                {lang === 'bn' ? 'রিসেট' : 'Reset'}
+                              </button>
+                            )}
+                          </div>
+                        </form>
+                      </div>
+
+                      {/* Right Side: Distribution Rules List Table Card */}
+                      <div className="lg:col-span-7 bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs space-y-4">
+                        <div className="flex justify-between items-center border-b border-gray-100 pb-4">
+                          <div>
+                            <h3 className="font-extrabold text-gray-950 text-base">
+                              {lang === 'bn' ? 'নম্বর বণ্টন রুলস তালিকা' : 'Distribution List'}
+                            </h3>
+                            <p className="text-xs text-gray-400 font-bold">
+                              {lang === 'bn' ? 'শ্রেণীভিত্তিক চূড়ান্ত মূল্যায়নে পরীক্ষার শতকরা অনুপাত' : 'Configured mark weigh percentages across different levels'}
+                            </p>
+                          </div>
+                          <span className="px-3 py-1 bg-emerald-50 text-[#025644] text-[11px] font-black rounded-lg">
+                            {lang === 'bn' ? `মোট: ${markDistributions.length}টি` : `Total: ${markDistributions.length}`}
+                          </span>
+                        </div>
+
+                        {markDistributions.length > 0 ? (
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-xs text-left text-gray-700 whitespace-nowrap">
+                              <thead className="bg-slate-50 border-y border-gray-150 uppercase text-[10px] font-black text-gray-500 tracking-wider">
+                                <tr>
+                                  <th className="py-3 px-3 text-center w-12">SL</th>
+                                  <th className="py-3 px-4">{lang === 'bn' ? 'শ্রেণী (Class)' : 'Class'}</th>
+                                  <th className="py-3 px-4">{lang === 'bn' ? 'মূল্যায়ন নাম (Assessment)' : 'Assessment Name'}</th>
+                                  <th className="py-3 px-4">{lang === 'bn' ? 'বণ্টন বিবরণী (Distribution Details)' : 'Distribution Details'}</th>
+                                  <th className="py-3 px-4 text-center w-24">{lang === 'bn' ? 'অ্যাকশন (Action)' : 'Action'}</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-gray-150">
+                                {markDistributions.map((item, index) => (
+                                  <tr key={item.id} className="hover:bg-slate-50/40 transition-colors">
+                                    {/* SL */}
+                                    <td className="py-4 px-3 text-center font-mono font-black text-gray-400">
+                                      {(index + 1).toString().padStart(2, '0')}
+                                    </td>
+
+                                    {/* Class */}
+                                    <td className="py-4 px-4 font-extrabold text-gray-950">
+                                      {item.className}
+                                    </td>
+
+                                    {/* Assessment Name */}
+                                    <td className="py-4 px-4 font-bold text-gray-600">
+                                      <div className="max-w-[160px] truncate" title={item.assessmentName}>
+                                        {item.assessmentName}
+                                      </div>
+                                    </td>
+
+                                    {/* Distribution Details Chips */}
+                                    <td className="py-4 px-4">
+                                      <div className="flex flex-wrap gap-1.5 max-w-[280px]">
+                                        {item.terms.map((term, tIdx) => (
+                                          <span 
+                                            key={tIdx} 
+                                            className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-emerald-50 text-[#025644] border border-emerald-100/70 rounded-full text-[10px] font-bold"
+                                          >
+                                            <span className="font-extrabold">{term.name.replace(' Exam', '').replace(' Assessment', '')}:</span>
+                                            <span className="font-black text-emerald-800">{term.percentage}%</span>
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </td>
+
+                                    {/* Action Buttons */}
+                                    <td className="py-4 px-4 text-center">
+                                      <div className="flex items-center justify-center gap-2">
+                                        <button
+                                          type="button"
+                                          onClick={() => handleEditDistribution(item)}
+                                          title={lang === 'bn' ? 'সম্পাদনা করুন' : 'Edit Rule'}
+                                          className="p-1.5 hover:bg-emerald-50 text-[#025644] hover:text-[#01352a] rounded-lg transition-colors cursor-pointer"
+                                        >
+                                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                          </svg>
+                                        </button>
+
+                                        <button
+                                          type="button"
+                                          onClick={() => handleDeleteDistribution(item.id, item.className, item.assessmentName)}
+                                          title={lang === 'bn' ? 'মুছে ফেলুন' : 'Delete Rule'}
+                                          className="p-1.5 hover:bg-rose-50 text-rose-500 hover:text-rose-700 rounded-lg transition-colors cursor-pointer"
+                                        >
+                                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                          </svg>
+                                        </button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        ) : (
+                          <div className="py-16 text-center space-y-3">
+                            <div className="inline-flex p-4 bg-gray-50 text-gray-400 rounded-full border border-dashed border-gray-200">
+                              <svg className="w-8 h-8 text-[#025644]/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                              </svg>
+                            </div>
+                            <h4 className="text-sm font-extrabold text-gray-950">
+                              {lang === 'bn' ? 'কোনো নম্বর বণ্টন নিয়ম নেই!' : 'No Distribution Rules Configured!'}
+                            </h4>
+                            <p className="text-xs text-gray-400 max-w-sm mx-auto leading-relaxed">
+                              {lang === 'bn' ? 'বাম পাশের ফর্মটি ব্যবহার করে আপনার প্রথম মার্ক ডিস্ট্রিবিউশন রুলস সেভ করুন।' : 'Please use the form on the left to set up and save your very first mark distribution weights.'}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
                     </div>
-                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-150 text-xs font-semibold text-gray-600 space-y-3">
-                      <div className="flex justify-between border-b border-gray-200 pb-2">
-                        <span>{lang === 'bn' ? 'লিখিত অংশ (Written / Theory)' : 'Theoretical Paper'}</span>
-                        <span className="font-black text-gray-800">70%</span>
-                      </div>
-                      <div className="flex justify-between border-b border-gray-200 pb-2">
-                        <span>{lang === 'bn' ? 'বহুনির্বাচনী (MCQ / Objective)' : 'Objective / MCQ'}</span>
-                        <span className="font-black text-gray-800">30%</span>
-                      </div>
-                      <div className="flex justify-between font-black text-gray-800">
-                        <span>{lang === 'bn' ? 'সর্বমোট' : 'Total Course Weight'}</span>
-                        <span>100%</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {examSubTab === 'exam_setup' && (() => {
                   // Fallback/Common subjects in case none are configured
