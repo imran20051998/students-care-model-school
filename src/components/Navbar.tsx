@@ -476,14 +476,14 @@ export default function Navbar({ activeTab, setActiveTab, lang, setLang, onSearc
               )}
             </div>
 
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1 flex flex-col items-center justify-center text-center px-2 md:px-4">
               <h1 
                 style={{ fontSize: settings?.bannerFontSize ? `${settings.bannerFontSize}px` : undefined }}
-                className="text-xs xs:text-sm sm:text-lg md:text-xl lg:text-2xl font-black text-white tracking-tight drop-shadow-xs truncate"
+                className="text-xs xs:text-sm sm:text-lg md:text-xl lg:text-2xl font-black text-white tracking-tight drop-shadow-xs truncate text-center w-full"
               >
                 {(settings?.siteNameBn || 'স্টুডেন্টস কেয়ার মডেল স্কুল')} — {formatToNiceEnglish(settings?.siteNameEn || 'STUDENTS CARE MODEL SCHOOL')}
               </h1>
-              <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[8px] xs:text-[9px] sm:text-xs text-blue-100 mt-1.5 opacity-90">
+              <div className="flex flex-wrap items-center justify-center gap-x-1.5 gap-y-0.5 text-[8px] xs:text-[9px] sm:text-xs text-blue-100 mt-1.5 opacity-90 text-center w-full">
                 <span className="truncate">{(settings?.addressBn || 'চরলক্ষ্যা, কর্ণফুলী, চট্টগ্রাম')}</span>
                 <span className="opacity-60">•</span>
                 <span>EIIN: {settings?.eiin || '471547'}</span>
