@@ -33,12 +33,34 @@ import {
   AlertTriangle,
   Info,
   Sliders,
-  Package
+  Package,
+  LayoutDashboard,
+  BookOpen,
+  Percent,
+  ClipboardList,
+  TrendingDown,
+  BarChart3,
+  Lock,
+  MoreVertical,
+  Trash2,
+  Edit,
+  User
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import TeacherPayrollDashboard from './TeacherPayrollDashboard';
 import InventoryTrackerDashboard from './InventoryTrackerDashboard';
 import ExpenseVendorDashboard from './ExpenseVendorDashboard';
+import AccountantOverview from './AccountantOverview';
+import {
+  CollectFeesView,
+  ExpenseReportsView,
+  GenerateInvoicesView,
+  FeeStructureView,
+  FeeDiscountsView,
+  ConcessionReportView,
+  FeesReportsView,
+  ProfileView
+} from './AccountantSubViews';
 
 interface AccountantDashboardProps {
   lang: 'bn' | 'en';
@@ -173,7 +195,21 @@ export default function AccountantDashboard({ lang, setLang, onLogout }: Account
   const [toast, setToast] = useState<{ text: string; type: 'success' | 'info' | 'error' } | null>(null);
   const [smsSentToday, setSmsSentToday] = useState(false);
   const [selectedChartSegment, setSelectedChartSegment] = useState<'paid' | 'pending' | null>(null);
-  const [activeTab, setActiveTab] = useState<'ledger' | 'payroll' | 'inventory' | 'expenses'>('payroll');
+  const [activeTab, setActiveTab] = useState<
+    | 'dashboard'
+    | 'collect_fees'
+    | 'expenses'
+    | 'expense_reports'
+    | 'generate_invoices'
+    | 'fee_structure'
+    | 'fee_discounts'
+    | 'concession_report'
+    | 'ledger'
+    | 'fees_reports'
+    | 'profile'
+    | 'payroll'
+    | 'inventory'
+  >('dashboard');
 
   // Teacher Payroll States
   const [teachers, setTeachers] = useState([
@@ -206,10 +242,51 @@ export default function AccountantDashboard({ lang, setLang, onLogout }: Account
 
   // Financial Stats Core state
   const [stats, setStats] = useState({
-    totalCollected: 125760,
-    pendingDues: 28430,
-    overdue: 9870,
-    bankBalance: 345210
+    todaysCollection: 84500,
+    pendingDues: 212300,
+    monthlyExpense: 145000,
+    netBalance: 568900,
+    cashInHand: 124500,
+    bankBalance: 1842300,
+    targetAchieved: 365000,
+    targetGoal: 500000
+  });
+
+  // Add Expense form states
+  const [showAddExpenseModal, setShowAddExpenseModal] = useState(false);
+  const [expenseForm, setExpenseForm] = useState({
+    description: '',
+    category: 'Stationery',
+    method: 'Cash',
+    amount: ''
+  });
+
+  // Fee Structure State
+  const [feeStructures, setFeeStructures] = useState([
+    { classId: 'Class 1', tuitionFee: 1200, examFee: 500, sportsFee: 300, sessionFee: 1500 },
+    { classId: 'Class 2', tuitionFee: 1200, examFee: 500, sportsFee: 300, sessionFee: 1500 },
+    { classId: 'Class 3', tuitionFee: 1500, examFee: 600, sportsFee: 300, sessionFee: 1800 },
+    { classId: 'Class 4', tuitionFee: 1500, examFee: 600, sportsFee: 300, sessionFee: 1800 },
+    { classId: 'Class 5', tuitionFee: 1800, examFee: 700, sportsFee: 400, sessionFee: 2000 },
+    { classId: 'Class 6', tuitionFee: 1800, examFee: 700, sportsFee: 400, sessionFee: 2000 },
+    { classId: 'Class 7', tuitionFee: 2000, examFee: 800, sportsFee: 500, sessionFee: 2200 },
+    { classId: 'Class 8', tuitionFee: 2000, examFee: 800, sportsFee: 500, sessionFee: 2200 },
+    { classId: 'Class 9', tuitionFee: 2500, examFee: 1000, sportsFee: 600, sessionFee: 2500 },
+    { classId: 'Class 10', tuitionFee: 2500, examFee: 1000, sportsFee: 600, sessionFee: 2500 },
+  ]);
+  const [editingFee, setEditingFee] = useState<any | null>(null);
+
+  // Fee Discounts State
+  const [feeDiscounts, setFeeDiscounts] = useState([
+    { studentId: '2026101', studentName: 'Farhan Ishrak', class: 'Class 8A', discountType: 'Merit Scholarship', waiverPercentage: 50, amountSaved: 1000 },
+    { studentId: '2026102', studentName: 'Nusrat Jahan', class: 'Class 8A', discountType: 'Sibling Discount', waiverPercentage: 25, amountSaved: 500 },
+    { studentId: '2026104', studentName: 'Tasfia Karim', class: 'Class 10A', discountType: 'Special Concession', waiverPercentage: 100, amountSaved: 2500 },
+  ]);
+  const [showAddDiscountModal, setShowAddDiscountModal] = useState(false);
+  const [discountForm, setDiscountForm] = useState({
+    studentId: '2026101',
+    discountType: 'Merit Scholarship',
+    waiverPercentage: '50'
   });
 
   // Recent Invoices / Transactions List
@@ -295,8 +372,11 @@ export default function AccountantDashboard({ lang, setLang, onLogout }: Account
     setTxs(prev => [newTx, ...prev]);
     setStats(prev => ({
       ...prev,
-      totalCollected: prev.totalCollected + amountNum,
-      bankBalance: prev.bankBalance + amountNum,
+      todaysCollection: prev.todaysCollection + amountNum,
+      netBalance: prev.netBalance + amountNum,
+      bankBalance: spotCashForm.method === 'Bank' || spotCashForm.method === 'Visa' ? prev.bankBalance + amountNum : prev.bankBalance,
+      cashInHand: spotCashForm.method === 'Cash' ? prev.cashInHand + amountNum : prev.cashInHand,
+      targetAchieved: Math.min(prev.targetGoal, prev.targetAchieved + amountNum),
       pendingDues: Math.max(0, prev.pendingDues - amountNum)
     }));
 
@@ -381,7 +461,8 @@ export default function AccountantDashboard({ lang, setLang, onLogout }: Account
     setDisputes(prev => prev.map(d => d.id === id ? { ...d, status: 'approved' } : d));
     setStats(prev => ({
       ...prev,
-      totalCollected: Math.max(0, prev.totalCollected - amount),
+      todaysCollection: Math.max(0, prev.todaysCollection - amount),
+      netBalance: Math.max(0, prev.netBalance - amount),
       bankBalance: Math.max(0, prev.bankBalance - amount)
     }));
     showToastMsg(
@@ -564,146 +645,75 @@ export default function AccountantDashboard({ lang, setLang, onLogout }: Account
     <div className="min-h-screen bg-[#F8FAFC] flex font-sans text-slate-800 antialiased">
       
       {/* ======================================================== */}
-      {/* LEFT SIDEBAR (Dark Teal Shell Aesthetic)                  */}
+      {/* LEFT SIDEBAR (Modern Light Aesthetics matching screenshot) */}
       {/* ======================================================== */}
-      <aside className="w-64 bg-[#004D40] text-teal-50 shrink-0 flex flex-col justify-between hidden md:flex border-r border-teal-800 select-none">
+      <aside className="w-64 bg-white shrink-0 flex flex-col justify-between hidden md:flex border-r border-slate-200/80 select-none">
         <div>
           {/* Brand Header */}
-          <div className="p-6 border-b border-teal-900 flex items-center gap-3">
-            <div className="h-9 w-9 bg-teal-800 text-teal-300 rounded-xl flex items-center justify-center border border-teal-700/50 shadow-inner">
-              <Coins className="h-5.5 w-5.5" />
+          <div className="p-6 border-b border-slate-100 flex items-center gap-3 bg-slate-50/50">
+            <div className="h-9 w-9 bg-[#004D40] text-emerald-100 rounded-xl flex items-center justify-center shadow-sm">
+              <Coins className="h-5 w-5" />
             </div>
             <div className="text-left min-w-0">
-              <h4 className="font-extrabold text-white text-xs tracking-tight leading-snug uppercase">
+              <h4 className="font-extrabold text-slate-800 text-[11px] tracking-tight leading-snug uppercase">
                 {lang === 'bn' ? 'স্টুডেন্টস কেয়ার মডেল স্কুল' : 'Students Care Model School'}
               </h4>
-              <p className="text-[10px] text-teal-300 font-bold tracking-wider uppercase mt-0.5 truncate">
-                {currentT.dashboardTitle}
+              <p className="text-[9px] text-[#004D40] font-bold tracking-wider uppercase mt-0.5 truncate">
+                {lang === 'bn' ? 'অ্যাকাউন্ট্যান্ট পোর্টাল' : 'Accountant Portal'}
               </p>
             </div>
           </div>
 
           {/* Navigation Items */}
-          <nav className="p-4 space-y-1.5">
-            <button
-              onClick={() => setActiveTab('ledger')}
-              className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-xs font-bold text-left transition-all cursor-pointer ${
-                activeTab === 'ledger'
-                  ? 'bg-teal-900 text-white shadow-md border-l-4 border-emerald-400 font-black'
-                  : 'text-teal-100 hover:bg-teal-900/40 hover:text-white'
-              }`}
-            >
-              <Activity className={`h-4.5 w-4.5 shrink-0 ${activeTab === 'ledger' ? 'text-emerald-400' : 'text-teal-300'}`} />
-              <span>{lang === 'bn' ? 'লেজার ওভারভিউ' : 'Ledger Overview'}</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('payroll')}
-              className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-xs font-bold text-left transition-all cursor-pointer ${
-                activeTab === 'payroll'
-                  ? 'bg-teal-900 text-white shadow-md border-l-4 border-emerald-400 font-black'
-                  : 'text-teal-100 hover:bg-teal-900/40 hover:text-white'
-              }`}
-            >
-              <CreditCard className={`h-4.5 w-4.5 shrink-0 ${activeTab === 'payroll' ? 'text-emerald-400' : 'text-teal-300'}`} />
-              <span>{lang === 'bn' ? 'শিক্ষক পে-রোল' : 'Teacher Payroll & Salary'}</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('inventory')}
-              className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-xs font-bold text-left transition-all cursor-pointer ${
-                activeTab === 'inventory'
-                  ? 'bg-teal-900 text-white shadow-md border-l-4 border-emerald-400 font-black'
-                  : 'text-teal-100 hover:bg-teal-900/40 hover:text-white'
-              }`}
-            >
-              <Package className={`h-4.5 w-4.5 shrink-0 ${activeTab === 'inventory' ? 'text-emerald-400' : 'text-teal-300'}`} />
-              <span>{lang === 'bn' ? 'ইনভেন্টরি ও সম্পদ' : 'Inventory & Assets'}</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('expenses')}
-              className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-xs font-bold text-left transition-all cursor-pointer ${
-                activeTab === 'expenses'
-                  ? 'bg-teal-900 text-white shadow-md border-l-4 border-emerald-400 font-black'
-                  : 'text-teal-100 hover:bg-teal-900/40 hover:text-white'
-              }`}
-            >
-              <Receipt className={`h-4.5 w-4.5 shrink-0 ${activeTab === 'expenses' ? 'text-emerald-400' : 'text-teal-300'}`} />
-              <span>{lang === 'bn' ? 'খরচ ও ভেন্ডর' : 'Expense & Vendors'}</span>
-            </button>
-
-            {/* Divider */}
-            <div className="h-[1px] bg-teal-800/40 my-3" />
-
-            {/* Contextual Actions */}
-            {activeTab === 'ledger' && (
-              <>
+          <nav className="p-4 space-y-1 overflow-y-auto max-h-[calc(100vh-180px)]">
+            {[
+              { id: 'dashboard', label_en: 'Dashboard', label_bn: 'ড্যাশবোর্ড', icon: LayoutDashboard },
+              { id: 'collect_fees', label_en: 'Collect Fees', label_bn: 'ফি আদায়', icon: Coins },
+              { id: 'expenses', label_en: 'Expense Vouchers', label_bn: 'খরচ ভাউচার', icon: FileText },
+              { id: 'expense_reports', label_en: 'Expense Reports', label_bn: 'ব্যয় রিপোর্ট', icon: TrendingDown },
+              { id: 'generate_invoices', label_en: 'Generate Invoices', label_bn: 'ইনভয়েস তৈরি', icon: Receipt },
+              { id: 'fee_structure', label_en: 'Fee Structure', label_bn: 'ফি কাঠামো', icon: Sliders },
+              { id: 'fee_discounts', label_en: 'Fee Discounts', label_bn: 'ফি ডিসকাউন্ট', icon: Percent },
+              { id: 'concession_report', label_en: 'Concession Report', label_bn: 'কনসেশন রিপোর্ট', icon: ClipboardList },
+              { id: 'ledger', label_en: 'Ledger', label_bn: 'লেজার খাতা', icon: BookOpen },
+              { id: 'fees_reports', label_en: 'Fees Reports', label_bn: 'ফি রিপোর্ট', icon: BarChart3 },
+              { id: 'payroll', label_en: 'Teacher Payroll', label_bn: 'শিক্ষক পে-রোল', icon: Users },
+              { id: 'inventory', label_en: 'Inventory & Assets', label_bn: 'ইনভেন্টরি ও সম্পদ', icon: Package },
+              { id: 'profile', label_en: 'Profile', label_bn: 'প্রোফাইল', icon: UserCheck },
+            ].map(item => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
+              return (
                 <button
-                  onClick={() => setShowSpotCashModal(true)}
-                  className="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-xs font-bold text-teal-100 hover:bg-teal-900/40 hover:text-white transition-all text-left cursor-pointer"
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id as any)}
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-semibold text-left transition-all cursor-pointer ${
+                    isActive
+                      ? 'bg-[#004D40] text-white shadow-sm font-bold'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  }`}
                 >
-                  <Plus className="h-4.5 w-4.5 text-teal-300 shrink-0" />
-                  <span>{currentT.colSpotCash}</span>
+                  <Icon className={`h-4.5 w-4.5 shrink-0 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600'}`} />
+                  <span>{lang === 'bn' ? item.label_bn : item.label_en}</span>
                 </button>
-                <button
-                  onClick={() => setShowBulkModal(true)}
-                  className="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-xs font-bold text-teal-100 hover:bg-teal-900/40 hover:text-white transition-all text-left cursor-pointer"
-                >
-                  <FileText className="h-4.5 w-4.5 text-teal-300 shrink-0" />
-                  <span>{currentT.genBulkInvoice}</span>
-                </button>
-                <button
-                  onClick={() => setShowExportModal(true)}
-                  className="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-xs font-bold text-teal-100 hover:bg-teal-900/40 hover:text-white transition-all text-left cursor-pointer"
-                >
-                  <Download className="h-4.5 w-4.5 text-teal-300 shrink-0" />
-                  <span>{lang === 'bn' ? 'ডাটা এক্সপোর্ট' : 'Audit Data Export'}</span>
-                </button>
-              </>
-            )}
-
-            {activeTab === 'payroll' && (
-              <>
-                <button
-                  onClick={() => setShowConfigureBaseModal(true)}
-                  className="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-xs font-bold text-teal-100 hover:bg-teal-900/40 hover:text-white transition-all text-left cursor-pointer"
-                >
-                  <Sliders className="h-4.5 w-4.5 text-teal-300 shrink-0" />
-                  <span>{lang === 'bn' ? 'বেস কাঠামো নির্ধারণ' : 'Configure Base Struct'}</span>
-                </button>
-                <button
-                  onClick={() => setShowAddBonusModal(true)}
-                  className="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-xs font-bold text-teal-100 hover:bg-teal-900/40 hover:text-white transition-all text-left cursor-pointer"
-                >
-                  <Sparkles className="h-4.5 w-4.5 text-teal-300 shrink-0" />
-                  <span>{lang === 'bn' ? 'পারফরম্যান্স বোনাস' : 'Add Performance Bonus'}</span>
-                </button>
-                <button
-                  onClick={handleExportBankAdvice}
-                  className="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-xs font-bold text-teal-100 hover:bg-teal-900/40 hover:text-white transition-all text-left cursor-pointer"
-                >
-                  <Download className="h-4.5 w-4.5 text-teal-300 shrink-0" />
-                  <span>{lang === 'bn' ? 'ব্যাংক এডভাইস এক্সপোর্ট' : 'Export Bank Advice'}</span>
-                </button>
-              </>
-            )}
+              );
+            })}
           </nav>
         </div>
 
         {/* Sidebar Footer Profile */}
-        <div className="p-4 border-t border-teal-900">
-          <div className="bg-teal-950/40 p-3.5 rounded-xl border border-teal-900 mb-3 text-left">
+        <div className="p-4 border-t border-slate-100 bg-slate-50/40">
+          <div className="bg-slate-100/60 p-3 rounded-lg border border-slate-200/50 mb-3 text-left">
             <div className="flex items-center gap-2.5">
-              <div className="h-7.5 w-7.5 bg-teal-800 text-white rounded-full flex items-center justify-center font-bold text-xs uppercase border border-teal-700">
+              <div className="h-8 w-8 bg-[#004D40] text-white rounded-full flex items-center justify-center font-bold text-xs uppercase shadow-sm">
                 KH
               </div>
               <div className="min-w-0">
-                <p className="text-white text-xs font-extrabold truncate">
+                <p className="text-slate-800 text-xs font-bold truncate">
                   {lang === 'bn' ? 'কামরুল হাসান' : 'Kamrul Hasan'}
                 </p>
-                <p className="text-[9px] text-teal-300 font-bold truncate">
-                  {lang === 'bn' ? 'প্রধান হিসাবরক্ষক' : 'Senior Accountant'}
+                <p className="text-[10px] text-slate-400 font-medium truncate">
+                  {lang === 'bn' ? 'হিসাবরক্ষক' : 'Finance Officer'}
                 </p>
               </div>
             </div>
@@ -711,10 +721,10 @@ export default function AccountantDashboard({ lang, setLang, onLogout }: Account
           
           <button
             onClick={onLogout}
-            className="w-full flex items-center gap-3 px-4 py-2.5 bg-teal-900 hover:bg-teal-950 text-teal-100 hover:text-rose-400 font-bold text-xs rounded-xl transition-all cursor-pointer border border-teal-950/50"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-rose-600 font-bold text-xs rounded-lg transition-all cursor-pointer border border-slate-200/60"
           >
-            <LogOut className="h-4.5 w-4.5 shrink-0" />
-            <span>{lang === 'bn' ? 'লগআউট' : 'Logout Ledger'}</span>
+            <LogOut className="h-4 w-4 shrink-0" />
+            <span>{lang === 'bn' ? 'লগআউট' : 'Logout Portal'}</span>
           </button>
         </div>
       </aside>
@@ -726,17 +736,19 @@ export default function AccountantDashboard({ lang, setLang, onLogout }: Account
         
         {/* TOP COMPACT HEADER */}
         <header className="h-16 bg-white border-b border-slate-200/80 px-6 sm:px-8 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-3 text-left">
+          <div className="flex items-center gap-4 text-left">
             <div className="md:hidden h-8 w-8 bg-[#004D40] text-teal-50 rounded-lg flex items-center justify-center">
               <Coins className="h-4.5 w-4.5" />
             </div>
-            <div>
-              <h2 className="text-slate-900 text-xs sm:text-sm font-black tracking-tight uppercase leading-none">
-                {currentT.dashboardTitle}
-              </h2>
-              <p className="text-[10px] text-slate-400 font-bold tracking-wide uppercase mt-0.5">
-                {currentT.schoolName}
-              </p>
+            
+            {/* Search Input Box */}
+            <div className="relative w-64 hidden sm:block">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+              <input 
+                type="text" 
+                placeholder={lang === 'bn' ? 'খুঁজুন...' : 'Search...'}
+                className="w-full bg-slate-50 border border-slate-200/80 rounded-lg pl-9 pr-4 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#004D40] focus:ring-1 focus:ring-[#004D40] transition-all"
+              />
             </div>
           </div>
 
@@ -747,7 +759,7 @@ export default function AccountantDashboard({ lang, setLang, onLogout }: Account
               <button
                 onClick={() => setLang('bn')}
                 className={`px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all cursor-pointer ${
-                  lang === 'bn' ? 'bg-[#004D40] text-white' : 'text-slate-500 hover:text-[#004D40]'
+                  lang === 'bn' ? 'bg-[#004D40] text-white font-black' : 'text-slate-500 hover:text-[#004D40]'
                 }`}
               >
                 বাংলা
@@ -755,11 +767,22 @@ export default function AccountantDashboard({ lang, setLang, onLogout }: Account
               <button
                 onClick={() => setLang('en')}
                 className={`px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all cursor-pointer ${
-                  lang === 'en' ? 'bg-[#004D40] text-white' : 'text-slate-500 hover:text-[#004D40]'
+                  lang === 'en' ? 'bg-[#004D40] text-white font-black' : 'text-slate-500 hover:text-[#004D40]'
                 }`}
               >
                 EN
               </button>
+            </div>
+
+            {/* Profile badge */}
+            <div className="flex items-center gap-2.5 pl-3 border-l border-slate-200">
+              <div className="h-8 w-8 rounded-full bg-[#004D40] text-emerald-100 flex items-center justify-center font-extrabold text-xs uppercase shadow-sm">
+                KH
+              </div>
+              <div className="hidden sm:block text-left">
+                <p className="text-slate-800 text-xs font-bold leading-none">{lang === 'bn' ? 'কামরুল হাসান' : 'Finance Officer'}</p>
+                <p className="text-[9px] text-slate-400 font-bold mt-0.5">{lang === 'bn' ? 'হিসাবরক্ষক' : 'Accountant'}</p>
+              </div>
             </div>
 
             {/* Mobile-only logout */}
@@ -774,7 +797,60 @@ export default function AccountantDashboard({ lang, setLang, onLogout }: Account
 
         {/* BODY CONTAINER */}
         <div className="p-6 sm:p-8 space-y-6 flex-1 max-w-7xl w-full mx-auto">
-          {activeTab === 'ledger' ? (
+          {activeTab === 'dashboard' ? (
+            <AccountantOverview
+              lang={lang}
+              stats={stats}
+              txs={txs}
+              setActiveTab={setActiveTab}
+              setShowAddExpenseModal={setShowAddExpenseModal}
+            />
+          ) : activeTab === 'collect_fees' ? (
+            <CollectFeesView
+              lang={lang}
+              spotCashForm={spotCashForm}
+              setSpotCashForm={setSpotCashForm}
+              handleSpotCashSubmit={handleSpotCashSubmit}
+              mockStudents={mockStudents}
+            />
+          ) : activeTab === 'expense_reports' ? (
+            <ExpenseReportsView lang={lang} />
+          ) : activeTab === 'generate_invoices' ? (
+            <GenerateInvoicesView
+              lang={lang}
+              isProcessingBulk={isProcessingBulk}
+              bulkProgress={bulkProgress}
+              handleRunBulkInvoice={handleRunBulkInvoice}
+              showToastMsg={showToastMsg}
+            />
+          ) : activeTab === 'fee_structure' ? (
+            <FeeStructureView
+              lang={lang}
+              feeStructures={feeStructures}
+              setFeeStructures={setFeeStructures}
+              editingFee={editingFee}
+              setEditingFee={setEditingFee}
+              showToastMsg={showToastMsg}
+            />
+          ) : activeTab === 'fee_discounts' ? (
+            <FeeDiscountsView
+              lang={lang}
+              feeDiscounts={feeDiscounts}
+              setFeeDiscounts={setFeeDiscounts}
+              discountForm={discountForm}
+              setDiscountForm={setDiscountForm}
+              showToastMsg={showToastMsg}
+            />
+          ) : activeTab === 'concession_report' ? (
+            <ConcessionReportView
+              lang={lang}
+              feeDiscounts={feeDiscounts}
+            />
+          ) : activeTab === 'fees_reports' ? (
+            <FeesReportsView lang={lang} />
+          ) : activeTab === 'profile' ? (
+            <ProfileView lang={lang} />
+          ) : activeTab === 'ledger' ? (
             <>
               {/* ======================================================== */}
               {/* 1. CASHFLOW & AI INSIGHTS HERO BANNER                     */}
@@ -1248,9 +1324,9 @@ export default function AccountantDashboard({ lang, setLang, onLogout }: Account
             <TeacherPayrollDashboard lang={lang} showToastMsg={showToastMsg} />
           ) : activeTab === 'inventory' ? (
             <InventoryTrackerDashboard lang={lang} showToastMsg={showToastMsg} />
-          ) : (
+          ) : activeTab === 'expenses' ? (
             <ExpenseVendorDashboard lang={lang} showToastMsg={showToastMsg} />
-          )}
+          ) : null}
         </div>
       </main>
 
