@@ -466,7 +466,10 @@ export default function Navbar({ activeTab, setActiveTab, lang, setLang, onSearc
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 md:gap-5 relative z-10">
           
           {/* Left / Middle: Logo & School Identifiers */}
-          <div className="flex flex-row items-center gap-3 sm:gap-4 text-left grow w-full md:w-auto min-w-0">
+          <div 
+            onClick={() => handleNavClick('home')}
+            className="flex flex-row items-center gap-3 sm:gap-4 text-left grow w-full md:w-auto min-w-0 cursor-pointer select-none active:scale-[0.99] transition-transform"
+          >
             {/* White circle containing the school logo or default icon */}
             <div className="h-14 w-14 xs:h-16 xs:w-16 sm:h-20 sm:w-20 bg-white rounded-full flex items-center justify-center shadow-lg border border-white/20 shrink-0 transform hover:scale-105 transition-transform duration-300 overflow-hidden">
               {settings?.logoUrl ? (
