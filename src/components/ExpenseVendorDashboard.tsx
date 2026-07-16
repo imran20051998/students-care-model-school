@@ -120,13 +120,27 @@ export default function ExpenseVendorDashboard({ lang, showToastMsg }: ExpenseVe
   const t = lang === 'bn' ? texts.bn : texts.en;
 
   // Expenditures database
-  const [vouchers, setVouchers] = useState([
-    { id: "VCH-301", description: "Purchased Whiteboard Markers & Chalks", category: "Stationary Procurement", date: "2026-07-08", amount: 4800, method: "Cash", receipt: "uploaded", attachment: "stationery_receipt_301.pdf" },
-    { id: "VCH-302", description: "June Electric Utility Bill Clear", category: "Utilities", date: "2026-07-05", amount: 12500, method: "Bank Transfer", receipt: "uploaded", attachment: "desco_bill_june_paid.pdf" },
-    { id: "VCH-303", description: "Water pump motor coil rewinding", category: "Maintenance", date: "2026-07-02", amount: 3500, method: "bKash", receipt: "missing", attachment: null },
-    { id: "VCH-304", description: "Class VIII Physics Exam Script Print", category: "Events", date: "2026-06-28", amount: 6500, method: "Cash", receipt: "uploaded", attachment: "script_print_invoice.pdf" },
-    { id: "VCH-305", description: "High-Speed Fiber Internet Bill (June)", category: "Utilities", date: "2026-06-25", amount: 15000, method: "Bank Transfer", receipt: "uploaded", attachment: "internet_june.pdf" }
-  ]);
+  const [vouchers, setVouchers] = useState(() => {
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('school_vouchers') : null;
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        // Fallback
+      }
+    }
+    return [
+      { id: "VCH-301", description: "Purchased Whiteboard Markers & Chalks", category: "Stationary Procurement", date: "2026-07-08", amount: 4800, method: "Cash", receipt: "uploaded", attachment: "stationery_receipt_301.pdf" },
+      { id: "VCH-302", description: "June Electric Utility Bill Clear", category: "Utilities", date: "2026-07-05", amount: 12500, method: "Bank Transfer", receipt: "uploaded", attachment: "desco_bill_june_paid.pdf" },
+      { id: "VCH-303", description: "Water pump motor coil rewinding", category: "Maintenance", date: "2026-07-02", amount: 3500, method: "bKash", receipt: "missing", attachment: null },
+      { id: "VCH-304", description: "Class VIII Physics Exam Script Print", category: "Events", date: "2026-06-28", amount: 6500, method: "Cash", receipt: "uploaded", attachment: "script_print_invoice.pdf" },
+      { id: "VCH-305", description: "High-Speed Fiber Internet Bill (June)", category: "Utilities", date: "2026-06-25", amount: 15000, method: "Bank Transfer", receipt: "uploaded", attachment: "internet_june.pdf" }
+    ];
+  });
+
+  React.useEffect(() => {
+    localStorage.setItem('school_vouchers', JSON.stringify(vouchers));
+  }, [vouchers]);
 
   // Reimbursements pending approval
   const [approvals, setApprovals] = useState([

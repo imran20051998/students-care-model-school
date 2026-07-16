@@ -255,11 +255,114 @@ export default function AccountantDashboard({ lang, setLang, onLogout }: Account
   // Add Expense form states
   const [showAddExpenseModal, setShowAddExpenseModal] = useState(false);
   const [expenseForm, setExpenseForm] = useState({
-    description: '',
+    accountName: '',
+    address: '',
     category: 'Stationery',
-    method: 'Cash',
-    amount: ''
+    amount: '',
+    date: '2026-07-16',
+    voucherNo: 'EXP-202607-0001',
+    paymentMethod: 'Cash',
+    approvedBy: '',
+    description: '',
+    receiptFile: null as File | null,
+    receiptFileName: ''
   });
+
+  const handleOpenAddExpenseModal = () => {
+    let count = 5;
+    try {
+      const saved = localStorage.getItem('school_vouchers');
+      if (saved) {
+        const list = JSON.parse(saved);
+        if (Array.isArray(list)) {
+          count = list.length;
+        }
+      }
+    } catch (e) {}
+    
+    const pad = (num: number, size: number) => {
+      let s = num + "";
+      while (s.length < size) s = "0" + s;
+      return s;
+    };
+    const nextVNo = `EXP-202607-${pad(count + 1, 4)}`;
+
+    setExpenseForm({
+      accountName: '',
+      address: '',
+      category: 'Stationery',
+      amount: '',
+      date: '2026-07-16',
+      voucherNo: nextVNo,
+      paymentMethod: 'Cash',
+      approvedBy: '',
+      description: '',
+      receiptFile: null,
+      receiptFileName: ''
+    });
+    setShowAddExpenseModal(true);
+  };
+
+  const handleSaveExpense = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!expenseForm.accountName || !expenseForm.amount) {
+      showToastMsg(
+        lang === 'bn' 
+          ? "দয়া করে একাউন্টের নাম এবং খরচের পরিমাণ প্রদান করুন" 
+          : "Please enter Account Name and Amount", 
+        "error"
+      );
+      return;
+    }
+
+    const amountNum = parseFloat(expenseForm.amount) || 0;
+    
+    let currentVouchers = [];
+    try {
+      const saved = localStorage.getItem('school_vouchers');
+      if (saved) {
+        currentVouchers = JSON.parse(saved);
+      } else {
+        currentVouchers = [
+          { id: "VCH-301", description: "Purchased Whiteboard Markers & Chalks", category: "Stationary Procurement", date: "2026-07-08", amount: 4800, method: "Cash", receipt: "uploaded", attachment: "stationery_receipt_301.pdf" },
+          { id: "VCH-302", description: "June Electric Utility Bill Clear", category: "Utilities", date: "2026-07-05", amount: 12500, method: "Bank Transfer", receipt: "uploaded", attachment: "desco_bill_june_paid.pdf" },
+          { id: "VCH-303", description: "Water pump motor coil rewinding", category: "Maintenance", date: "2026-07-02", amount: 3500, method: "bKash", receipt: "missing", attachment: null },
+          { id: "VCH-304", description: "Class VIII Physics Exam Script Print", category: "Events", date: "2026-06-28", amount: 6500, method: "Cash", receipt: "uploaded", attachment: "script_print_invoice.pdf" },
+          { id: "VCH-305", description: "High-Speed Fiber Internet Bill (June)", category: "Utilities", date: "2026-06-25", amount: 15000, method: "Bank Transfer", receipt: "uploaded", attachment: "internet_june.pdf" }
+        ];
+      }
+    } catch (err) {}
+
+    const newVoucher = {
+      id: expenseForm.voucherNo || `EXP-202607-${String(currentVouchers.length + 1).padStart(4, '0')}`,
+      description: expenseForm.description || `Expense for ${expenseForm.accountName}`,
+      category: expenseForm.category || 'Stationery',
+      date: expenseForm.date || '2026-07-16',
+      amount: amountNum,
+      method: expenseForm.paymentMethod || 'Cash',
+      receipt: expenseForm.receiptFileName ? "uploaded" : "missing",
+      attachment: expenseForm.receiptFileName || null,
+      accountName: expenseForm.accountName,
+      address: expenseForm.address,
+      approvedBy: expenseForm.approvedBy
+    };
+
+    localStorage.setItem('school_vouchers', JSON.stringify([newVoucher, ...currentVouchers]));
+
+    setStats(prev => ({
+      ...prev,
+      monthlyExpense: prev.monthlyExpense + amountNum,
+      netBalance: prev.netBalance - amountNum
+    }));
+
+    setShowAddExpenseModal(false);
+    showToastMsg(
+      lang === 'bn'
+        ? `খরচ ভাউচার "${newVoucher.id}" সফলভাবে সংরক্ষণ করা হয়েছে!`
+        : `Successfully saved expense voucher "${newVoucher.id}"!`,
+      "success"
+    );
+  };
 
   // Fee Structure State
   const [feeStructures, setFeeStructures] = useState([
@@ -803,7 +906,10 @@ export default function AccountantDashboard({ lang, setLang, onLogout }: Account
               stats={stats}
               txs={txs}
               setActiveTab={setActiveTab}
-              setShowAddExpenseModal={setShowAddExpenseModal}
+              setShowAddExpenseModal={(show) => {
+                if (show) handleOpenAddExpenseModal();
+                else setShowAddExpenseModal(false);
+              }}
             />
           ) : activeTab === 'collect_fees' ? (
             <CollectFeesView
@@ -1967,6 +2073,246 @@ export default function AccountantDashboard({ lang, setLang, onLogout }: Account
                   </button>
                 </div>
               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ======================================================== */}
+      {/* MODAL 7: ADD EXPENSE VOUCHER                             */}
+      {/* ======================================================== */}
+      <AnimatePresence>
+        {showAddExpenseModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowAddExpenseModal(false)}
+              className="absolute inset-0"
+            />
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              className="relative w-full max-w-xl bg-[#F0F9F9] border border-teal-100 rounded-3xl shadow-2xl p-6 sm:p-8 text-left z-10 max-h-[90vh] overflow-y-auto"
+            >
+              {/* Header */}
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-black text-slate-850 tracking-tight">
+                  {lang === 'bn' ? 'খরচ ভাউচার যুক্ত করুন' : 'Add Expense Voucher'}
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setShowAddExpenseModal(false)}
+                  className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100/50 transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Form */}
+              <form onSubmit={handleSaveExpense} className="space-y-4">
+                {/* Account Name */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-[#475569]">
+                    {lang === 'bn' ? 'অ্যাকাউন্টের নাম' : 'Account Name'}
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Electricity Bill / Vendor Name"
+                    value={expenseForm.accountName}
+                    onChange={(e) => setExpenseForm(prev => ({ ...prev, accountName: e.target.value }))}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#004D40] focus:border-transparent transition-all"
+                  />
+                </div>
+
+                {/* Address & Category */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-[#475569]">
+                      {lang === 'bn' ? 'ঠিকানা' : 'Address'}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Vendor address"
+                      value={expenseForm.address}
+                      onChange={(e) => setExpenseForm(prev => ({ ...prev, address: e.target.value }))}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#004D40] focus:border-transparent transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-[#475569]">
+                      {lang === 'bn' ? 'ক্যাটাগরি' : 'Category'}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Utility, Salary, Stationery"
+                      value={expenseForm.category}
+                      onChange={(e) => setExpenseForm(prev => ({ ...prev, category: e.target.value }))}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#004D40] focus:border-transparent transition-all"
+                    />
+                  </div>
+                </div>
+
+                {/* Amount & Date */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-[#475569]">
+                      {lang === 'bn' ? 'পরিমাণ (৳)' : 'Amount (৳)'}
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      required
+                      placeholder="0.00"
+                      value={expenseForm.amount}
+                      onChange={(e) => setExpenseForm(prev => ({ ...prev, amount: e.target.value }))}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#004D40] focus:border-transparent transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-[#475569]">
+                      {lang === 'bn' ? 'তারিখ' : 'Date'}
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="date"
+                        required
+                        value={expenseForm.date}
+                        onChange={(e) => setExpenseForm(prev => ({ ...prev, date: e.target.value }))}
+                        className="w-full bg-white border border-slate-200 rounded-xl pl-4 pr-10 py-3 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#004D40] focus:border-transparent transition-all"
+                      />
+                      <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Voucher No */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-[#475569]">
+                    {lang === 'bn' ? 'ভাউচার নং' : 'Voucher No'}
+                  </label>
+                  <input
+                    type="text"
+                    disabled
+                    readOnly
+                    value={expenseForm.voucherNo}
+                    className="w-full bg-[#EBF5F5] border border-slate-200 rounded-xl px-4 py-3 text-xs text-slate-600 font-mono cursor-not-allowed"
+                  />
+                </div>
+
+                {/* Payment Method & Approved By */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-[#475569]">
+                      {lang === 'bn' ? 'পেমেন্ট মাধ্যম' : 'Payment Method'}
+                    </label>
+                    <select
+                      value={expenseForm.paymentMethod}
+                      onChange={(e) => setExpenseForm(prev => ({ ...prev, paymentMethod: e.target.value }))}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#004D40] focus:border-transparent transition-all"
+                    >
+                      <option value="Cash">{lang === 'bn' ? 'নগদ (Cash)' : 'Cash'}</option>
+                      <option value="Bank Transfer">{lang === 'bn' ? 'ব্যাংক ট্রান্সফার' : 'Bank Transfer'}</option>
+                      <option value="bKash">{lang === 'bn' ? 'বিকাশ' : 'bKash'}</option>
+                      <option value="Nagad">{lang === 'bn' ? 'নগদ (Mobile)' : 'Nagad'}</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-[#475569]">
+                      {lang === 'bn' ? 'অনুমোদনকারী' : 'Approved By'}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Principal Md. Rahman"
+                      value={expenseForm.approvedBy}
+                      onChange={(e) => setExpenseForm(prev => ({ ...prev, approvedBy: e.target.value }))}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#004D40] focus:border-transparent transition-all"
+                    />
+                  </div>
+                </div>
+
+                {/* Upload Receipt */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-[#475569]">
+                    {lang === 'bn' ? 'রসিদ আপলোড করুন (ছবি / পিডিএফ)' : 'Upload Receipt (Photo / PDF)'}
+                  </label>
+                  <div className="relative flex items-center bg-white border border-slate-200 rounded-xl p-2">
+                    <input
+                      type="file"
+                      id="expense-file-upload"
+                      accept="image/*,application/pdf"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setExpenseForm(prev => ({
+                            ...prev,
+                            receiptFile: file,
+                            receiptFileName: file.name
+                          }));
+                        }
+                      }}
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => document.getElementById('expense-file-upload')?.click()}
+                      className="px-4 py-2 bg-[#004D40] hover:bg-teal-900 text-teal-50 text-xs font-bold rounded-lg transition-colors cursor-pointer mr-3 shrink-0"
+                    >
+                      Browse...
+                    </button>
+                    <span className="text-xs text-slate-500 font-medium truncate">
+                      {expenseForm.receiptFileName || (lang === 'bn' ? 'কোনো ফাইল নির্বাচন করা হয়নি' : 'No file selected.')}
+                    </span>
+                    {expenseForm.receiptFileName && (
+                      <button
+                        type="button"
+                        onClick={() => setExpenseForm(prev => ({ ...prev, receiptFile: null, receiptFileName: '' }))}
+                        className="ml-auto text-rose-500 hover:text-rose-700 p-1"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-[#475569]">
+                    {lang === 'bn' ? 'বিবরণ' : 'Description'}
+                  </label>
+                  <textarea
+                    rows={3}
+                    placeholder="Purpose / details of expense"
+                    value={expenseForm.description}
+                    onChange={(e) => setExpenseForm(prev => ({ ...prev, description: e.target.value }))}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#004D40] focus:border-transparent transition-all resize-none"
+                  />
+                </div>
+
+                {/* Buttons */}
+                <div className="flex justify-end gap-3 pt-4 border-t border-slate-200/50">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddExpenseModal(false)}
+                    className="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-extrabold rounded-xl transition-all cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2.5 bg-[#004D40] hover:bg-teal-900 text-white text-xs font-extrabold rounded-xl shadow-md transition-all cursor-pointer"
+                  >
+                    Save & Preview
+                  </button>
+                </div>
+              </form>
             </motion.div>
           </div>
         )}
