@@ -61,6 +61,52 @@ import {
   FeesReportsView,
   ProfileView
 } from './AccountantSubViews';
+const numberToWords = (num: number): string => {
+  if (num === 0) return "Zero Taka Only";
+  
+  const ones = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
+  const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+  
+  const convertLessThanOneThousand = (n: number): string => {
+    if (n < 20) return ones[n];
+    const digit = n % 10;
+    if (n < 100) return tens[Math.floor(n / 10)] + (digit ? " " + ones[digit] : "");
+    return ones[Math.floor(n / 100)] + " Hundred" + (n % 100 ? " and " + convertLessThanOneThousand(n % 100) : "");
+  };
+  
+  let temp = Math.floor(num);
+  const crore = Math.floor(temp / 10000000);
+  temp %= 10000000;
+  
+  const lakh = Math.floor(temp / 100000);
+  temp %= 100000;
+  
+  const thousand = Math.floor(temp / 1000);
+  temp %= 1000;
+  
+  const hundred = Math.floor(temp / 100);
+  temp %= 100;
+  
+  let result = "";
+  if (crore) {
+    result += convertLessThanOneThousand(crore) + " Crore ";
+  }
+  if (lakh) {
+    result += convertLessThanOneThousand(lakh) + " Lakh ";
+  }
+  if (thousand) {
+    result += convertLessThanOneThousand(thousand) + " Thousand ";
+  }
+  if (hundred) {
+    result += convertLessThanOneThousand(hundred) + " Hundred ";
+  }
+  if (temp) {
+    if (result !== "") result += "and ";
+    result += convertLessThanOneThousand(temp) + " ";
+  }
+  
+  return result.trim() + " Taka Only";
+};
 
 interface AccountantDashboardProps {
   lang: 'bn' | 'en';
@@ -254,6 +300,8 @@ export default function AccountantDashboard({ lang, setLang, onLogout }: Account
 
   // Add Expense form states
   const [showAddExpenseModal, setShowAddExpenseModal] = useState(false);
+  const [showVoucherPreview, setShowVoucherPreview] = useState(false);
+  const [previewVoucher, setPreviewVoucher] = useState<any | null>(null);
   const [expenseForm, setExpenseForm] = useState({
     accountName: '',
     address: '',
@@ -348,6 +396,7 @@ export default function AccountantDashboard({ lang, setLang, onLogout }: Account
     };
 
     localStorage.setItem('school_vouchers', JSON.stringify([newVoucher, ...currentVouchers]));
+    window.dispatchEvent(new Event('school_vouchers_updated'));
 
     setStats(prev => ({
       ...prev,
@@ -355,12 +404,202 @@ export default function AccountantDashboard({ lang, setLang, onLogout }: Account
       netBalance: prev.netBalance - amountNum
     }));
 
+    setPreviewVoucher(newVoucher);
+    setShowVoucherPreview(true);
     setShowAddExpenseModal(false);
     showToastMsg(
       lang === 'bn'
-        ? `খরচ ভাউচার "${newVoucher.id}" সফলভাবে সংরক্ষণ করা হয়েছে!`
-        : `Successfully saved expense voucher "${newVoucher.id}"!`,
+        ? `খরচ ভাউচার "${newVoucher.id}" সফলভাবে সংরক্ষণ করা হয়েছে এবং প্রিভিউ জেনারেট করা হয়েছে!`
+        : `Successfully saved expense voucher "${newVoucher.id}" and generated preview!`,
       "success"
+    );
+  };
+
+  const renderVoucherCopy = (type: 'OFFICE COPY' | 'ACCOUNT COPY') => {
+    if (!previewVoucher) return null;
+    const amountNum = previewVoucher.amount || 0;
+    const formattedAmount = amountNum.toLocaleString('en-IN');
+    const words = numberToWords(amountNum);
+    
+    // Date formatting: if date is YYYY-MM-DD, convert to DD/MM/YYYY
+    let displayDate = previewVoucher.date || '';
+    if (displayDate.includes('-')) {
+      const parts = displayDate.split('-');
+      if (parts.length === 3) {
+        displayDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+      }
+    }
+    
+    return (
+      <div className="bg-white border-2 border-slate-900 rounded-2xl p-5 sm:p-6 text-slate-900 relative shadow-xs">
+        {/* Header section with SCMS logo on left, text in middle, copy badge on right */}
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 border-b-2 border-slate-900 pb-4 mb-4">
+          <div className="flex items-center gap-3">
+            {/* Circle SCMS Logo */}
+            <div className="w-14 h-14 rounded-full border-2 border-slate-800 flex items-center justify-center font-black text-xs text-slate-800 tracking-wider bg-slate-50 shrink-0 select-none">
+              SCMS
+            </div>
+            <div>
+              <h2 className="text-sm sm:text-base font-black text-slate-900 tracking-wider leading-snug">
+                STUDENTS CARE MODEL SCHOOL
+              </h2>
+              <p className="text-[10px] font-bold text-slate-600 leading-tight">
+                Main Road, Dhaka, Bangladesh &bull; +880 1812-555066
+              </p>
+            </div>
+          </div>
+          <div className="border-2 border-slate-900 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-slate-900 bg-slate-50 rounded-md">
+            {type}
+          </div>
+        </div>
+
+        {/* EXPENSE VOUCHER Title Bar */}
+        <div className="bg-slate-900 text-white py-2 px-4 rounded-md mb-6 text-center">
+          <h3 className="text-xs font-black uppercase tracking-[0.25em]">
+            {lang === 'bn' ? 'খরচ ভাউচার' : 'EXPENSE VOUCHER'}
+          </h3>
+        </div>
+
+        {/* Metadata Fields */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-xs font-bold mb-6">
+          {/* Row 1 */}
+          <div className="flex items-end gap-2">
+            <span className="text-[10px] uppercase tracking-wider text-slate-500 shrink-0">
+              {lang === 'bn' ? 'ভাউচার নং:' : 'VOUCHER NO'}
+            </span>
+            <span className="grow border-b border-dotted border-slate-400 pb-0.5 font-mono text-slate-800 pl-1">
+              {previewVoucher.id}
+            </span>
+          </div>
+          <div className="flex items-end gap-2">
+            <span className="text-[10px] uppercase tracking-wider text-slate-500 shrink-0">
+              {lang === 'bn' ? 'তারিখ:' : 'DATE'}
+            </span>
+            <span className="grow border-b border-dotted border-slate-400 pb-0.5 text-slate-800 pl-1">
+              {displayDate}
+            </span>
+          </div>
+
+          {/* Row 2 */}
+          <div className="flex items-end gap-2">
+            <span className="text-[10px] uppercase tracking-wider text-slate-500 shrink-0">
+              {lang === 'bn' ? 'প্রাপক:' : 'PAID TO'}
+            </span>
+            <span className="grow border-b border-dotted border-slate-400 pb-0.5 text-slate-800 pl-1">
+              {previewVoucher.accountName}
+            </span>
+          </div>
+          <div className="flex items-end gap-2">
+            <span className="text-[10px] uppercase tracking-wider text-slate-500 shrink-0">
+              {lang === 'bn' ? 'ক্যাটাগরি:' : 'CATEGORY'}
+            </span>
+            <span className="grow border-b border-dotted border-slate-400 pb-0.5 text-slate-800 pl-1">
+              {previewVoucher.category}
+            </span>
+          </div>
+
+          {/* Row 3 */}
+          <div className="flex items-end gap-2">
+            <span className="text-[10px] uppercase tracking-wider text-slate-500 shrink-0">
+              {lang === 'bn' ? 'মাধ্যম:' : 'PAYMENT'}
+            </span>
+            <span className="grow border-b border-dotted border-slate-400 pb-0.5 text-slate-800 pl-1">
+              {previewVoucher.method}
+            </span>
+          </div>
+          <div className="flex items-end gap-2">
+            <span className="text-[10px] uppercase tracking-wider text-slate-500 shrink-0">
+              {lang === 'bn' ? 'অনুমোদনকারী:' : 'APPROVED BY'}
+            </span>
+            <span className="grow border-b border-dotted border-slate-400 pb-0.5 text-slate-800 pl-1">
+              {previewVoucher.approvedBy || "Principal"}
+            </span>
+          </div>
+
+          {/* Row 4 */}
+          <div className="flex items-end gap-2 sm:col-span-2">
+            <span className="text-[10px] uppercase tracking-wider text-slate-500 shrink-0">
+              {lang === 'bn' ? 'ঠিকানা:' : 'ADDRESS'}
+            </span>
+            <span className="grow border-b border-dotted border-slate-400 pb-0.5 text-slate-800 pl-1">
+              {previewVoucher.address || "N/A"}
+            </span>
+          </div>
+        </div>
+
+        {/* Table of Particulars */}
+        <div className="border-2 border-slate-900 rounded-lg overflow-hidden mb-6">
+          <div className="grid grid-cols-4 bg-slate-900 text-white text-[10px] sm:text-xs font-black uppercase tracking-wider py-2 px-3">
+            <div className="col-span-3 text-left">
+              {lang === 'bn' ? 'বিবরণ' : 'PARTICULARS / DESCRIPTION'}
+            </div>
+            <div className="col-span-1 text-right">
+              {lang === 'bn' ? 'পরিমাণ (টাকা)' : 'AMOUNT (BDT)'}
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-4 border-b-2 border-slate-900 py-4 px-3 text-xs text-slate-800 font-bold min-h-[60px]">
+            <div className="col-span-3 text-left leading-relaxed">
+              {previewVoucher.description}
+            </div>
+            <div className="col-span-1 text-right font-mono text-sm">
+              ৳{formattedAmount}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-4 bg-slate-50 py-3 px-3 text-xs font-black uppercase text-slate-900 tracking-wider">
+            <div className="col-span-3 text-left">
+              {lang === 'bn' ? 'মোট খরচের পরিমাণ' : 'TOTAL EXPENSE AMOUNT'}
+            </div>
+            <div className="col-span-1 text-right font-mono text-sm text-[#004D40]">
+              ৳{formattedAmount}
+            </div>
+          </div>
+        </div>
+
+        {/* In Words Box */}
+        <div className="border border-slate-900 p-3 rounded-lg text-xs font-bold text-slate-800 text-left bg-slate-50/50 mb-8 flex gap-2">
+          <span className="text-[10px] uppercase tracking-wider text-slate-500 shrink-0">
+            {lang === 'bn' ? 'কথায়:' : 'IN WORDS:'}
+          </span>
+          <span className="italic">
+            {words}
+          </span>
+        </div>
+
+        {/* Signatures & Stamp */}
+        <div className="flex justify-between items-end pt-4 relative">
+          {/* Prepared By Signature Line */}
+          <div className="flex flex-col items-center w-1/3">
+            <div className="w-full border-b border-slate-900 mb-1.5"></div>
+            <span className="text-[10px] font-black text-slate-600 uppercase tracking-wider">
+              {lang === 'bn' ? 'প্রস্তুতকারী' : 'Prepared By'}
+            </span>
+          </div>
+
+          {/* Stamp Circle */}
+          <div className="absolute left-1/2 -translate-x-1/2 -top-4 flex items-center justify-center select-none rotate-[-12deg]">
+            <div className="relative w-20 h-20 rounded-full border-2 border-dashed border-rose-500/80 flex items-center justify-center">
+              <div className="absolute inset-1 rounded-full border border-rose-500/40 flex items-center justify-center">
+                <div className="text-[10px] font-black text-rose-500/90 text-center tracking-tight leading-none uppercase">
+                  PAID<br/>VOUCHER
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Approved By Signature Line */}
+          <div className="flex flex-col items-center w-1/3 z-10">
+            <span className="text-xs font-bold font-mono text-slate-800 leading-none mb-1">
+              {previewVoucher.approvedBy || "Principal"}
+            </span>
+            <div className="w-full border-b border-slate-900 mb-1.5"></div>
+            <span className="text-[10px] font-black text-slate-600 uppercase tracking-wider">
+              {lang === 'bn' ? 'অনুমোদনকারী' : 'Approved By'}
+            </span>
+          </div>
+        </div>
+      </div>
     );
   };
 
@@ -2313,6 +2552,106 @@ export default function AccountantDashboard({ lang, setLang, onLogout }: Account
                   </button>
                 </div>
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ======================================================== */}
+      {/* MODAL 8: VOUCHER PREVIEW (OFFICE COPY & ACCOUNT COPY)     */}
+      {/* ======================================================== */}
+      <AnimatePresence>
+        {showVoucherPreview && previewVoucher && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowVoucherPreview(false)}
+              className="absolute inset-0"
+            />
+
+            {/* Print style injection to make printing flawless */}
+            <style dangerouslySetInnerHTML={{__html: `
+              @media print {
+                body * {
+                  visibility: hidden !important;
+                }
+                #printable-voucher-sheet, #printable-voucher-sheet * {
+                  visibility: visible !important;
+                }
+                #printable-voucher-sheet {
+                  position: absolute !important;
+                  left: 0 !important;
+                  top: 0 !important;
+                  width: 100% !important;
+                  background: white !important;
+                  padding: 0 !important;
+                  margin: 0 !important;
+                  border: none !important;
+                  box-shadow: none !important;
+                }
+              }
+            `}} />
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              className="relative w-full max-w-3xl bg-[#F0F9F9] border border-teal-100 rounded-3xl shadow-2xl p-6 sm:p-8 text-left z-10 max-h-[95vh] overflow-y-auto print:p-0 print:bg-white print:border-none print:shadow-none"
+            >
+              {/* Header (No-print) */}
+              <div className="flex justify-between items-center mb-6 print:hidden">
+                <h3 className="text-lg font-black text-slate-850 tracking-tight flex items-center gap-2">
+                  <Receipt className="h-5 w-5 text-[#004D40]" />
+                  {lang === 'bn' ? 'ভাউচার প্রিভিউ' : 'Voucher Preview'}
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setShowVoucherPreview(false)}
+                  className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100/50 transition-colors cursor-pointer"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Printable sheet containing both copies separated by Cut Here */}
+              <div id="printable-voucher-sheet" className="space-y-6 bg-slate-50/50 p-4 rounded-2xl border border-slate-200/60 print:p-0 print:bg-white print:border-none">
+                {/* 1. Office Copy */}
+                {renderVoucherCopy('OFFICE COPY')}
+
+                {/* 2. Cut Here Separator */}
+                <div className="flex items-center gap-2 my-4 text-slate-400 select-none print:hidden">
+                  <div className="grow border-t border-dashed border-slate-300"></div>
+                  <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 font-mono">
+                    <span>✂</span>
+                    <span>{lang === 'bn' ? 'এখান থেকে কাটুন' : 'CUT HERE'}</span>
+                  </div>
+                  <div className="grow border-t border-dashed border-slate-300"></div>
+                </div>
+
+                {/* 3. Account Copy */}
+                {renderVoucherCopy('ACCOUNT COPY')}
+              </div>
+
+              {/* Action Buttons (No-print) */}
+              <div className="flex gap-3 mt-6 pt-4 border-t border-slate-200/50 print:hidden justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowVoucherPreview(false)}
+                  className="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-extrabold rounded-xl transition-all cursor-pointer"
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="px-6 py-2.5 bg-[#004D40] hover:bg-teal-900 text-white text-xs font-extrabold rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer"
+                >
+                  <Printer className="h-4 w-4" />
+                  {lang === 'bn' ? 'ভাউচার প্রিন্ট করুন' : 'Print Voucher'}
+                </button>
+              </div>
             </motion.div>
           </div>
         )}

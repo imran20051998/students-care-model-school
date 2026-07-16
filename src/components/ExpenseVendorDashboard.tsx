@@ -142,6 +142,21 @@ export default function ExpenseVendorDashboard({ lang, showToastMsg }: ExpenseVe
     localStorage.setItem('school_vouchers', JSON.stringify(vouchers));
   }, [vouchers]);
 
+  React.useEffect(() => {
+    const handleUpdate = () => {
+      const saved = localStorage.getItem('school_vouchers');
+      if (saved) {
+        try {
+          setVouchers(JSON.parse(saved));
+        } catch (e) {}
+      }
+    };
+    window.addEventListener('school_vouchers_updated', handleUpdate);
+    return () => {
+      window.removeEventListener('school_vouchers_updated', handleUpdate);
+    };
+  }, []);
+
   // Reimbursements pending approval
   const [approvals, setApprovals] = useState([
     { id: "APP-501", requester: "IT Lab Assistant", description: "Mouse replacements (4 Units)", amount: 1200, attachment: "it_mouse_quote.pdf" },
