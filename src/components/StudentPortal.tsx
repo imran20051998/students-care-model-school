@@ -297,6 +297,28 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
   const [isStudentDetailsExpanded, setIsStudentDetailsExpanded] = useState(true);
   const [studentDetailsSubTab, setStudentDetailsSubTab] = useState<'student_list' | 'login_deactivate' | 'deactivate_reason'>('student_list');
 
+  // Employee menu expansion and active sub-tab
+  const [isEmployeeMenuExpanded, setIsEmployeeMenuExpanded] = useState(true);
+  const [employeeSubTab, setEmployeeSubTab] = useState<'employee_list' | 'add_department' | 'add_designation' | 'add_employee' | 'login_deactivate'>('employee_list');
+  const [employeeSearchQuery, setEmployeeSearchQuery] = useState('');
+  const [selectedEmployeeDeptFilter, setSelectedEmployeeDeptFilter] = useState('All');
+  const [employeeDepartments, setEmployeeDepartments] = useState<string[]>(() => {
+    const saved = localStorage.getItem('school_employee_departments');
+    return saved ? JSON.parse(saved) : ['Science', 'Humanities', 'Business Studies', 'Mathematics', 'Language', 'Accounts & Administration', 'General'];
+  });
+  const [employeeDesignations, setEmployeeDesignations] = useState<string[]>(() => {
+    const saved = localStorage.getItem('school_employee_designations');
+    return saved ? JSON.parse(saved) : ['Headmaster/Headmistress', 'Assistant Headmaster', 'Senior Lecturer', 'Faculty Member', 'Senior Accountant', 'Office Assistant', 'IT Support', 'Security Guard'];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('school_employee_departments', JSON.stringify(employeeDepartments));
+  }, [employeeDepartments]);
+
+  useEffect(() => {
+    localStorage.setItem('school_employee_designations', JSON.stringify(employeeDesignations));
+  }, [employeeDesignations]);
+
   // Academic menu expansion and active sub-tab
   const [isAcademicMenuExpanded, setIsAcademicMenuExpanded] = useState(true);
   const [academicSubTab, setAcademicSubTab] = useState<
@@ -920,6 +942,8 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
     phone: '',
     status: 'Active' as 'Active' | 'Inactive'
   });
+  const [newDepartmentInput, setNewDepartmentInput] = useState('');
+  const [newDesignationInput, setNewDesignationInput] = useState('');
 
   // Google Drive State Hook Integration
   const [googleUser, setGoogleUser] = useState<any>(null);
@@ -4337,6 +4361,70 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
                   );
                 }
 
+                if (item.id === 'employee') {
+                  const isEmployeeActive = adminActiveTab === 'employee';
+                  return (
+                    <div key={item.id} className="space-y-1">
+                      <button
+                        onClick={() => {
+                          setIsEmployeeMenuExpanded(!isEmployeeMenuExpanded);
+                          setAdminActiveTab('employee');
+                        }}
+                        className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
+                          isEmployeeActive 
+                            ? 'bg-[#005c53] text-white shadow-xs font-black' 
+                            : 'text-gray-600 hover:bg-slate-50 hover:text-[#005c53] font-bold'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Icon className={`h-4.5 w-4.5 shrink-0 ${isEmployeeActive ? 'text-white' : 'text-gray-400 group-hover:text-[#005c53]'}`} />
+                          <span className="truncate">{item.label}</span>
+                        </div>
+                        {isEmployeeActive ? (
+                          <ChevronRight className="h-3.5 w-3.5 text-white shrink-0" />
+                        ) : (
+                          <ChevronDown className={`h-3 w-3 opacity-50 transition-transform duration-200 ${isEmployeeMenuExpanded ? 'rotate-180' : ''}`} />
+                        )}
+                      </button>
+                      
+                      {isEmployeeMenuExpanded && (
+                        <div className="pl-4 pr-1 py-1 space-y-1 border-l border-emerald-500/10 ml-6">
+                          {[
+                            { id: 'employee_list', labelBn: 'কর্মচারী তালিকা', labelEn: 'Employee List' },
+                            { id: 'add_department', labelBn: 'ডিপার্টমেন্ট যোগ করুন', labelEn: 'Add Department' },
+                            { id: 'add_designation', labelBn: 'ডেজিগনেশন যোগ করুন', labelEn: 'Add Designation' },
+                            { id: 'add_employee', labelBn: 'কর্মচারী যোগ করুন', labelEn: 'Add Employee' },
+                            { id: 'login_deactivate', labelBn: 'লগইন নিষ্ক্রিয়', labelEn: 'Login Deactivate' }
+                          ].map((sub) => {
+                            const isSubActive = isEmployeeActive && employeeSubTab === sub.id;
+                            return (
+                              <button
+                                key={sub.id}
+                                onClick={() => {
+                                  setAdminActiveTab('employee');
+                                  setEmployeeSubTab(sub.id as any);
+                                  setIsAdminSidebarOpen(false);
+                                  if (sub.id === 'add_employee') {
+                                    setIsAddEmployeeModalOpen(true);
+                                  }
+                                }}
+                                className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[10px] font-black transition-all cursor-pointer text-left ${
+                                  isSubActive
+                                    ? 'bg-emerald-50 text-[#005c53] shadow-xs font-black'
+                                    : 'text-gray-500 hover:bg-slate-50 hover:text-[#005c53] font-bold'
+                                }`}
+                              >
+                                <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${isSubActive ? 'bg-[#005c53]' : 'bg-[#005c53]/20'}`} />
+                                <span className="truncate">{lang === 'bn' ? sub.labelBn : sub.labelEn}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
                 if (item.id === 'settings') {
                   return (
                     <div key={item.id} className="space-y-1">
@@ -6210,79 +6298,512 @@ def approve_admission_application(request, pk):
 
             {/* EMPLOYEE AND FACULTY REGISTRY PANEL */}
             {adminActiveTab === 'employee' && (
-              <div className="bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs text-left space-y-6">
-                <div className="flex items-center justify-between border-b border-gray-100 pb-4">
-                  <div>
-                    <h3 className="font-extrabold text-gray-900 text-lg">
-                      {lang === 'bn' ? 'কর্মচারী ও শিক্ষক ডিরেক্টরি' : 'Faculty & Staff Directory'}
-                    </h3>
-                    <p className="text-xs text-gray-400 font-bold">
-                      {lang === 'bn' ? 'স্কুলের সকল শিক্ষক ও কর্মচারীর তথ্য দেখুন' : 'Browse and manage all registered teaching and administrative personnel'}
-                    </p>
-                  </div>
-                  <button 
-                    onClick={() => setIsAddEmployeeModalOpen(true)}
-                    className="px-4 py-2 bg-[#025644] hover:bg-[#01352a] text-white text-xs font-black rounded-xl transition-all cursor-pointer shadow-3xs"
-                  >
-                    + {lang === 'bn' ? 'নতুন কর্মচারী যোগ করুন' : 'Add Employee'}
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {employees.map((emp, i) => (
-                    <div key={i} className="bg-gray-50 border border-gray-150 rounded-2xl p-5 space-y-3.5 hover:shadow-2xs transition-shadow relative">
-                      {/* Status Badge */}
-                      <span className={`absolute top-4 right-4 text-[10px] font-black px-2 py-0.5 rounded-full ${
-                        emp.status === 'Active' 
-                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' 
-                          : 'bg-rose-50 text-rose-700 border border-rose-100'
-                      }`}>
-                        {lang === 'bn' 
-                          ? (emp.status === 'Active' ? 'সক্রিয়' : 'নিষ্ক্রিয়')
-                          : emp.status
-                        }
-                      </span>
-
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 bg-emerald-50 text-[#025644] border border-emerald-100/30 rounded-xl flex items-center justify-center font-black text-sm shrink-0">
-                          {emp.name.split(' ').slice(-1)[0] ? emp.name.split(' ').slice(-1)[0][0] : 'T'}
-                        </div>
-                        <div className="text-left leading-tight min-w-0 pr-12">
-                          <h4 className="font-extrabold text-sm text-gray-900 truncate">{emp.name}</h4>
-                          <p className="text-[11px] text-gray-400 font-bold mt-0.5">{emp.role}</p>
-                        </div>
+              <div className="space-y-6">
+                {/* 1. EMPLOYEE LIST SUB-TAB */}
+                {employeeSubTab === 'employee_list' && (
+                  <div className="bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs text-left space-y-6">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-100 pb-4">
+                      <div>
+                        <h3 className="font-extrabold text-gray-900 text-lg">
+                          {lang === 'bn' ? 'কর্মচারী ও শিক্ষক ডিরেক্টরি' : 'Faculty & Staff Directory'}
+                        </h3>
+                        <p className="text-xs text-gray-400 font-bold">
+                          {lang === 'bn' ? 'স্কুলের সকল শিক্ষক ও কর্মচারীর তথ্য দেখুন' : 'Browse and manage all registered teaching and administrative personnel'}
+                        </p>
                       </div>
-
-                      <div className="text-xs text-gray-500 font-semibold space-y-1.5 pt-1.5 border-t border-gray-200/65">
-                        <p>{lang === 'bn' ? 'বিষয়' : 'Specialization'}: <span className="text-gray-800 font-bold">{emp.subject}</span></p>
-                        <p>{lang === 'bn' ? 'ইমেইল' : 'Email'}: <span className="text-gray-700 font-bold font-mono text-xs truncate block">{emp.email}</span></p>
-                        <p>{lang === 'bn' ? 'মোবাইল' : 'Mobile'}: <span className="text-gray-700 font-bold font-mono">{emp.phone}</span></p>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-150">
+                      <div className="flex flex-wrap items-center gap-2">
                         <button 
                           onClick={() => {
-                            setEmployees(prev => prev.map((e, idx) => idx === i ? { ...e, status: e.status === 'Active' ? 'Inactive' : 'Active' } : e));
+                            setEmployeeSubTab('add_employee');
                           }}
-                          className="py-1.5 bg-white hover:bg-gray-100 text-gray-700 text-xs font-bold rounded-xl border border-gray-200 transition-colors cursor-pointer text-center"
+                          className="px-4 py-2 bg-[#025644] hover:bg-[#01352a] text-white text-xs font-black rounded-xl transition-all cursor-pointer shadow-3xs"
                         >
-                          {emp.status === 'Active' 
-                            ? (lang === 'bn' ? 'নিষ্ক্রিয়' : 'Deactivate') 
-                            : (lang === 'bn' ? 'সক্রিয়' : 'Activate')
-                          }
-                        </button>
-                        <button 
-                          onClick={() => {
-                            setEmployees(prev => prev.filter((_, idx) => idx !== i));
-                          }}
-                          className="py-1.5 bg-white hover:bg-rose-50 text-rose-600 hover:border-rose-200 text-xs font-bold rounded-xl border border-gray-200 transition-colors cursor-pointer text-center"
-                        >
-                          {lang === 'bn' ? 'মুছে ফেলুন' : 'Remove'}
+                          + {lang === 'bn' ? 'নতুন কর্মচারী যোগ করুন' : 'Add Employee'}
                         </button>
                       </div>
                     </div>
-                  ))}
-                </div>
+
+                    {/* Filter controls */}
+                    <div className="flex flex-col sm:flex-row items-center gap-3 bg-gray-50 p-4 rounded-xl border border-gray-150">
+                      <div className="relative w-full sm:w-72">
+                        <Search className="absolute inset-y-0 left-3 h-4 w-4 my-auto text-gray-400" />
+                        <input
+                          type="text"
+                          placeholder={lang === 'bn' ? 'কর্মচারী খুঁজুন...' : 'Search employees...'}
+                          value={employeeSearchQuery}
+                          onChange={(e) => setEmployeeSearchQuery(e.target.value)}
+                          className="w-full pl-9 pr-4 py-1.5 bg-white border border-gray-200 focus:border-[#025644] focus:outline-none rounded-xl text-xs font-bold text-gray-700 shadow-3xs"
+                        />
+                      </div>
+                      <div className="w-full sm:w-48">
+                        <select
+                          value={selectedEmployeeDeptFilter}
+                          onChange={(e) => setSelectedEmployeeDeptFilter(e.target.value)}
+                          className="w-full bg-white border border-gray-200 focus:border-[#025644] focus:outline-none rounded-xl text-xs font-bold text-gray-700 py-1.5 px-3 cursor-pointer shadow-3xs"
+                        >
+                          <option value="All">{lang === 'bn' ? 'সব ডিপার্টমেন্ট' : 'All Departments'}</option>
+                          {employeeDepartments.map((dept, idx) => (
+                            <option key={idx} value={dept}>{dept}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* List Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {employees
+                        .filter(emp => {
+                          const matchesSearch = emp.name.toLowerCase().includes(employeeSearchQuery.toLowerCase()) ||
+                            emp.role.toLowerCase().includes(employeeSearchQuery.toLowerCase()) ||
+                            emp.subject.toLowerCase().includes(employeeSearchQuery.toLowerCase()) ||
+                            emp.email.toLowerCase().includes(employeeSearchQuery.toLowerCase()) ||
+                            emp.phone.includes(employeeSearchQuery);
+                          const matchesDept = selectedEmployeeDeptFilter === 'All' || emp.subject.toLowerCase().includes(selectedEmployeeDeptFilter.toLowerCase()) || emp.role.toLowerCase().includes(selectedEmployeeDeptFilter.toLowerCase());
+                          return matchesSearch && matchesDept;
+                        })
+                        .map((emp, i) => (
+                          <div key={i} className="bg-gray-50 border border-gray-150 rounded-2xl p-5 space-y-3.5 hover:shadow-2xs transition-shadow relative">
+                            {/* Status Badge */}
+                            <span className={`absolute top-4 right-4 text-[10px] font-black px-2 py-0.5 rounded-full ${
+                              emp.status === 'Active' 
+                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' 
+                                : 'bg-rose-50 text-rose-700 border border-rose-100'
+                            }`}>
+                              {lang === 'bn' 
+                                ? (emp.status === 'Active' ? 'সক্রিয়' : 'নিষ্ক্রিয়')
+                                : emp.status
+                              }
+                            </span>
+
+                            <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 bg-emerald-50 text-[#025644] border border-emerald-100/30 rounded-xl flex items-center justify-center font-black text-sm shrink-0">
+                                {emp.name.split(' ').slice(-1)[0] ? emp.name.split(' ').slice(-1)[0][0] : 'T'}
+                              </div>
+                              <div className="text-left leading-tight min-w-0 pr-12">
+                                <h4 className="font-extrabold text-sm text-gray-900 truncate">{emp.name}</h4>
+                                <p className="text-[11px] text-gray-400 font-bold mt-0.5">{emp.role}</p>
+                              </div>
+                            </div>
+
+                            <div className="text-xs text-gray-500 font-semibold space-y-1.5 pt-1.5 border-t border-gray-200/65">
+                              <p>{lang === 'bn' ? 'ডিপার্টমেন্ট / বিষয়' : 'Dept / Specialization'}: <span className="text-gray-800 font-bold">{emp.subject}</span></p>
+                              <p>{lang === 'bn' ? 'ইমেইল' : 'Email'}: <span className="text-gray-700 font-bold font-mono text-xs truncate block">{emp.email}</span></p>
+                              <p>{lang === 'bn' ? 'মোবাইল' : 'Mobile'}: <span className="text-gray-700 font-bold font-mono">{emp.phone}</span></p>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-150">
+                              <button 
+                                onClick={() => {
+                                  setEmployees(prev => prev.map((e) => e.email === emp.email ? { ...e, status: e.status === 'Active' ? 'Inactive' : 'Active' } : e));
+                                }}
+                                className="py-1.5 bg-white hover:bg-gray-100 text-gray-700 text-xs font-bold rounded-xl border border-gray-200 transition-colors cursor-pointer text-center"
+                              >
+                                {emp.status === 'Active' 
+                                  ? (lang === 'bn' ? 'নিষ্ক্রিয়' : 'Deactivate') 
+                                  : (lang === 'bn' ? 'সক্রিয়' : 'Activate')
+                                }
+                              </button>
+                              <button 
+                                onClick={() => {
+                                  setEmployees(prev => prev.filter((e) => e.email !== emp.email));
+                                }}
+                                className="py-1.5 bg-white hover:bg-rose-50 text-rose-600 hover:border-rose-200 text-xs font-bold rounded-xl border border-gray-200 transition-colors cursor-pointer text-center"
+                              >
+                                {lang === 'bn' ? 'মুছে ফেলুন' : 'Remove'}
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 2. ADD DEPARTMENT SUB-TAB */}
+                {employeeSubTab === 'add_department' && (
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <div className="lg:col-span-5 bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs text-left space-y-4">
+                      <div>
+                        <h3 className="font-extrabold text-gray-900 text-base">
+                          {lang === 'bn' ? 'নতুন ডিপার্টমেন্ট যোগ করুন' : 'Add New Department'}
+                        </h3>
+                        <p className="text-xs text-gray-400 font-bold mt-1">
+                          {lang === 'bn' ? 'স্কুলের একাডেমিক বা প্রশাসনিক নতুন বিভাগ যুক্ত করুন' : 'Register a new academic or administrative department'}
+                        </p>
+                      </div>
+
+                      <div className="space-y-3 pt-2">
+                        <div>
+                          <label className="block text-[10px] font-black text-gray-500 uppercase tracking-wide mb-1.5">{lang === 'bn' ? 'ডিপার্টমেন্টের নাম' : 'Department Name'}</label>
+                          <input
+                            type="text"
+                            placeholder={lang === 'bn' ? 'যেমন: Science, Commerce, Language' : 'e.g. Science, Commerce, Language'}
+                            value={newDepartmentInput}
+                            onChange={(e) => setNewDepartmentInput(e.target.value)}
+                            className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 focus:bg-white focus:border-[#025644] focus:outline-none rounded-xl text-xs font-semibold text-gray-700"
+                          />
+                        </div>
+
+                        <button
+                          onClick={() => {
+                            if (!newDepartmentInput.trim()) {
+                              alert(lang === 'bn' ? 'দয়া করে ডিপার্টমেন্টের নাম লিখুন!' : 'Please enter a department name!');
+                              return;
+                            }
+                            if (employeeDepartments.map(d => d.toLowerCase()).includes(newDepartmentInput.trim().toLowerCase())) {
+                              alert(lang === 'bn' ? 'এই ডিপার্টমেন্টটি ইতিমধ্যে বিদ্যমান!' : 'This department already exists!');
+                              return;
+                            }
+                            setEmployeeDepartments(prev => [...prev, newDepartmentInput.trim()]);
+                            setNewDepartmentInput('');
+                            addAuditLog(`Admin added a new employee department: ${newDepartmentInput.trim()}`);
+                          }}
+                          className="w-full py-2.5 bg-[#025644] hover:bg-[#01352a] text-white text-xs font-black rounded-xl transition-all cursor-pointer shadow-3xs"
+                        >
+                          {lang === 'bn' ? 'ডিপার্টমেন্ট সেভ করুন' : 'Save Department'}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="lg:col-span-7 bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs text-left space-y-4">
+                      <div>
+                        <h3 className="font-extrabold text-gray-900 text-base">
+                          {lang === 'bn' ? 'বিদ্যমান ডিপার্টমেন্ট তালিকা' : 'Existing Departments'}
+                        </h3>
+                        <p className="text-xs text-gray-400 font-bold mt-1">
+                          {lang === 'bn' ? 'বর্তমানে স্কুলে অনুমোদিত বিভাগসমূহ' : 'List of currently active school departments'}
+                        </p>
+                      </div>
+
+                      <div className="divide-y divide-gray-100 max-h-[400px] overflow-y-auto pr-1">
+                        {employeeDepartments.map((dept, index) => {
+                          const associatedCount = employees.filter(e => e.subject.toLowerCase().includes(dept.toLowerCase()) || e.role.toLowerCase().includes(dept.toLowerCase())).length;
+                          return (
+                            <div key={index} className="py-3 flex items-center justify-between gap-4">
+                              <div className="flex items-center gap-3">
+                                <div className="h-7 w-7 rounded-lg bg-emerald-50 text-[#025644] flex items-center justify-center font-bold text-xs">
+                                  {index + 1}
+                                </div>
+                                <div>
+                                  <p className="text-xs font-black text-gray-800">{dept}</p>
+                                  <p className="text-[10px] text-gray-400 font-bold mt-0.5">{associatedCount} {lang === 'bn' ? 'জন স্টাফ/শিক্ষক' : 'associated members'}</p>
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => {
+                                  if (associatedCount > 0) {
+                                    alert(lang === 'bn' 
+                                      ? 'এই ডিপার্টমেন্টের সাথে কর্মচারী যুক্ত আছে, তাই এটি মুছে ফেলা সম্ভব নয়!' 
+                                      : 'Cannot delete department. There are active employees assigned to it!'
+                                    );
+                                    return;
+                                  }
+                                  setEmployeeDepartments(prev => prev.filter((_, i) => i !== index));
+                                  addAuditLog(`Admin deleted employee department: ${dept}`);
+                                }}
+                                className="p-1.5 hover:bg-rose-50 text-gray-400 hover:text-rose-600 rounded-lg transition-colors cursor-pointer"
+                                title="Delete Department"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 3. ADD DESIGNATION SUB-TAB */}
+                {employeeSubTab === 'add_designation' && (
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <div className="lg:col-span-5 bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs text-left space-y-4">
+                      <div>
+                        <h3 className="font-extrabold text-gray-900 text-base">
+                          {lang === 'bn' ? 'নতুন ডেজিগনেশন যোগ করুন' : 'Add New Designation'}
+                        </h3>
+                        <p className="text-xs text-gray-400 font-bold mt-1">
+                          {lang === 'bn' ? 'কর্মচারী ও শিক্ষকদের জন্য নতুন পদ বা উপাধি যুক্ত করুন' : 'Register a new official designation or job title'}
+                        </p>
+                      </div>
+
+                      <div className="space-y-3 pt-2">
+                        <div>
+                          <label className="block text-[10px] font-black text-gray-500 uppercase tracking-wide mb-1.5">{lang === 'bn' ? 'ডেজিগনেশনের নাম' : 'Designation Name'}</label>
+                          <input
+                            type="text"
+                            placeholder={lang === 'bn' ? 'যেমন: Assistant Lecturer, Senior Officer' : 'e.g. Assistant Lecturer, Senior Officer'}
+                            value={newDesignationInput}
+                            onChange={(e) => setNewDesignationInput(e.target.value)}
+                            className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 focus:bg-white focus:border-[#025644] focus:outline-none rounded-xl text-xs font-semibold text-gray-700"
+                          />
+                        </div>
+
+                        <button
+                          onClick={() => {
+                            if (!newDesignationInput.trim()) {
+                              alert(lang === 'bn' ? 'দয়া করে ডেজিগনেশনের নাম লিখুন!' : 'Please enter a designation name!');
+                              return;
+                            }
+                            if (employeeDesignations.map(d => d.toLowerCase()).includes(newDesignationInput.trim().toLowerCase())) {
+                              alert(lang === 'bn' ? 'এই ডেজিগনেশনটি ইতিমধ্যে বিদ্যমান!' : 'This designation already exists!');
+                              return;
+                            }
+                            setEmployeeDesignations(prev => [...prev, newDesignationInput.trim()]);
+                            setNewDesignationInput('');
+                            addAuditLog(`Admin added a new employee designation: ${newDesignationInput.trim()}`);
+                          }}
+                          className="w-full py-2.5 bg-[#025644] hover:bg-[#01352a] text-white text-xs font-black rounded-xl transition-all cursor-pointer shadow-3xs"
+                        >
+                          {lang === 'bn' ? 'ডেজিগনেশন সেভ করুন' : 'Save Designation'}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="lg:col-span-7 bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs text-left space-y-4">
+                      <div>
+                        <h3 className="font-extrabold text-gray-900 text-base">
+                          {lang === 'bn' ? 'বিদ্যমান ডেজিগনেশন তালিকা' : 'Existing Designations'}
+                        </h3>
+                        <p className="text-xs text-gray-400 font-bold mt-1">
+                          {lang === 'bn' ? 'বর্তমানে স্কুলে অনুমোদিত পদ বা পদবীসমূহ' : 'List of currently active school designations'}
+                        </p>
+                      </div>
+
+                      <div className="divide-y divide-gray-100 max-h-[400px] overflow-y-auto pr-1">
+                        {employeeDesignations.map((desig, index) => {
+                          const associatedCount = employees.filter(e => e.role.toLowerCase().includes(desig.toLowerCase())).length;
+                          return (
+                            <div key={index} className="py-3 flex items-center justify-between gap-4">
+                              <div className="flex items-center gap-3">
+                                <div className="h-7 w-7 rounded-lg bg-emerald-50 text-[#025644] flex items-center justify-center font-bold text-xs">
+                                  {index + 1}
+                                </div>
+                                <div>
+                                  <p className="text-xs font-black text-gray-800">{desig}</p>
+                                  <p className="text-[10px] text-gray-400 font-bold mt-0.5">{associatedCount} {lang === 'bn' ? 'জন স্টাফ/শিক্ষক' : 'associated members'}</p>
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => {
+                                  if (associatedCount > 0) {
+                                    alert(lang === 'bn' 
+                                      ? 'এই ডেজিগনেশনের সাথে কর্মচারী যুক্ত আছে, তাই এটি মুছে ফেলা সম্ভব নয়!' 
+                                      : 'Cannot delete designation. There are active employees assigned to it!'
+                                    );
+                                    return;
+                                  }
+                                  setEmployeeDesignations(prev => prev.filter((_, i) => i !== index));
+                                  addAuditLog(`Admin deleted employee designation: ${desig}`);
+                                }}
+                                className="p-1.5 hover:bg-rose-50 text-gray-400 hover:text-rose-600 rounded-lg transition-colors cursor-pointer"
+                                title="Delete Designation"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 4. ADD EMPLOYEE INLINE FORM SUB-TAB */}
+                {employeeSubTab === 'add_employee' && (
+                  <div className="bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs text-left space-y-6 max-w-2xl mx-auto">
+                    <div>
+                      <h3 className="font-extrabold text-gray-900 text-lg">
+                        {lang === 'bn' ? 'নতুন কর্মচারী/শিক্ষক যোগ করুন' : 'Add New Employee/Teacher'}
+                      </h3>
+                      <p className="text-xs text-gray-400 font-bold">
+                        {lang === 'bn' ? 'নতুন শিক্ষকমন্ডলী বা স্টাফের সম্পূর্ণ প্রোফাইল তথ্য ইনপুট করুন' : 'Fill up the primary service record to onboard a new faculty or administrative staff member'}
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-wide">{lang === 'bn' ? 'পূর্ণ নাম' : 'Full Name'}</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Dr. Muhammad Jafar"
+                          value={newEmployeeForm.name}
+                          onChange={(e) => setNewEmployeeForm(prev => ({ ...prev, name: e.target.value }))}
+                          className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 focus:bg-white focus:border-[#025644] focus:outline-none rounded-xl text-xs font-semibold text-gray-700"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-wide">{lang === 'bn' ? 'পদবী / ডেজিগনেশন' : 'Designation / Title'}</label>
+                        <select
+                          value={newEmployeeForm.role}
+                          onChange={(e) => setNewEmployeeForm(prev => ({ ...prev, role: e.target.value }))}
+                          className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 focus:bg-white focus:border-[#025644] focus:outline-none rounded-xl text-xs font-semibold text-gray-700 cursor-pointer"
+                        >
+                          <option value="">{lang === 'bn' ? '-- ডেজিগনেশন নির্বাচন করুন --' : '-- Select Designation --'}</option>
+                          {employeeDesignations.map((desig, idx) => (
+                            <option key={idx} value={desig}>{desig}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-wide">{lang === 'bn' ? 'ডিপার্টমেন্ট / বিষয়' : 'Department / Subject'}</label>
+                        <select
+                          value={newEmployeeForm.subject}
+                          onChange={(e) => setNewEmployeeForm(prev => ({ ...prev, subject: e.target.value }))}
+                          className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 focus:bg-white focus:border-[#025644] focus:outline-none rounded-xl text-xs font-semibold text-gray-700 cursor-pointer"
+                        >
+                          <option value="">{lang === 'bn' ? '-- ডিপার্টমেন্ট নির্বাচন করুন --' : '-- Select Department --'}</option>
+                          {employeeDepartments.map((dept, idx) => (
+                            <option key={idx} value={dept}>{dept}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-wide">{lang === 'bn' ? 'ইমেইল অ্যাড্রেস' : 'Official Email'}</label>
+                        <input
+                          type="email"
+                          placeholder="e.g. jafar.m@scms.edu.bd"
+                          value={newEmployeeForm.email}
+                          onChange={(e) => setNewEmployeeForm(prev => ({ ...prev, email: e.target.value }))}
+                          className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 focus:bg-white focus:border-[#025644] focus:outline-none rounded-xl text-xs font-semibold text-gray-700 font-mono"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-wide">{lang === 'bn' ? 'মোবাইল নম্বর' : 'Mobile Number'}</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. 01712-112233"
+                          value={newEmployeeForm.phone}
+                          onChange={(e) => setNewEmployeeForm(prev => ({ ...prev, phone: e.target.value }))}
+                          className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 focus:bg-white focus:border-[#025644] focus:outline-none rounded-xl text-xs font-semibold text-gray-700 font-mono"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-wide">{lang === 'bn' ? 'প্রাথমিক স্ট্যাটাস' : 'Initial Status'}</label>
+                        <select
+                          value={newEmployeeForm.status}
+                          onChange={(e) => setNewEmployeeForm(prev => ({ ...prev, status: e.target.value as any }))}
+                          className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 focus:bg-white focus:border-[#025644] focus:outline-none rounded-xl text-xs font-semibold text-gray-700 cursor-pointer"
+                        >
+                          <option value="Active">{lang === 'bn' ? 'সক্রিয় (Active)' : 'Active'}</option>
+                          <option value="Inactive">{lang === 'bn' ? 'নিষ্ক্রিয় (Inactive)' : 'Inactive'}</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+                      <button
+                        onClick={() => {
+                          setEmployeeSubTab('employee_list');
+                        }}
+                        className="px-4 py-2 border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-bold rounded-xl transition-colors cursor-pointer"
+                      >
+                        {lang === 'bn' ? 'বাতিল' : 'Cancel'}
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (!newEmployeeForm.name.trim() || !newEmployeeForm.role.trim() || !newEmployeeForm.subject.trim() || !newEmployeeForm.email.trim() || !newEmployeeForm.phone.trim()) {
+                            alert(lang === 'bn' ? 'অনুগ্রহ করে সকল ঘর পূরণ করুন!' : 'Please complete all form fields!');
+                            return;
+                          }
+                          setEmployees(prev => [...prev, { ...newEmployeeForm }]);
+                          addAuditLog(`Admin onboarded a new employee: ${newEmployeeForm.name} (${newEmployeeForm.role})`);
+                          setNewEmployeeForm({
+                            name: '',
+                            role: '',
+                            subject: '',
+                            email: '',
+                            phone: '',
+                            status: 'Active'
+                          });
+                          setEmployeeSubTab('employee_list');
+                        }}
+                        className="px-5 py-2.5 bg-[#025644] hover:bg-[#01352a] text-white text-xs font-black rounded-xl shadow-3xs transition-all cursor-pointer"
+                      >
+                        {lang === 'bn' ? 'কর্মচারী যোগ করুন' : 'Onboard Employee'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* 5. LOGIN DEACTIVATE SUB-TAB */}
+                {employeeSubTab === 'login_deactivate' && (
+                  <div className="bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs text-left space-y-6">
+                    <div>
+                      <h3 className="font-extrabold text-gray-900 text-lg">
+                        {lang === 'bn' ? 'কর্মচারী লগইন নিয়ন্ত্রণ প্যানেল' : 'Employee Login Access Panel'}
+                      </h3>
+                      <p className="text-xs text-gray-400 font-bold">
+                        {lang === 'bn' ? 'শিক্ষক ও কর্মকর্তাদের পোর্টাল লগইন অ্যাক্সেস অন বা অফ করুন' : 'Enable or disable interactive web-portal logins for any registered staff member instantly'}
+                      </p>
+                    </div>
+
+                    <div className="overflow-x-auto border border-gray-150 rounded-2xl">
+                      <table className="w-full text-xs text-left text-gray-600">
+                        <thead className="bg-gray-50 text-gray-500 uppercase font-black text-[10px] tracking-wider border-b border-gray-150">
+                          <tr>
+                            <th className="px-5 py-3.5">{lang === 'bn' ? 'নাম ও রোল' : 'Name & Title'}</th>
+                            <th className="px-5 py-3.5">{lang === 'bn' ? 'ইমেইল অ্যাড্রেস' : 'Official Email'}</th>
+                            <th className="px-5 py-3.5">{lang === 'bn' ? 'ডিভাইস বা আইপি' : 'Last Secure Activity'}</th>
+                            <th className="px-5 py-3.5 text-center">{lang === 'bn' ? 'লগইন স্ট্যাটাস' : 'Authentication Access'}</th>
+                            <th className="px-5 py-3.5 text-right">{lang === 'bn' ? 'পদক্ষেপ' : 'Quick Actions'}</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-150">
+                          {employees.map((emp, idx) => (
+                            <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
+                              <td className="px-5 py-4">
+                                <div className="flex items-center gap-3">
+                                  <div className="h-8 w-8 rounded-full bg-emerald-50 text-[#025644] flex items-center justify-center font-bold">
+                                    {emp.name.charAt(0)}
+                                  </div>
+                                  <div>
+                                    <p className="font-extrabold text-gray-800">{emp.name}</p>
+                                    <p className="text-[10px] text-gray-400 font-bold mt-0.5">{emp.role}</p>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-5 py-4 font-mono font-medium text-gray-500">{emp.email}</td>
+                              <td className="px-5 py-4">
+                                <p className="font-bold text-gray-700">{lang === 'bn' ? 'আজ, ১০:২৪ মিনিট' : 'Today, 10:24 AM'}</p>
+                                <p className="text-[10px] text-gray-400 font-mono font-bold mt-0.5">IP: 103.245.12.{10 + idx}</p>
+                              </td>
+                              <td className="px-5 py-4 text-center">
+                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black border ${
+                                  emp.status === 'Active'
+                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                                    : 'bg-rose-50 text-rose-700 border-rose-100'
+                                }`}>
+                                  <span className={`h-1.5 w-1.5 rounded-full ${emp.status === 'Active' ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                                  {emp.status === 'Active' ? (lang === 'bn' ? 'অনুমোদিত' : 'Allowed') : (lang === 'bn' ? 'নিষিদ্ধ' : 'Blocked')}
+                                </span>
+                              </td>
+                              <td className="px-5 py-4 text-right">
+                                <button
+                                  onClick={() => {
+                                    setEmployees(prev => prev.map((e, i) => i === idx ? { ...e, status: e.status === 'Active' ? 'Inactive' : 'Active' } : e));
+                                    addAuditLog(`Admin toggled login status for ${emp.name} to ${emp.status === 'Active' ? 'Inactive' : 'Active'}`);
+                                  }}
+                                  className={`px-3 py-1.5 rounded-xl text-[10px] font-black border transition-colors cursor-pointer ${
+                                    emp.status === 'Active'
+                                      ? 'bg-rose-50 border-rose-200 text-rose-600 hover:bg-rose-100'
+                                      : 'bg-emerald-50 border-emerald-200 text-emerald-600 hover:bg-emerald-100'
+                                  }`}
+                                >
+                                  {emp.status === 'Active' ? (lang === 'bn' ? 'লগইন বন্ধ করুন' : 'Deactivate Login') : (lang === 'bn' ? 'লগইন চালু করুন' : 'Activate Login')}
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
