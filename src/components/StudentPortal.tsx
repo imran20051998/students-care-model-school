@@ -637,18 +637,18 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
       }
     }
     return [
-      { id: 'STD-1024', photo: '', name: 'Aarav Hossain', class: '8', section: 'A', roll: '12', group: 'General', guardianName: 'Rashid Hossain', guardianPhone: '+880 1711-223344', status: 'Active', loginActive: true },
-      { id: 'STD-1025', photo: '', name: 'Maya Rahman', class: '6', section: 'B', roll: '05', group: 'General', guardianName: 'Sumi Rahman', guardianPhone: '+880 1712-998877', status: 'Active', loginActive: true },
-      { id: 'STD-1026', photo: '', name: 'Tanvir Ahmed', class: '9', section: 'A', roll: '18', group: 'Science', guardianName: 'Karim Ahmed', guardianPhone: '+880 1718-554433', status: 'Active', loginActive: true },
-      { id: 'STD-1027', photo: '', name: 'Nadia Islam', class: '7', section: 'C', roll: '22', group: 'General', guardianName: 'Lipi Islam', guardianPhone: '+880 1719-112233', status: 'Inactive', loginActive: false, deactivateReason: 'Fees Overdue' },
-      { id: 'STD-1028', photo: '', name: 'Rafiq Karim', class: '10', section: 'B', roll: '03', group: 'Science', guardianName: 'Jamal Karim', guardianPhone: '+880 1722-665544', status: 'Active', loginActive: true },
-      { id: 'STD-1029', photo: '', name: 'Priya Das', class: '5', section: 'A', roll: '09', group: 'General', guardianName: 'Anil Das', guardianPhone: '+880 1731-778899', status: 'Active', loginActive: true },
-      { id: 'STD-1030', photo: '', name: 'Sami Akhter', class: '8', section: 'B', roll: '14', group: 'General', guardianName: 'Nazma Akhter', guardianPhone: '+880 1741-334455', status: 'Active', loginActive: true },
-      { id: 'STD-1031', photo: '', name: 'Imran Hossain', class: '9', section: 'B', roll: '21', group: 'Science', guardianName: 'Bashir Hossain', guardianPhone: '+880 1751-877766', status: 'Inactive', loginActive: false, deactivateReason: 'Academic Suspension' },
-      { id: 'STD-1032', photo: '', name: 'Farhan Masud', class: '7', section: 'B', roll: '07', group: 'General', guardianName: 'Masudur Rahman', guardianPhone: '+880 1761-334455', status: 'Active', loginActive: true },
-      { id: 'STD-1033', photo: '', name: 'Zayan Khan', class: '8', section: 'A', roll: '11', group: 'General', guardianName: 'Shamin Khan', guardianPhone: '+880 1771-889900', status: 'Active', loginActive: true },
-      { id: 'STD-1034', photo: '', name: 'Tasfia Tabassum', class: '6', section: 'C', roll: '15', group: 'General', guardianName: 'Rafiqul Islam', guardianPhone: '+880 1781-445566', status: 'Active', loginActive: true },
-      { id: 'STD-1035', photo: '', name: 'Sadia Afrin', class: '10', section: 'A', roll: '02', group: 'Science', guardianName: 'Selim Afrin', guardianPhone: '+880 1791-223344', status: 'Active', loginActive: true }
+      { id: 'STD-1024', photo: '', name: 'Aarav Hossain', class: '8', section: 'A', roll: '12', group: 'General', guardianName: 'Rashid Hossain', guardianPhone: '+880 1711-223344', status: 'Active', loginActive: true, bloodGroup: 'O+', birthRegistration: '20121511613012345', fatherName: 'Rashid Hossain', motherName: 'Sultana Begum', fatherNid: '5541234567', motherNid: '5541234568', presentAddress: 'Charlakshya, Karnaphuli, Chattogram', permanentAddress: 'Charlakshya, Karnaphuli, Chattogram', dob: '2012-05-15', gender: 'Male' },
+      { id: 'STD-1025', photo: '', name: 'Maya Rahman', class: '6', section: 'B', roll: '05', group: 'General', guardianName: 'Sumi Rahman', guardianPhone: '+880 1712-998877', status: 'Active', loginActive: true, bloodGroup: 'A+', birthRegistration: '20141511613012999', fatherName: 'Fazlur Rahman', motherName: 'Sumi Rahman', fatherNid: '5541234511', motherNid: '5541234512', presentAddress: 'Charlakshya Road, Karnaphuli, Chattogram', permanentAddress: 'Charlakshya Road, Karnaphuli, Chattogram', dob: '2014-08-20', gender: 'Female' },
+      { id: 'STD-1026', photo: '', name: 'Tanvir Ahmed', class: '9', section: 'A', roll: '18', group: 'Science', guardianName: 'Karim Ahmed', guardianPhone: '+880 1718-554433', status: 'Active', loginActive: true, bloodGroup: 'B+', birthRegistration: '20111511613012888', fatherName: 'Karim Ahmed', motherName: 'Taslima Begum', fatherNid: '5541234521', motherNid: '5541234522', presentAddress: 'Ichanagar, Karnaphuli, Chattogram', permanentAddress: 'Mirkhas, Patiya, Chattogram', dob: '2011-03-10', gender: 'Male' },
+      { id: 'STD-1027', photo: '', name: 'Nadia Islam', class: '7', section: 'C', roll: '22', group: 'General', guardianName: 'Lipi Islam', guardianPhone: '+880 1719-112233', status: 'Inactive', loginActive: false, deactivateReason: 'Fees Overdue', bloodGroup: 'AB+', birthRegistration: '20131511613012777', fatherName: 'Mofizul Islam', motherName: 'Lipi Islam', fatherNid: '5541234531', motherNid: '5541234532', presentAddress: 'Julodha, Karnaphuli, Chattogram', permanentAddress: 'Julodha, Karnaphuli, Chattogram', dob: '2013-11-22', gender: 'Female' },
+      { id: 'STD-1028', photo: '', name: 'Rafiq Karim', class: '10', section: 'B', roll: '03', group: 'Science', guardianName: 'Jamal Karim', guardianPhone: '+880 1722-665544', status: 'Active', loginActive: true, bloodGroup: 'O-', birthRegistration: '20101511613012666', fatherName: 'Jamal Karim', motherName: 'Nazmun Nahar', fatherNid: '5541234541', motherNid: '5541234542', presentAddress: 'Charlakshya Bazar, Karnaphuli, Chattogram', permanentAddress: 'Anwara, Chattogram', dob: '2010-01-05', gender: 'Male' },
+      { id: 'STD-1029', photo: '', name: 'Priya Das', class: '5', section: 'A', roll: '09', group: 'General', guardianName: 'Anil Das', guardianPhone: '+880 1731-778899', status: 'Active', loginActive: true, bloodGroup: 'B-', birthRegistration: '20151511613012555', fatherName: 'Anil Das', motherName: 'Saraswati Das', fatherNid: '5541234551', motherNid: '5541234552', presentAddress: 'Dangarchar, Karnaphuli, Chattogram', permanentAddress: 'Dangarchar, Karnaphuli, Chattogram', dob: '2015-06-18', gender: 'Female' },
+      { id: 'STD-1030', photo: '', name: 'Sami Akhter', class: '8', section: 'B', roll: '14', group: 'General', guardianName: 'Nazma Akhter', guardianPhone: '+880 1741-334455', status: 'Active', loginActive: true, bloodGroup: 'A-', birthRegistration: '20121511613012444', fatherName: 'Shamsul Alam', motherName: 'Nazma Akhter', fatherNid: '5541234561', motherNid: '5541234562', presentAddress: 'Charlakshya, Karnaphuli, Chattogram', permanentAddress: 'Charlakshya, Karnaphuli, Chattogram', dob: '2012-09-12', gender: 'Male' },
+      { id: 'STD-1031', photo: '', name: 'Imran Hossain', class: '9', section: 'B', roll: '21', group: 'Science', guardianName: 'Bashir Hossain', guardianPhone: '+880 1751-877766', status: 'Inactive', loginActive: false, deactivateReason: 'Academic Suspension', bloodGroup: 'AB-', birthRegistration: '20111511613012333', fatherName: 'Bashir Hossain', motherName: 'Fatema Begum', fatherNid: '5541234571', motherNid: '5541234572', presentAddress: 'Sikalbaha, Karnaphuli, Chattogram', permanentAddress: 'Sikalbaha, Karnaphuli, Chattogram', dob: '2011-12-01', gender: 'Male' },
+      { id: 'STD-1032', photo: '', name: 'Farhan Masud', class: '7', section: 'B', roll: '07', group: 'General', guardianName: 'Masudur Rahman', guardianPhone: '+880 1761-334455', status: 'Active', loginActive: true, bloodGroup: 'O+', birthRegistration: '20131511613012222', fatherName: 'Masudur Rahman', motherName: 'Israt Jahan', fatherNid: '5541234581', motherNid: '5541234582', presentAddress: 'Charlakshya Block C, Karnaphuli, Chattogram', permanentAddress: 'Sandwip, Chattogram', dob: '2013-04-15', gender: 'Male' },
+      { id: 'STD-1033', photo: '', name: 'Zayan Khan', class: '8', section: 'A', roll: '11', group: 'General', guardianName: 'Shamin Khan', guardianPhone: '+880 1771-889900', status: 'Active', loginActive: true, bloodGroup: 'A+', birthRegistration: '20121511613012111', fatherName: 'Shamin Khan', motherName: 'Nusrat Jahan', fatherNid: '5541234591', motherNid: '5541234592', presentAddress: 'Ichanagar, Karnaphuli, Chattogram', permanentAddress: 'Ichanagar, Karnaphuli, Chattogram', dob: '2012-02-28', gender: 'Male' },
+      { id: 'STD-1034', photo: '', name: 'Tasfia Tabassum', class: '6', section: 'C', roll: '15', group: 'General', guardianName: 'Rafiqul Islam', guardianPhone: '+880 1781-445566', status: 'Active', loginActive: true, bloodGroup: 'B+', birthRegistration: '20141511613012000', fatherName: 'Rafiqul Islam', motherName: 'Shahana Begum', fatherNid: '5541234501', motherNid: '5541234502', presentAddress: 'Julodha Union, Karnaphuli, Chattogram', permanentAddress: 'Julodha Union, Karnaphuli, Chattogram', dob: '2014-10-05', gender: 'Female' },
+      { id: 'STD-1035', photo: '', name: 'Sadia Afrin', class: '10', section: 'A', roll: '02', group: 'Science', guardianName: 'Selim Afrin', guardianPhone: '+880 1791-223344', status: 'Active', loginActive: true, bloodGroup: 'O+', birthRegistration: '20101511613012456', fatherName: 'Selim Afrin', motherName: 'Rina Afrin', fatherNid: '5541234611', motherNid: '5541234612', presentAddress: 'Charlakshya Road, Karnaphuli, Chattogram', permanentAddress: 'Patiya, Chattogram', dob: '2010-07-25', gender: 'Female' }
     ];
   });
 
@@ -969,6 +969,8 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
   // Add Student Form States
   const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
   const [studentPhotoFile, setStudentPhotoFile] = useState<File | null>(null);
+  const [viewingStudentDetails, setViewingStudentDetails] = useState<any | null>(null);
+  const [viewingAdmissionForm, setViewingAdmissionForm] = useState<any | null>(null);
   
   // Edit Student Form States
   const [isEditStudentModalOpen, setIsEditStudentModalOpen] = useState(false);
@@ -5547,17 +5549,9 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
                                     <td className="py-3 px-4">
                                       <div className="flex items-center justify-center gap-1.5">
                                         <button 
-                                          title="View"
+                                          title={lang === 'bn' ? "শিক্ষার্থীর তথ্য দেখুন" : "View Student Details"}
                                           onClick={() => {
-                                            setIdCardData({
-                                              name: std.name,
-                                              roll: std.roll,
-                                              className: `Class ${std.class}`,
-                                              phone: std.guardianPhone,
-                                              bloodGroup: std.group === 'Science' ? 'B+' : 'O+',
-                                              photoUrl: std.photo
-                                            });
-                                            setAdminActiveTab('card');
+                                            setViewingStudentDetails(std);
                                           }}
                                           className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-[#025644] rounded-lg transition-colors cursor-pointer"
                                         >
@@ -14435,6 +14429,735 @@ class PageSectionController extends Controller {
           </div>
         )}
 
+        {/* VIEW STUDENT DETAILS MODAL */}
+        {viewingStudentDetails && (
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-[9999] p-4 text-left">
+            <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-3xl flex flex-col max-h-[92vh] overflow-hidden border border-slate-100">
+              
+              {/* Modal Header */}
+              <div className="p-6 pb-4 border-b border-slate-100 flex items-start justify-between bg-white shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 bg-emerald-50 rounded-xl flex items-center justify-center text-[#025644]">
+                    <User className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-extrabold text-slate-900 tracking-tight">
+                      {lang === 'bn' ? 'শিক্ষার্থীর বিস্তারিত তথ্য' : 'Student Full Profile Details'}
+                    </h3>
+                    <p className="text-xs text-slate-500 font-bold mt-1">
+                      {lang === 'bn' ? 'ডাটাবেজে সংরক্ষিত শিক্ষার্থীর বিস্তারিত তথ্য বিবরণী' : "Database record of student's personal, academic, and guardian parameters."}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setViewingStudentDetails(null)}
+                  className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded-xl transition-all cursor-pointer"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Scrollable Content */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-[#fcfdfe]">
+                
+                {/* Visual Header Grid */}
+                <div className="bg-gradient-to-r from-[#025644]/5 to-transparent border border-[#e2f2ef] rounded-2xl p-5 flex flex-col sm:flex-row items-center gap-5">
+                  <div className="h-24 w-24 bg-white rounded-2xl border border-gray-200 shadow-3xs overflow-hidden shrink-0 flex items-center justify-center">
+                    {viewingStudentDetails.photo ? (
+                      <img src={viewingStudentDetails.photo} alt={viewingStudentDetails.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <User className="h-12 w-12 text-[#025644]/40" />
+                    )}
+                  </div>
+                  <div className="grow text-center sm:text-left space-y-1">
+                    <h4 className="text-xl font-black text-slate-900">{viewingStudentDetails.name}</h4>
+                    <p className="text-xs font-bold text-gray-500">
+                      ID: <span className="font-mono text-[#025644] font-black">{viewingStudentDetails.id}</span> • {lang === 'bn' ? 'শ্রেণি:' : 'Class:'} {viewingStudentDetails.class} • {lang === 'bn' ? 'শাখা:' : 'Section:'} {viewingStudentDetails.section}
+                    </p>
+                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-2">
+                      <span className="px-2 py-0.5 bg-rose-50 text-rose-600 border border-rose-100 text-[10px] font-black rounded-md">
+                        🩸 {lang === 'bn' ? 'রক্তের গ্রুপ:' : 'Blood Group:'} {viewingStudentDetails.bloodGroup || 'O+'}
+                      </span>
+                      <span className="px-2 py-0.5 bg-blue-50 text-blue-600 border border-blue-100 text-[10px] font-black rounded-md">
+                        🔑 {lang === 'bn' ? 'রোল:' : 'Roll:'} {viewingStudentDetails.roll}
+                      </span>
+                      <span className={`px-2 py-0.5 text-[10px] font-black rounded-md border ${
+                        viewingStudentDetails.status === 'Active'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                          : 'bg-rose-50 text-rose-700 border-rose-100'
+                      }`}>
+                        {viewingStudentDetails.status}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 1: Academic & Registry info */}
+                <div className="bg-white border border-slate-100 rounded-2xl p-5 space-y-4 shadow-3xs">
+                  <h4 className="font-extrabold text-[#025644] text-xs uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-100 pb-2">
+                    <span>📋</span> {lang === 'bn' ? 'একাডেমিক ও রেজিস্ট্রেশন তথ্য' : 'Academic & Registry Specifications'}
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                    <div className="flex justify-between py-1.5 border-b border-slate-50">
+                      <span className="text-gray-400 font-bold">{lang === 'bn' ? 'জন্ম নিবন্ধন নম্বর:' : 'Birth Registration No:'}</span>
+                      <span className="font-mono font-black text-slate-800">{viewingStudentDetails.birthRegistration || 'N/A'}</span>
+                    </div>
+                    <div className="flex justify-between py-1.5 border-b border-slate-50">
+                      <span className="text-gray-400 font-bold">{lang === 'bn' ? 'জন্ম তারিখ:' : 'Date of Birth:'}</span>
+                      <span className="font-extrabold text-slate-800">{viewingStudentDetails.dob || 'N/A'}</span>
+                    </div>
+                    <div className="flex justify-between py-1.5 border-b border-slate-50">
+                      <span className="text-gray-400 font-bold">{lang === 'bn' ? 'লিঙ্গ:' : 'Gender:'}</span>
+                      <span className="font-extrabold text-slate-800">{viewingStudentDetails.gender || 'N/A'}</span>
+                    </div>
+                    <div className="flex justify-between py-1.5 border-b border-slate-50">
+                      <span className="text-gray-400 font-bold">{lang === 'bn' ? 'গ্রুপ / বিভাগ:' : 'Group / Department:'}</span>
+                      <span className="font-extrabold text-slate-800">{viewingStudentDetails.group || 'General'}</span>
+                    </div>
+                    <div className="flex justify-between py-1.5 border-b border-slate-50">
+                      <span className="text-gray-400 font-bold">{lang === 'bn' ? 'ধর্ম:' : 'Religion:'}</span>
+                      <span className="font-extrabold text-slate-800">{viewingStudentDetails.religion || 'Islam'}</span>
+                    </div>
+                    <div className="flex justify-between py-1.5 border-b border-slate-50">
+                      <span className="text-gray-400 font-bold">{lang === 'bn' ? 'জাতীয়তা:' : 'Nationality:'}</span>
+                      <span className="font-extrabold text-slate-800">{viewingStudentDetails.nationality || 'বাংলাদেশী'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 2: Parents & Guardian info */}
+                <div className="bg-white border border-slate-100 rounded-2xl p-5 space-y-4 shadow-3xs">
+                  <h4 className="font-extrabold text-[#025644] text-xs uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-100 pb-2">
+                    <span>👨‍👩‍👦</span> {lang === 'bn' ? 'পিতা, মাতা ও অভিভাবক বিবরণ' : "Parents' & Guardian Parameters"}
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                    <div className="flex justify-between py-1.5 border-b border-slate-50">
+                      <span className="text-gray-400 font-bold">{lang === 'bn' ? 'পিতার নাম:' : "Father's Name:"}</span>
+                      <span className="font-extrabold text-slate-800">{viewingStudentDetails.fatherName || 'N/A'}</span>
+                    </div>
+                    <div className="flex justify-between py-1.5 border-b border-slate-50">
+                      <span className="text-gray-400 font-bold">{lang === 'bn' ? 'পিতার এনআইডি (NID):' : "Father's NID:"}</span>
+                      <span className="font-mono font-black text-slate-800">{viewingStudentDetails.fatherNid || 'N/A'}</span>
+                    </div>
+                    <div className="flex justify-between py-1.5 border-b border-slate-50">
+                      <span className="text-gray-400 font-bold">{lang === 'bn' ? 'মাতার নাম:' : "Mother's Name:"}</span>
+                      <span className="font-extrabold text-slate-800">{viewingStudentDetails.motherName || 'N/A'}</span>
+                    </div>
+                    <div className="flex justify-between py-1.5 border-b border-slate-50">
+                      <span className="text-gray-400 font-bold">{lang === 'bn' ? 'মাতার এনআইডি (NID):' : "Mother's NID:"}</span>
+                      <span className="font-mono font-black text-slate-800">{viewingStudentDetails.motherNid || 'N/A'}</span>
+                    </div>
+                    <div className="flex justify-between py-1.5 border-b border-slate-50 md:col-span-2">
+                      <span className="text-gray-400 font-bold">{lang === 'bn' ? 'পছন্দসই অভিভাবক:' : 'Guardian Name:'}</span>
+                      <span className="font-extrabold text-slate-800">
+                        {viewingStudentDetails.guardianName || 'N/A'} {viewingStudentDetails.relationWithGuardian ? `(${viewingStudentDetails.relationWithGuardian})` : ''}
+                      </span>
+                    </div>
+                    <div className="flex justify-between py-1.5 border-b border-slate-50 md:col-span-2">
+                      <span className="text-gray-400 font-bold">{lang === 'bn' ? 'যোগাযোগ মোবাইল:' : 'Contact Mobile:'}</span>
+                      <span className="font-mono font-black text-[#025644]">{viewingStudentDetails.guardianPhone || 'N/A'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 3: Addresses details */}
+                <div className="bg-white border border-slate-100 rounded-2xl p-5 space-y-4 shadow-3xs">
+                  <h4 className="font-extrabold text-[#025644] text-xs uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-100 pb-2">
+                    <span>📍</span> {lang === 'bn' ? 'ঠিকানা ও অবস্থান বিবরণী' : 'Address & Location Registry'}
+                  </h4>
+                  <div className="space-y-3 text-xs">
+                    <div className="py-1 border-b border-slate-50">
+                      <p className="text-gray-400 font-bold mb-1">{lang === 'bn' ? 'বর্তমান ঠিকানা (Present Address):' : 'Present Address:'}</p>
+                      <p className="font-extrabold text-slate-800 bg-slate-50/50 p-2.5 rounded-xl border border-slate-100 leading-relaxed">
+                        {viewingStudentDetails.presentAddress || 'Charlakshya, Karnaphuli, Chattogram'}
+                      </p>
+                    </div>
+                    <div className="py-1">
+                      <p className="text-gray-400 font-bold mb-1">{lang === 'bn' ? 'স্থায়ী ঠিকানা (Permanent Address):' : 'Permanent Address:'}</p>
+                      <p className="font-extrabold text-slate-800 bg-slate-50/50 p-2.5 rounded-xl border border-slate-100 leading-relaxed">
+                        {viewingStudentDetails.permanentAddress || 'Charlakshya, Karnaphuli, Chattogram'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 4: Previous Education details */}
+                {(viewingStudentDetails.prevSchool || viewingStudentDetails.prevClass) && (
+                  <div className="bg-white border border-slate-100 rounded-2xl p-5 space-y-4 shadow-3xs">
+                    <h4 className="font-extrabold text-[#025644] text-xs uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-100 pb-2">
+                      <span>🏫</span> {lang === 'bn' ? 'পূর্ববর্তী শিক্ষাগত বিবরণ' : 'Previous Educational Records'}
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                      <div className="flex flex-col gap-1 py-1">
+                        <span className="text-gray-400 font-bold">{lang === 'bn' ? 'পূর্ববর্তী বিদ্যালয়:' : 'Prev. School:'}</span>
+                        <span className="font-extrabold text-slate-800">{viewingStudentDetails.prevSchool || 'N/A'}</span>
+                      </div>
+                      <div className="flex flex-col gap-1 py-1">
+                        <span className="text-gray-400 font-bold">{lang === 'bn' ? 'পূর্ববর্তী শ্রেণি:' : 'Prev. Class:'}</span>
+                        <span className="font-extrabold text-slate-800">{viewingStudentDetails.prevClass || 'N/A'}</span>
+                      </div>
+                      <div className="flex flex-col gap-1 py-1">
+                        <span className="text-gray-400 font-bold">{lang === 'bn' ? 'পূর্ববর্তী রোল নম্বর:' : 'Prev. Roll:'}</span>
+                        <span className="font-mono font-black text-slate-800">{viewingStudentDetails.prevRoll || 'N/A'}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+              </div>
+
+              {/* Modal Footer */}
+              <div className="p-6 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap bg-white shrink-0">
+                <div className="flex gap-2 flex-wrap">
+                  <button
+                    onClick={() => {
+                      setIdCardData({
+                        name: viewingStudentDetails.name,
+                        roll: viewingStudentDetails.roll,
+                        className: `Class ${viewingStudentDetails.class}`,
+                        phone: viewingStudentDetails.guardianPhone,
+                        bloodGroup: viewingStudentDetails.bloodGroup || 'O+',
+                        photoUrl: viewingStudentDetails.photo
+                      });
+                      setAdminActiveTab('card');
+                      setViewingStudentDetails(null);
+                    }}
+                    className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs rounded-full transition-all cursor-pointer shadow-3xs flex items-center gap-1.5"
+                  >
+                    💳 {lang === 'bn' ? 'আইডি কার্ড তৈরি করুন' : 'Generate ID Card'}
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setViewingAdmissionForm(viewingStudentDetails);
+                      setViewingStudentDetails(null);
+                    }}
+                    className="px-4 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-[#025644] font-extrabold text-xs rounded-full transition-all cursor-pointer shadow-3xs flex items-center gap-1.5 border border-emerald-100"
+                  >
+                    📝 {lang === 'bn' ? 'ভর্তি ফরম ডাউনলোড / প্রিন্ট' : 'Admission Form Download/Print'}
+                  </button>
+                </div>
+                
+                <button
+                  onClick={() => setViewingStudentDetails(null)}
+                  className="px-6 py-2.5 bg-[#025644] hover:bg-[#01352a] text-white font-extrabold text-xs rounded-full transition-all cursor-pointer shadow-2xs"
+                >
+                  {lang === 'bn' ? 'বন্ধ করুন' : 'Close'}
+                </button>
+              </div>
+
+            </div>
+          </div>
+        )}
+
+        {/* VIEW ADMISSION FORM DOWNLOAD / PRINT MODAL */}
+        {viewingAdmissionForm && (() => {
+          const getRelationBn = (relation: string | undefined | null) => {
+            if (!relation) return 'পিতা';
+            const rel = relation.toLowerCase().trim();
+            if (rel === 'father' || rel === 'pita' || rel === 'বাবা' || rel === 'পিতা') return 'পিতা';
+            if (rel === 'mother' || rel === 'mata' || rel === 'মা' || rel === 'মাতা') return 'মাতা';
+            if (rel === 'brother' || rel === 'ভাই') return 'ভাই';
+            if (rel === 'sister' || rel === 'বোন') return 'বোন';
+            if (rel === 'uncle' || rel === 'চাচা' || rel === 'মামা') return 'চাচা/মামা';
+            return relation;
+          };
+
+          const getProfessionBn = (prof: string | undefined | null) => {
+            if (!prof) return 'ব্যবসায়ী';
+            const p = prof.toLowerCase().trim();
+            if (p === 'business' || p === 'businessman' || p === 'ব্যবসা' || p === 'ব্যবসায়ী') return 'ব্যবসায়ী';
+            if (p === 'service' || p === 'job' || p === 'চাকরি' || p === 'চাকরিজীবী') return 'চাকরিজীবী';
+            if (p === 'farmer' || p === 'কৃষি' || p === 'কৃষক') return 'কৃষক';
+            if (p === 'teacher' || p === 'শিক্ষক') return 'শিক্ষক';
+            if (p === 'doctor' || p === 'চিকিৎসক') return 'চিকিৎসক';
+            if (p === 'housewife' || p === 'গৃহিণী') return 'গৃহিণী';
+            return prof;
+          };
+
+          const getReligionBn = (rel: string | undefined | null) => {
+            if (!rel) return 'ইসলাম';
+            const r = rel.toLowerCase().trim();
+            if (r === 'islam' || r === 'muslim' || r === 'ইসলাম') return 'ইসলাম';
+            if (r === 'hindu' || r === 'hinduism' || r === 'হিন্দু') return 'হিন্দু';
+            if (r === 'buddha' || r === 'buddhist' || r === 'বৌদ্ধ') return 'বৌদ্ধ';
+            if (r === 'christian' || r === 'খ্রিস্টান') return 'খ্রিস্টান';
+            return rel;
+          };
+
+          const toLocalBanglaDigits = (numStr: string | number | undefined | null) => {
+            if (numStr === undefined || numStr === null) return '';
+            const banglaDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+            return String(numStr).replace(/[0-9]/g, (digit) => banglaDigits[parseInt(digit)]);
+          };
+
+          const formatLocalToBanglaDate = (dateStr: string | undefined | null) => {
+            if (!dateStr) return '';
+            const parts = dateStr.split('-');
+            if (parts.length === 3) {
+              const formatted = `${parts[2]}/${parts[1]}/${parts[0]}`;
+              return toLocalBanglaDigits(formatted);
+            }
+            return toLocalBanglaDigits(dateStr);
+          };
+
+          const handlePrintAdmissionForm = () => {
+            const printContent = document.getElementById('printable-admission-form')?.innerHTML;
+            if (!printContent) return;
+            
+            const iframe = document.createElement('iframe');
+            iframe.style.position = 'absolute';
+            iframe.style.width = '0px';
+            iframe.style.height = '0px';
+            iframe.style.border = 'none';
+            document.body.appendChild(iframe);
+            
+            const doc = iframe.contentWindow?.document;
+            if (doc) {
+              doc.open();
+              doc.write(`
+                <html>
+                  <head>
+                    <title>Admission Form - ${viewingAdmissionForm.name}</title>
+                    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+                    <script src="https://cdn.tailwindcss.com"></script>
+                    <style>
+                      body {
+                        font-family: 'Hind Siliguri', sans-serif;
+                        background-color: white;
+                        color: black;
+                        padding: 10px;
+                        margin: 0;
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                      }
+                      @page {
+                        size: A4;
+                        margin: 15mm;
+                      }
+                    </style>
+                  </head>
+                  <body class="bg-white">
+                    <div class="w-full max-w-[800px] mx-auto p-4 bg-white">
+                      ${printContent}
+                    </div>
+                    <script>
+                      window.onload = function() {
+                        window.focus();
+                        setTimeout(function() {
+                          window.print();
+                          setTimeout(function() {
+                            window.parent.document.body.removeChild(window.frameElement);
+                          }, 500);
+                        }, 300);
+                      };
+                    </script>
+                  </body>
+                </html>
+              `);
+              doc.close();
+            }
+          };
+
+          return (
+            <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-[9999] p-4 text-left">
+              <div className="bg-slate-100 rounded-[32px] shadow-2xl w-full max-w-4xl flex flex-col max-h-[96vh] overflow-hidden border border-slate-200">
+                
+                {/* Control Header (Top Bar) */}
+                <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-white shrink-0">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 bg-rose-50 rounded-xl flex items-center justify-center text-rose-600">
+                      <Printer className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-black text-slate-900 tracking-tight">
+                        {lang === 'bn' ? 'অফিসিয়াল ভর্তি ফরম প্রিন্ট প্রিভিউ' : 'Official Admission Form Print Preview'}
+                      </h3>
+                      <p className="text-xs text-slate-500 font-bold mt-0.5">
+                        {lang === 'bn' ? 'স্টুডেন্টস কেয়ার মডেল স্কুলের ভর্তি ফরম জেনারেটর' : 'Students Care Model School admission form output configuration'}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handlePrintAdmissionForm}
+                      className="px-5 py-2.5 bg-[#025644] hover:bg-[#01352a] text-white font-black text-xs rounded-full transition-all cursor-pointer shadow-md flex items-center gap-2"
+                    >
+                      <Printer className="h-4 w-4 animate-pulse" />
+                      {lang === 'bn' ? 'প্রিন্ট / পিডিএফ ডাউনলোড' : 'Print / Download PDF'}
+                    </button>
+
+                    <button
+                      onClick={() => setViewingAdmissionForm(null)}
+                      className="p-2.5 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded-xl transition-all cursor-pointer border border-slate-200"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Printable Form Canvas / Viewer */}
+                <div className="flex-1 overflow-y-auto p-8 flex justify-center bg-slate-200/50">
+                  <div className="w-full max-w-[800px] bg-white shadow-xl rounded-2xl p-8 border border-slate-300 relative overflow-hidden" style={{ minHeight: '1120px' }}>
+                    
+                    {/* Inner Content Component (Shared with print iframe) */}
+                    <div id="printable-admission-form" className="text-slate-800 space-y-5 bg-white select-none">
+                      
+                      {/* Bismillahir Rahmanir Rahim */}
+                      <div className="text-center font-bold text-[12px] text-slate-500 tracking-wide">
+                        বিসমিল্লাহির রাহমানির রাহিম
+                      </div>
+
+                      {/* Header Layout */}
+                      <div className="flex items-start justify-between gap-4 border-b-2 border-[#025644] pb-4">
+                        
+                        {/* School Circular Logo */}
+                        <div className="shrink-0">
+                          <svg className="w-20 h-20" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="50" cy="50" r="46" stroke="#025644" strokeWidth="4" fill="#ffffff" />
+                            <circle cx="50" cy="50" r="40" stroke="#E11D48" strokeWidth="1.5" strokeDasharray="3 3" />
+                            <circle cx="50" cy="50" r="37" fill="#025644" />
+                            <circle cx="50" cy="50" r="29" fill="#ffffff" />
+                            <path d="M50 34 L63 43 V57 L50 66 L37 57 V43 Z" fill="#ffffff" stroke="#E11D48" strokeWidth="2.5" />
+                            <text x="50" y="50" fill="#025644" fontWeight="900" fontSize="10" textAnchor="middle" fontFamily="sans-serif">S C</text>
+                            <text x="50" y="58" fill="#025644" fontWeight="900" fontSize="8" textAnchor="middle" fontFamily="sans-serif">M S</text>
+                            <circle cx="50" cy="14" r="2.5" fill="#E11D48" />
+                            <circle cx="14" cy="50" r="2.5" fill="#E11D48" />
+                            <circle cx="86" cy="50" r="2.5" fill="#E11D48" />
+                            <circle cx="50" cy="86" r="2.5" fill="#E11D48" />
+                          </svg>
+                        </div>
+
+                        {/* Middle Text Details */}
+                        <div className="grow text-center space-y-1">
+                          <h1 className="text-3xl font-black text-[#E11D48] tracking-tight" style={{ fontFamily: "'Hind Siliguri', sans-serif" }}>
+                            {frontendData?.settings?.siteNameBn || 'স্টুডেন্টস কেয়ার মডেল স্কুল'}
+                          </h1>
+                          <h2 className="text-sm font-black text-blue-700 tracking-widest" style={{ fontFamily: "monospace, sans-serif" }}>
+                            {frontendData?.settings?.siteNameEn || 'STUDENTS CARE MODEL SCHOOL'}
+                          </h2>
+                          <p className="text-[11px] font-black text-slate-500" style={{ fontFamily: "'Hind Siliguri', sans-serif" }}>
+                            {frontendData?.settings?.addressBn || 'চরলক্ষ্যা, কর্ণফুলী, চট্টগ্রাম'}
+                          </p>
+                          <p className="text-[11px] font-black text-slate-500" style={{ fontFamily: "'Hind Siliguri', sans-serif" }}>
+                            মোবাইল: {toLocalBanglaDigits(frontendData?.settings?.helpline || '০১৮১২-৬০৬১৪৯, ০১৮১১-৮১৩৭২৬')}
+                          </p>
+                        </div>
+
+                        {/* Top-Right Applicant Photo Container */}
+                        <div className="shrink-0">
+                          <div className="w-24 h-28 border-2 border-dashed border-blue-400 rounded-lg flex flex-col items-center justify-center bg-blue-50/10 relative overflow-hidden">
+                            {viewingAdmissionForm.photo ? (
+                              <img src={viewingAdmissionForm.photo} alt={viewingAdmissionForm.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="text-center space-y-1">
+                                <span className="text-blue-400/80 font-black text-[11px] block">ছবি</span>
+                                <span className="text-[8px] text-blue-400/60 block font-bold">Passport Size</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                      </div>
+
+                      {/* Pink Pill Header for Admission Form */}
+                      <div className="flex justify-center">
+                        <div className="px-10 py-1 bg-rose-600 text-white font-black text-xs rounded-full border border-rose-500 uppercase tracking-widest shadow-2xs">
+                          ভর্তি ফরম
+                        </div>
+                      </div>
+
+                      {/* Core Form Fields Grid */}
+                      <div className="space-y-4 text-xs font-bold leading-loose text-slate-800">
+                        
+                        {/* Serial Number Row */}
+                        <div className="flex justify-between items-center pb-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-extrabold text-slate-800 text-[13px]">ক্রমিক নং-</span>
+                            <span className="font-mono font-black text-rose-600 text-sm border-b border-dotted border-rose-400 px-3 pb-0.5">{viewingAdmissionForm.id}</span>
+                          </div>
+                          <div className="text-slate-500 text-[10px] font-black">
+                            ভর্তি শিক্ষাবর্ষ: {toLocalBanglaDigits('২০২৬-২০২৭')}
+                          </div>
+                        </div>
+
+                        {/* 1. Student Name */}
+                        <div className="flex items-end gap-1.5">
+                          <span className="font-black text-slate-800 shrink-0">১। ছাত্র/ছাত্রীর নাম :</span>
+                          <div className="grow border-b border-dotted border-gray-400 font-extrabold text-slate-900 px-3 pb-0.5 text-[13px] tracking-tight">
+                            {viewingAdmissionForm.name}
+                          </div>
+                        </div>
+
+                        {/* Birth date & Birth Registration */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="flex items-end gap-1.5">
+                            <span className="font-black text-slate-800 shrink-0">জন্ম তারিখ :</span>
+                            <div className="grow border-b border-dotted border-gray-400 px-3 pb-0.5 text-slate-900">
+                              {formatLocalToBanglaDate(viewingAdmissionForm.dob)}
+                            </div>
+                          </div>
+                          <div className="flex items-end gap-1.5">
+                            <span className="font-black text-slate-800 shrink-0">অনলাইন জন্মনিবন্ধন নং :</span>
+                            <div className="grow border-b border-dotted border-gray-400 px-3 pb-0.5 font-mono text-slate-900">
+                              {toLocalBanglaDigits(viewingAdmissionForm.birthRegistration) || toLocalBanglaDigits('N/A')}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 2. Father Info Row */}
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+                          <div className="flex items-end gap-1.5 md:col-span-6">
+                            <span className="font-black text-slate-800 shrink-0">২। পিতার নাম :</span>
+                            <div className="grow border-b border-dotted border-gray-400 px-3 pb-0.5 text-slate-900">
+                              {viewingAdmissionForm.fatherName || 'N/A'}
+                            </div>
+                          </div>
+                          <div className="flex items-end gap-1.5 md:col-span-3">
+                            <span className="font-black text-slate-800 shrink-0">পেশা :</span>
+                            <div className="grow border-b border-dotted border-gray-400 px-3 pb-0.5 text-slate-900">
+                              {getProfessionBn(viewingAdmissionForm.fatherProfession)}
+                            </div>
+                          </div>
+                          <div className="flex items-end gap-1.5 md:col-span-3">
+                            <span className="font-black text-slate-800 shrink-0">মোবাইল নং :</span>
+                            <div className="grow border-b border-dotted border-gray-400 px-3 pb-0.5 font-mono text-slate-900">
+                              {toLocalBanglaDigits(viewingAdmissionForm.fatherMobile || viewingAdmissionForm.guardianPhone)}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Father NID and DOB */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="flex items-end gap-1.5">
+                            <span className="font-black text-slate-800 shrink-0">জন্ম তারিখ :</span>
+                            <div className="grow border-b border-dotted border-gray-400 px-3 pb-0.5 text-slate-900">
+                              {formatLocalToBanglaDate(viewingAdmissionForm.fatherDob || 'N/A')}
+                            </div>
+                          </div>
+                          <div className="flex items-end gap-1.5">
+                            <span className="font-black text-slate-800 shrink-0">জাতীয় পরিচয় পত্র নং :</span>
+                            <div className="grow border-b border-dotted border-gray-400 px-3 pb-0.5 font-mono text-slate-900">
+                              {toLocalBanglaDigits(viewingAdmissionForm.fatherNid) || toLocalBanglaDigits('N/A')}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 3. Mother Info Row */}
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+                          <div className="flex items-end gap-1.5 md:col-span-6">
+                            <span className="font-black text-slate-800 shrink-0">৩। মাতার নাম :</span>
+                            <div className="grow border-b border-dotted border-gray-400 px-3 pb-0.5 text-slate-900">
+                              {viewingAdmissionForm.motherName || 'N/A'}
+                            </div>
+                          </div>
+                          <div className="flex items-end gap-1.5 md:col-span-3">
+                            <span className="font-black text-slate-800 shrink-0">পেশা :</span>
+                            <div className="grow border-b border-dotted border-gray-400 px-3 pb-0.5 text-slate-900">
+                              {getProfessionBn(viewingAdmissionForm.motherProfession) || 'গৃহিণী'}
+                            </div>
+                          </div>
+                          <div className="flex items-end gap-1.5 md:col-span-3">
+                            <span className="font-black text-slate-800 shrink-0">মোবাইল নং :</span>
+                            <div className="grow border-b border-dotted border-gray-400 px-3 pb-0.5 font-mono text-slate-900">
+                              {toLocalBanglaDigits(viewingAdmissionForm.motherMobile) || toLocalBanglaDigits('N/A')}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Mother NID and DOB */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="flex items-end gap-1.5">
+                            <span className="font-black text-slate-800 shrink-0">জন্ম তারিখ :</span>
+                            <div className="grow border-b border-dotted border-gray-400 px-3 pb-0.5 text-slate-900">
+                              {formatLocalToBanglaDate(viewingAdmissionForm.motherDob || 'N/A')}
+                            </div>
+                          </div>
+                          <div className="flex items-end gap-1.5">
+                            <span className="font-black text-slate-800 shrink-0">জাতীয় পরিচয় পত্র নং :</span>
+                            <div className="grow border-b border-dotted border-gray-400 px-3 pb-0.5 font-mono text-slate-900">
+                              {toLocalBanglaDigits(viewingAdmissionForm.motherNid) || toLocalBanglaDigits('N/A')}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 4. Address: Care Of and Village */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="flex items-end gap-1.5">
+                            <span className="font-black text-slate-800 shrink-0">৪। ঠিকানা : প্রযত্নে :</span>
+                            <div className="grow border-b border-dotted border-gray-400 px-3 pb-0.5 text-slate-900">
+                              {viewingAdmissionForm.careOf || viewingAdmissionForm.fatherName || viewingAdmissionForm.guardianName || 'N/A'}
+                            </div>
+                          </div>
+                          <div className="flex items-end gap-1.5">
+                            <span className="font-black text-slate-800 shrink-0">গ্রাম :</span>
+                            <div className="grow border-b border-dotted border-gray-400 px-3 pb-0.5 text-slate-900">
+                              {viewingAdmissionForm.village || 'চরলক্ষ্যা'}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Post Office & Thana & District */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div className="flex items-end gap-1.5">
+                            <span className="font-black text-slate-800 shrink-0">ডাকঘর :</span>
+                            <div className="grow border-b border-dotted border-gray-400 px-3 pb-0.5 text-slate-900">
+                              {viewingAdmissionForm.postOffice || 'বোর্ড বাজার'}
+                            </div>
+                          </div>
+                          <div className="flex items-end gap-1.5">
+                            <span className="font-black text-slate-800 shrink-0">থানা :</span>
+                            <div className="grow border-b border-dotted border-gray-400 px-3 pb-0.5 text-slate-900">
+                              {viewingAdmissionForm.thana || 'কর্ণফুলী'}
+                            </div>
+                          </div>
+                          <div className="flex items-end gap-1.5">
+                            <span className="font-black text-slate-800 shrink-0">জিলা :</span>
+                            <div className="grow border-b border-dotted border-gray-400 px-3 pb-0.5 text-slate-900">
+                              {viewingAdmissionForm.district || 'চট্টগ্রাম'}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 5. Religion & Nationality */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="flex items-end gap-1.5">
+                            <span className="font-black text-slate-800 shrink-0">৫। ধর্ম :</span>
+                            <div className="grow border-b border-dotted border-gray-400 px-3 pb-0.5 text-slate-900">
+                              {getReligionBn(viewingAdmissionForm.religion)}
+                            </div>
+                          </div>
+                          <div className="flex items-end gap-1.5">
+                            <span className="font-black text-slate-800 shrink-0">জাতীয়তা :</span>
+                            <div className="grow border-b border-dotted border-gray-400 px-3 pb-0.5 text-slate-900">
+                              {viewingAdmissionForm.nationality || 'বাংলাদেশী'}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 6. Guardian Details Row */}
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+                          <div className="flex items-end gap-1.5 md:col-span-5">
+                            <span className="font-black text-slate-800 shrink-0">৬। অভিভাবকের নাম :</span>
+                            <div className="grow border-b border-dotted border-gray-400 px-3 pb-0.5 text-slate-900">
+                              {viewingAdmissionForm.guardianName || viewingAdmissionForm.fatherName || 'Parent / Guardian'}
+                            </div>
+                          </div>
+                          <div className="flex items-end gap-1.5 md:col-span-3">
+                            <span className="font-black text-slate-800 shrink-0">সম্পর্ক :</span>
+                            <div className="grow border-b border-dotted border-gray-400 px-3 pb-0.5 text-slate-900">
+                              {getRelationBn(viewingAdmissionForm.relationWithGuardian)}
+                            </div>
+                          </div>
+                          <div className="flex items-end gap-1.5 md:col-span-4">
+                            <span className="font-black text-slate-800 shrink-0">মোবাইল নং :</span>
+                            <div className="grow border-b border-dotted border-gray-400 px-3 pb-0.5 font-mono text-slate-900">
+                              {toLocalBanglaDigits(viewingAdmissionForm.guardianPhone || viewingAdmissionForm.fatherMobile)}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 7. Class To Enroll */}
+                        <div className="flex items-end gap-1.5">
+                          <span className="font-black text-slate-800 shrink-0">৭। যে শ্রেণিতে ভর্তি হতে ইচ্ছুক :</span>
+                          <div className="grow border-b border-dotted border-gray-400 px-3 pb-0.5 text-slate-900 text-[13px]">
+                            {toLocalBanglaDigits(viewingAdmissionForm.class)}
+                          </div>
+                        </div>
+
+                        {/* 8. Prev Class & Prev Roll */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="flex items-end gap-1.5">
+                            <span className="font-black text-slate-800 shrink-0">৮। পূর্বে যে শ্রেণিতে পড়েছিল :</span>
+                            <div className="grow border-b border-dotted border-gray-400 px-3 pb-0.5 text-slate-900">
+                              {toLocalBanglaDigits(viewingAdmissionForm.prevClass || String(Number(viewingAdmissionForm.class) - 1)) || 'N/A'}
+                            </div>
+                          </div>
+                          <div className="flex items-end gap-1.5">
+                            <span className="font-black text-slate-800 shrink-0">পূর্বের শ্রেণি রোল :</span>
+                            <div className="grow border-b border-dotted border-gray-400 px-3 pb-0.5 font-mono text-slate-900">
+                              {toLocalBanglaDigits(viewingAdmissionForm.prevRoll || viewingAdmissionForm.roll) || 'N/A'}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 9. Previous School */}
+                        <div className="flex items-end gap-1.5">
+                          <span className="font-black text-slate-800 shrink-0">৯। পূর্ববর্তী বিদ্যালয়ের নাম :</span>
+                          <div className="grow border-b border-dotted border-gray-400 px-3 pb-0.5 text-slate-900">
+                            {viewingAdmissionForm.prevSchool || 'স্টুডেন্টস কেয়ার মডেল স্কুল'}
+                          </div>
+                        </div>
+
+                      </div>
+
+                      {/* Guardian Pledge Box (অভিভাবকের অঙ্গীকারনামা) */}
+                      <div className="mt-5 border border-slate-300 rounded-xl p-4 bg-slate-50/40 space-y-3">
+                        <h3 className="text-center font-black text-slate-850 text-xs tracking-wider uppercase border-b border-slate-200 pb-1.5">
+                          <u>অভিভাবকের অঙ্গীকার নামা</u>
+                        </h3>
+                        <p className="text-xs leading-relaxed text-slate-700 text-justify">
+                          আমি <span className="border-b border-dotted border-gray-400 px-2 font-extrabold text-slate-900">{viewingAdmissionForm.guardianName || viewingAdmissionForm.fatherName || '...............................................'}</span> পিতা/স্বামী : <span className="border-b border-dotted border-gray-400 px-2 font-extrabold text-slate-900">{viewingAdmissionForm.fatherName || '...............................................'}</span> এই মর্মে অঙ্গীকার করছি যে, আমার ছেলে কিংবা পোষ্য এর লেখা-পড়ার প্রতি যথাযথ যত্ন নেব এবং সে অত্র বিদ্যালয়ের যাবতীয় নিয়ম-কানুন যথাযথভাবে মেনে চলবে। আমার ছেলে কিংবা পোষ্য, বিদ্যালয়ের শৃঙ্খলা পরিপন্থী ও রাষ্ট্রবিরোধী কোন কার্যকলাপে জড়িত থাকার অভিযোগে বিদ্যালয় কর্তৃপক্ষ কর্তৃক গৃহীত সকল সিদ্ধান্ত আমি দ্বিধাদ্বন্দ্বে মেনে নিতে বাধ্য থাকব।
+                        </p>
+
+                        {/* Signature Slots */}
+                        <div className="grid grid-cols-3 gap-4 pt-5 text-center text-[10px] text-slate-650 font-black">
+                          <div className="space-y-1">
+                            <div className="border-b border-slate-300 w-24 mx-auto pb-1 text-slate-800">
+                              {formatLocalToBanglaDate(new Date().toISOString().split('T')[0])}
+                            </div>
+                            <div>তারিখ :</div>
+                          </div>
+                          <div className="space-y-1">
+                            <div className="border-b border-slate-300 w-32 mx-auto h-4"></div>
+                            <div>ছাত্র/ছাত্রীর স্বাক্ষর</div>
+                          </div>
+                          <div className="space-y-1">
+                            <div className="border-b border-slate-300 w-32 mx-auto h-4"></div>
+                            <div>অভিভাবকের স্বাক্ষর</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Office Filling Portion */}
+                      <div className="mt-5 border border-emerald-200 rounded-xl p-4 bg-emerald-50/10 space-y-3">
+                        <h3 className="text-center font-black text-[#025644] text-xs tracking-wider uppercase border-b border-emerald-100 pb-1.5">
+                          <u>অফিস কর্তৃক পূরণীয় :</u>
+                        </h3>
+                        <p className="text-xs leading-relaxed text-slate-700 text-justify">
+                          আপনার অঙ্গীকারের পরিপ্রেক্ষিতে আপনার ছেলে/মেয়ে <span className="border-b border-dotted border-gray-400 px-3 font-extrabold text-slate-900">{viewingAdmissionForm.name}</span> কে অদ্য <span className="border-b border-dotted border-gray-400 px-3 font-extrabold text-slate-900">{formatLocalToBanglaDate(new Date().toISOString().split('T')[0])}</span> তারিখ হতে <span className="border-b border-dotted border-gray-400 px-3 font-extrabold text-slate-900">{toLocalBanglaDigits(viewingAdmissionForm.class)}</span> শ্রেণিতে ভর্তির অনুমতি দেওয়া গেল।
+                        </p>
+
+                        {/* Headmaster Signature */}
+                        <div className="flex justify-end pt-6">
+                          <div className="text-center text-[10px] text-slate-650 font-black space-y-1">
+                            <div className="border-b border-slate-300 w-40 pb-1"></div>
+                            <div>প্রধান শিক্ষকের স্বাক্ষর</div>
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
+
+                  </div>
+                </div>
+
+                {/* Footer Controls (Close only) */}
+                <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end shrink-0">
+                  <button
+                    onClick={() => setViewingAdmissionForm(null)}
+                    className="px-6 py-2 bg-[#025644] hover:bg-[#01352a] text-white font-black text-xs rounded-full cursor-pointer transition-all shadow-sm"
+                  >
+                    {lang === 'bn' ? 'বন্ধ করুন' : 'Close'}
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          );
+        })()}
+
         {/* ADD NEW STUDENT MODAL (SCREENSHOT ACCURATE) */}
         {isAddStudentModalOpen && (
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-[9999] p-4 text-left">
@@ -15035,23 +15758,50 @@ class PageSectionController extends Controller {
                       return;
                     }
                     
-                    // Create a new student record
-                    const newStudent = {
-                      id: `STD-${1000 + Math.floor(Math.random() * 9000)}`,
-                      photo: addStudentForm.studentPhoto || '',
-                      name: addStudentForm.fullName,
-                      class: addStudentForm.className,
-                      section: addStudentForm.section,
-                      roll: addStudentForm.rollNumber.padStart(2, '0'),
-                      group: addStudentForm.className === '9' || addStudentForm.className === '10' ? 'Science' : 'General',
-                      guardianName: addStudentForm.guardianName || addStudentForm.fatherName || 'Parent / Guardian',
-                      guardianPhone: addStudentForm.guardianMobile,
-                      status: 'Active' as const,
-                      gender: addStudentForm.gender || 'Male',
-                      bloodGroup: addStudentForm.bloodGroup || 'O+',
-                      admissionDate: new Date().toISOString().split('T')[0],
-                      loginActive: true
-                    };
+                     // Create a new student record
+                     const newStudent = {
+                       id: `STD-${1000 + Math.floor(Math.random() * 9000)}`,
+                       photo: addStudentForm.studentPhoto || '',
+                       name: addStudentForm.fullName,
+                       class: addStudentForm.className,
+                       section: addStudentForm.section,
+                       roll: addStudentForm.rollNumber.padStart(2, '0'),
+                       group: addStudentForm.className === '9' || addStudentForm.className === '10' ? 'Science' : 'General',
+                       guardianName: addStudentForm.guardianName || addStudentForm.fatherName || 'Parent / Guardian',
+                       guardianPhone: addStudentForm.guardianMobile,
+                       status: 'Active' as const,
+                       gender: addStudentForm.gender || 'Male',
+                       bloodGroup: addStudentForm.bloodGroup || 'O+',
+                       admissionDate: new Date().toISOString().split('T')[0],
+                       loginActive: true,
+                       
+                       // Copy additional fields:
+                       dob: addStudentForm.dob,
+                       birthRegistration: addStudentForm.birthRegistration,
+                       fatherName: addStudentForm.fatherName,
+                       motherName: addStudentForm.motherName,
+                       fatherProfession: addStudentForm.fatherProfession,
+                       motherProfession: addStudentForm.motherProfession,
+                       fatherNid: addStudentForm.fatherNid,
+                       motherNid: addStudentForm.motherNid,
+                       fatherMobile: addStudentForm.fatherMobile,
+                       motherMobile: addStudentForm.motherMobile,
+                       fatherDob: addStudentForm.fatherDob,
+                       motherDob: addStudentForm.motherDob,
+                       careOf: addStudentForm.careOf,
+                       relationWithGuardian: addStudentForm.relationWithGuardian,
+                       presentAddress: addStudentForm.presentAddress,
+                       permanentAddress: addStudentForm.permanentAddress,
+                       village: addStudentForm.village,
+                       postOffice: addStudentForm.postOffice,
+                       thana: addStudentForm.thana,
+                       district: addStudentForm.district,
+                       religion: addStudentForm.religion,
+                       nationality: addStudentForm.nationality,
+                       prevClass: addStudentForm.prevClass,
+                       prevRoll: addStudentForm.prevRoll,
+                       prevSchool: addStudentForm.prevSchool,
+                     };
 
                     setStudents(prev => [newStudent, ...prev]);
 
