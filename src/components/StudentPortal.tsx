@@ -607,14 +607,17 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
   // Exam Terms State and UI Expanded States
   const [examSubTab, setExamSubTab] = useState<string>('exam_term');
   const [isExamMenuExpanded, setIsExamMenuExpanded] = useState<boolean>(true);
+  const [isExamControllerMenuExpanded, setIsExamControllerMenuExpanded] = useState<boolean>(true);
+  const [examControllerSubTab, setExamControllerSubTab] = useState<string>('exam_hall_duty');
 
-  const toggleExclusiveMenu = (menuToOpen: 'student_details' | 'frontend' | 'settings' | 'employee' | 'academic' | 'exam' | 'card') => {
+  const toggleExclusiveMenu = (menuToOpen: 'student_details' | 'frontend' | 'settings' | 'employee' | 'academic' | 'exam' | 'exam_controller' | 'card') => {
     setIsStudentDetailsExpanded(menuToOpen === 'student_details' ? !isStudentDetailsExpanded : false);
     setIsFrontendMenuExpanded(menuToOpen === 'frontend' ? !isFrontendMenuExpanded : false);
     setIsSettingsMenuExpanded(menuToOpen === 'settings' ? !isSettingsMenuExpanded : false);
     setIsEmployeeMenuExpanded(menuToOpen === 'employee' ? !isEmployeeMenuExpanded : false);
     setIsAcademicMenuExpanded(menuToOpen === 'academic' ? !isAcademicMenuExpanded : false);
     setIsExamMenuExpanded(menuToOpen === 'exam' ? !isExamMenuExpanded : false);
+    setIsExamControllerMenuExpanded(menuToOpen === 'exam_controller' ? !isExamControllerMenuExpanded : false);
     setIsCardMenuExpanded(menuToOpen === 'card' ? !isCardMenuExpanded : false);
   };
 
@@ -4494,6 +4497,7 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
       { id: 'card', label: lang === 'bn' ? 'আইডি কার্ড তৈরি' : 'Card Management', icon: CreditCard },
       { id: 'certificate', label: lang === 'bn' ? 'শংসাপত্র' : 'Certificate', icon: Award },
       { id: 'academic', label: lang === 'bn' ? 'একাডেমিক রুটিন' : 'Academic', icon: Calendar },
+      { id: 'exam_controller', label: lang === 'bn' ? 'এক্সাম কন্ট্রোলার প্ল্যান' : 'Exam Controller Plan', icon: FileText },
       { id: 'exam', label: lang === 'bn' ? 'পরীক্ষা ও ফলাফল' : 'Exam', icon: FileText },
       { id: 'attendance', label: lang === 'bn' ? 'হাজিরা খাতা' : 'Attendance', icon: CheckSquare },
       { id: 'notice', label: lang === 'bn' ? 'নোটিশ পাবলিশার' : 'Notice', icon: Bell },
@@ -4844,6 +4848,66 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
                   );
                 }
 
+
+                if (item.id === 'exam_controller') {
+                  const isExamControllerActive = adminActiveTab === 'exam_controller';
+                  return (
+                    <div key={item.id} className="space-y-1">
+                      <div className="w-full flex items-center bg-gray-50 rounded-2xl">
+                        <button
+                          onClick={() => {
+                            setAdminActiveTab('exam_controller');
+                          }}
+                          className={`flex-grow flex items-center gap-3 px-4 py-3 rounded-l-2xl text-xs font-black transition-all cursor-pointer ${
+                            isExamControllerActive 
+                              ? 'bg-[#005c53] text-white shadow-xs font-black' 
+                              : 'text-gray-600 hover:bg-slate-50 hover:text-[#005c53] font-bold'
+                          }`}
+                        >
+                          <Icon className={`h-4.5 w-4.5 shrink-0 ${isExamControllerActive ? 'text-white' : 'text-gray-400 group-hover:text-[#005c53]'}`} />
+                          <span className="truncate">{item.label}</span>
+                        </button>
+                        <button
+                          onClick={() => toggleExclusiveMenu('exam_controller')}
+                          className="px-3 py-3 text-gray-500 hover:text-[#005c53]"
+                        >
+                          <ChevronDown className={`h-3 w-3 opacity-50 transition-transform duration-200 ${isExamControllerMenuExpanded ? 'rotate-180' : ''}`} />
+                        </button>
+                      </div>
+                      
+                      {isExamControllerMenuExpanded && (
+                        <div className="pl-4 pr-1 py-1 space-y-1 border-l border-emerald-500/10 ml-6">
+                          {[
+                            { id: 'exam_hall_duty', labelBn: 'পরীক্ষা হল ডিউটি', labelEn: 'Exam Hall Duty' },
+                            { id: 'seat_arrangement', labelBn: 'আসন বিন্যাস', labelEn: 'Seat Arrangement' },
+                            { id: 'seat_plan', labelBn: 'সিট প্ল্যান', labelEn: 'Seat Plan' }
+                          ].map((sub) => {
+                            const isSubActive = isExamControllerActive && examControllerSubTab === sub.id;
+                            return (
+                              <button
+                                key={sub.id}
+                                onClick={() => {
+                                  setAdminActiveTab('exam_controller');
+                                  setExamControllerSubTab(sub.id as any);
+                                  setIsAdminSidebarOpen(false);
+                                }}
+                                className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[10px] font-black transition-all cursor-pointer text-left ${
+                                  isSubActive
+                                    ? 'bg-emerald-50 text-[#005c53] shadow-xs font-black'
+                                    : 'text-gray-500 hover:bg-slate-50 hover:text-[#005c53] font-bold'
+                                }`}
+                              >
+                                <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${isSubActive ? 'bg-[#005c53]' : 'bg-[#005c53]/20'}`} />
+                                <span className="truncate">{lang === 'bn' ? sub.labelBn : sub.labelEn}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+                
                 if (item.id === 'academic') {
                   const isAcademicActive = adminActiveTab === 'academic';
                   return (
@@ -4879,9 +4943,6 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
                             { id: 'class_routine', labelBn: 'ক্লাস রুটিন', labelEn: 'Class Routine' },
                             { id: 'teacher_class_routine', labelBn: 'শিক্ষক ক্লাস রুটিন', labelEn: 'Teacher Class Routine' },
                             { id: 'routine_overview', labelBn: 'রুটিন ওভারভিউ', labelEn: 'Routine Overview' },
-                            { id: 'exam_hall_duty', labelBn: 'পরীক্ষা হল ডিউটি', labelEn: 'Exam Hall Duty' },
-                            { id: 'seat_arrangement', labelBn: 'আসন বিন্যাস', labelEn: 'Seat Arrangement' },
-                            { id: 'seat_plan', labelBn: 'সিট প্ল্যান', labelEn: 'Seat Plan' },
                             { id: 'teacher_schedule', labelBn: 'শিক্ষকের সময়সূচী', labelEn: 'Teacher Schedule' },
                             { id: 'promotion', labelBn: 'প্রমোশন', labelEn: 'Promotion' }
                           ].map((sub) => {
