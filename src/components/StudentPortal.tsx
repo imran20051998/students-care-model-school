@@ -352,6 +352,7 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
     roll: '',
     dateOfBirth: '',
     refNo: '',
+    classGrade: '',
     customBody: 'এই মর্মে প্রত্যয়ন করা যাচ্ছে যে, [নাম], পিতা: [বাবা], মাতা: [মা]। সে অত্র বিদ্যালয়ের [শ্রেণি] শ্রেণির একজন নিয়মিত শিক্ষার্থী। তার রোল নম্বর [রোল] এবং জন্ম তারিখ [জন্ম তারিখ]।\n\nসে অত্র বিদ্যালয়ের একজন মেধাবী এবং অনুগত শিক্ষার্থী। আমি তার উজ্জ্বল ভবিষ্যৎ কামনা করি।'
   });
   const [savedDesigns, setSavedDesigns] = useState<{name: string, settings: typeof certificateData}[]>([]);
@@ -7738,7 +7739,7 @@ def approve_admission_application(request, pk):
                           <label className="block font-bold text-gray-400">Student Name</label>
                           <input 
                             type="text" 
-                            value={certificateData.studentName} 
+                            value={certificateData.studentName || ''} 
                             onChange={(e) => setCertificateData(prev => ({ ...prev, studentName: e.target.value }))}
                             className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold" 
                           />
@@ -7747,7 +7748,7 @@ def approve_admission_application(request, pk):
                           <label className="block font-bold text-gray-400">Class Grade</label>
                           <input 
                             type="text" 
-                            value={certificateData.className} 
+                            value={certificateData.className || ''} 
                             onChange={(e) => setCertificateData(prev => ({ ...prev, className: e.target.value }))}
                             className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold" 
                           />
@@ -7756,7 +7757,7 @@ def approve_admission_application(request, pk):
                           <label className="block font-bold text-gray-400">Honor Description Reason</label>
                           <textarea 
                             rows={3}
-                            value={certificateData.cause} 
+                            value={certificateData.cause || ''} 
                             onChange={(e) => setCertificateData(prev => ({ ...prev, cause: e.target.value }))}
                             className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold" 
                           />
@@ -7764,7 +7765,7 @@ def approve_admission_application(request, pk):
                         <div className="space-y-1">
                           <label className="block font-bold text-gray-400">Certificate Template</label>
                           <select
-                            value={certificateData.template}
+                            value={certificateData.template || ''}
                             onChange={(e) => setCertificateData(prev => ({ ...prev, template: e.target.value }))}
                             className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold"
                           >
@@ -7804,11 +7805,11 @@ def approve_admission_application(request, pk):
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-1">
                                 <label className="block font-bold text-gray-400">Font Size (px)</label>
-                                <input type="number" value={certificateData.fontSize} onChange={(e) => setCertificateData(prev => ({ ...prev, fontSize: parseInt(e.target.value) }))} className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold" />
+                                <input type="number" value={certificateData.fontSize || 0} onChange={(e) => setCertificateData(prev => ({ ...prev, fontSize: parseInt(e.target.value) || 0 }))} className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold" />
                             </div>
                             <div className="space-y-1">
                                 <label className="block font-bold text-gray-400">Font Color</label>
-                                <input type="color" value={certificateData.fontColor} onChange={(e) => setCertificateData(prev => ({ ...prev, fontColor: e.target.value }))} className="w-full h-12 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644]" />
+                                <input type="color" value={certificateData.fontColor || '#000000'} onChange={(e) => setCertificateData(prev => ({ ...prev, fontColor: e.target.value }))} className="w-full h-12 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644]" />
                             </div>
                         </div>
                         <button onClick={() => {
@@ -7902,35 +7903,35 @@ def approve_admission_application(request, pk):
                         <h3 className="font-bold text-gray-900 mb-4">প্রত্যয়নপত্র (Pottoyon Potro)</h3>
                         <div className="space-y-1">
                             <label className="block text-xs font-bold text-gray-400">Student Name</label>
-                            <input type="text" value={certificateData.studentName} onChange={(e) => setCertificateData(prev => ({...prev, studentName: e.target.value}))} className="w-full p-2 border rounded" />
+                            <input type="text" value={certificateData.studentName || ''} onChange={(e) => setCertificateData(prev => ({...prev, studentName: e.target.value}))} className="w-full p-2 border rounded" />
                         </div>
                         <div className="space-y-1">
                             <label className="block text-xs font-bold text-gray-400">Father Name</label>
-                            <input type="text" value={certificateData.fatherName} onChange={(e) => setCertificateData(prev => ({...prev, fatherName: e.target.value}))} className="w-full p-2 border rounded" />
+                            <input type="text" value={certificateData.fatherName || ''} onChange={(e) => setCertificateData(prev => ({...prev, fatherName: e.target.value}))} className="w-full p-2 border rounded" />
                         </div>
                         <div className="space-y-1">
                             <label className="block text-xs font-bold text-gray-400">Mother Name</label>
-                            <input type="text" value={certificateData.motherName} onChange={(e) => setCertificateData(prev => ({...prev, motherName: e.target.value}))} className="w-full p-2 border rounded" />
+                            <input type="text" value={certificateData.motherName || ''} onChange={(e) => setCertificateData(prev => ({...prev, motherName: e.target.value}))} className="w-full p-2 border rounded" />
                         </div>
                         <div className="space-y-1">
                             <label className="block text-xs font-bold text-gray-400">Class</label>
-                            <input type="text" value={certificateData.classGrade} onChange={(e) => setCertificateData(prev => ({...prev, classGrade: e.target.value}))} className="w-full p-2 border rounded" />
+                            <input type="text" value={certificateData.classGrade || ''} onChange={(e) => setCertificateData(prev => ({...prev, classGrade: e.target.value}))} className="w-full p-2 border rounded" />
                         </div>
                         <div className="space-y-1">
                             <label className="block text-xs font-bold text-gray-400">Roll</label>
-                            <input type="text" value={certificateData.roll} onChange={(e) => setCertificateData(prev => ({...prev, roll: e.target.value}))} className="w-full p-2 border rounded" />
+                            <input type="text" value={certificateData.roll || ''} onChange={(e) => setCertificateData(prev => ({...prev, roll: e.target.value}))} className="w-full p-2 border rounded" />
                         </div>
                         <div className="space-y-1">
                             <label className="block text-xs font-bold text-gray-400">Date of Birth</label>
-                            <input type="text" value={certificateData.dateOfBirth} onChange={(e) => setCertificateData(prev => ({...prev, dateOfBirth: e.target.value}))} className="w-full p-2 border rounded" />
+                            <input type="text" value={certificateData.dateOfBirth || ''} onChange={(e) => setCertificateData(prev => ({...prev, dateOfBirth: e.target.value}))} className="w-full p-2 border rounded" />
                         </div>
                          <div className="space-y-1">
                             <label className="block text-xs font-bold text-gray-400">Ref No.</label>
-                            <input type="text" value={certificateData.refNo} onChange={(e) => setCertificateData(prev => ({...prev, refNo: e.target.value}))} className="w-full p-2 border rounded" />
+                            <input type="text" value={certificateData.refNo || ''} onChange={(e) => setCertificateData(prev => ({...prev, refNo: e.target.value}))} className="w-full p-2 border rounded" />
                         </div>
                         <div className="space-y-1">
                             <label className="block text-xs font-bold text-gray-400">Custom Body</label>
-                            <textarea value={certificateData.customBody} onChange={(e) => setCertificateData(prev => ({...prev, customBody: e.target.value}))} className="w-full p-2 border rounded" rows={5} />
+                            <textarea value={certificateData.customBody || ''} onChange={(e) => setCertificateData(prev => ({...prev, customBody: e.target.value}))} className="w-full p-2 border rounded" rows={5} />
                         </div>
                         <div className="space-y-1">
                             <label className="block text-xs font-bold text-gray-400">Background Image</label>
