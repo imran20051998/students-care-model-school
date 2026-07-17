@@ -92,6 +92,8 @@ import {
 import { mockStudentProfile, mockHomework, mockExamResults } from '../data/schoolData';
 import { getMergedFrontendData } from '../data/defaultFrontendData';
 import ClassRoutineGrid from './ClassRoutineGrid';
+import ClassScheduleEditor from './ClassScheduleEditor';
+import StudentPromotion from './StudentPromotion';
 import AdminMailbox from './AdminMailbox';
 import { HomeworkItem, Notice } from '../types';
 import GuardianDashboard from './GuardianDashboard';
@@ -356,7 +358,7 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
   }, [academicClasses]);
 
   // Academic Subjects list state
-  const [academicSubjects, setAcademicSubjects] = useState<Array<{ code: string; name: string; class: string; teacher: string; type?: string }>>(() => {
+  const [academicSubjects, setAcademicSubjects] = useState<Array<{ code: string; name: string; class: string; teacher: string; type?: string; isCombined?: boolean; parentSubject?: string }>>(() => {
     const saved = localStorage.getItem('school_academic_subjects');
     if (saved) {
       try { return JSON.parse(saved); } catch (e) {}
@@ -966,7 +968,7 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
 
   // Forms for adding academic items
   const [academicNewClassForm, setAcademicNewClassForm] = useState({ name: '', shift: 'Morning', group: 'General', classTeacher: '' });
-  const [academicNewSubjectForm, setAcademicNewSubjectForm] = useState({ code: '', name: '', class: 'Class 9-A', teacher: '', type: 'Theory' });
+  const [academicNewSubjectForm, setAcademicNewSubjectForm] = useState({ code: '', name: '', class: 'Class 9-A', teacher: '', type: 'Theory', isCombined: false, parentSubject: '' });
   const [academicNewDutyForm, setAcademicNewDutyForm] = useState({ examName: 'Half-Yearly Exam 2026', date: '2026-07-15', room: '', invigilator: '', shift: 'Morning' });
   const [academicNewSeatingForm, setAcademicNewSeatingForm] = useState({ examName: 'Half-Yearly Exam 2026', classLevel: 'Class 9-A', hallName: '', capacity: 40, date: '2026-07-15' });
 
@@ -8202,6 +8204,38 @@ def approve_admission_application(request, pk):
                               </select>
                             </div>
 
+                            {/* Is Combined Subject? */}
+                            <div className="flex items-center gap-2 pt-2">
+                              <input
+                                type="checkbox"
+                                id="isCombined"
+                                checked={academicNewSubjectForm.isCombined}
+                                onChange={(e) => setAcademicNewSubjectForm(prev => ({ ...prev, isCombined: e.target.checked, parentSubject: e.target.checked ? prev.parentSubject : '' }))}
+                                className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded cursor-pointer"
+                              />
+                              <label htmlFor="isCombined" className="font-bold text-gray-700 text-sm cursor-pointer">
+                                {lang === 'bn' ? 'এটি কি কম্বাইন সাবজেক্ট?' : 'Is Combine Subject?'}
+                              </label>
+                            </div>
+
+                            {academicNewSubjectForm.isCombined && (
+                              <div className="space-y-1 text-left">
+                                <label className="block font-bold text-gray-600">
+                                  {lang === 'bn' ? 'মূল বিষয় সিলেক্ট করুন (Parent Subject)' : 'Select Parent Subject'}
+                                </label>
+                                <select
+                                  value={academicNewSubjectForm.parentSubject || ''}
+                                  onChange={(e) => setAcademicNewSubjectForm(prev => ({ ...prev, parentSubject: e.target.value }))}
+                                  className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 font-semibold text-gray-700 cursor-pointer shadow-3xs"
+                                >
+                                  <option value="">{lang === 'bn' ? '-- সিলেক্ট করুন --' : '-- Select Parent --'}</option>
+                                  {academicSubjects.filter(s => !s.isCombined).map(s => (
+                                    <option key={s.code} value={s.name}>{s.name}</option>
+                                  ))}
+                                </select>
+                              </div>
+                            )}
+
                             {/* Subject Teacher Option */}
                             <div className="space-y-1 text-left">
                               <label className="block font-bold text-gray-600">
@@ -8288,9 +8322,16 @@ def approve_admission_application(request, pk):
                                           </span>
                                         </td>
                                         <td className="p-4">
-                                          <span className={`px-2.5 py-1 rounded-md border text-[10px] font-extrabold tracking-wide ${typeBadgeColor}`}>
-                                            {typeVal}
-                                          </span>
+                                          <div className="flex flex-wrap gap-1">
+                                            <span className={`px-2.5 py-1 rounded-md border text-[10px] font-extrabold tracking-wide ${typeBadgeColor}`}>
+                                              {typeVal}
+                                            </span>
+                                            {sub.isCombined && (
+                                              <span className="px-2.5 py-1 rounded-md border bg-indigo-50 text-indigo-700 border-indigo-100 text-[10px] font-extrabold tracking-wide">
+                                                Combined
+                                              </span>
+                                            )}
+                                          </div>
                                         </td>
                                         <td className="p-4 text-gray-500 font-semibold">{sub.teacher || (lang === 'bn' ? 'বরাদ্দ করা হয়নি' : 'Not Assigned')}</td>
                                         <td className="p-4 text-center">
@@ -8342,7 +8383,8 @@ def approve_admission_application(request, pk):
                   {/* =================================================== */}
                   {/* SUB-TAB 3: CLASS SCHEDULE (SCREENSHOT SYSTEM DESIGN) */}
                   {/* =================================================== */}
-                  {academicSubTab === 'class_schedule' && <ClassRoutineGrid />}
+                  {academicSubTab === 'class_schedule' && <ClassScheduleEditor />}
+                  {academicSubTab === 'promotion' && <StudentPromotion />}
                                   
 
 

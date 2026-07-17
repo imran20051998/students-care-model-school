@@ -106,12 +106,15 @@
 
   /* Show ONLY the printable-application-summary element and its descendants */
   #printable-application-summary,
-  #printable-application-summary * {
+  #printable-application-summary *,
+  #printable-routine,
+  #printable-routine * {
     visibility: visible;
   }
 
   /* Position it perfectly for the print layout */
-  #printable-application-summary {
+  #printable-application-summary,
+  #printable-routine {
     position: absolute;
     left: 0;
     top: 0;
