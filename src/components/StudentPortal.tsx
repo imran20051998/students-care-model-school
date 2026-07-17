@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import AdmitCardModal from './AdmitCardModal';
 import { 
   Lock, 
   LogOut, 
@@ -60,7 +61,6 @@ import {
   Contact,
   Edit3,
   Bookmark,
-  Printer,
   Upload,
   ShieldCheck,
   X,
@@ -74,7 +74,8 @@ import {
   Database,
   Copy,
   Code,
-  Heart
+  Heart,
+  Filter
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -265,8 +266,10 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
   
   // Frontend settings and submenus state
   const [frontendSubTab, setFrontendSubTab] = useState<string>('banner');
+  const [cardSubTab, setCardSubTab] = useState<string>('id_card');
   const [isFrontendMenuExpanded, setIsFrontendMenuExpanded] = useState<boolean>(true);
   const [isSettingsMenuExpanded, setIsSettingsMenuExpanded] = useState<boolean>(true);
+  const [isCardMenuExpanded, setIsCardMenuExpanded] = useState<boolean>(false);
   
   // Page section editing state helpers
   const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
@@ -297,6 +300,10 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
     issueDate: '2026-07-06',
     principalName: 'Mohammad Zakir Hosen'
   });
+
+  const [showAdmitCardFor, setShowAdmitCardFor] = useState<any | null>(null);
+
+  const [certificateSubTab, setCertificateSubTab] = useState<string>('generate');
 
   // Student Details submenu expansion and active sub-tab
   const [isStudentDetailsExpanded, setIsStudentDetailsExpanded] = useState(true);
@@ -529,12 +536,13 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
   const [examSubTab, setExamSubTab] = useState<string>('exam_term');
   const [isExamMenuExpanded, setIsExamMenuExpanded] = useState<boolean>(true);
 
-  const toggleExclusiveMenu = (menuToOpen: 'frontend' | 'settings' | 'employee' | 'academic' | 'exam') => {
+  const toggleExclusiveMenu = (menuToOpen: 'frontend' | 'settings' | 'employee' | 'academic' | 'exam' | 'card') => {
     setIsFrontendMenuExpanded(menuToOpen === 'frontend' ? !isFrontendMenuExpanded : false);
     setIsSettingsMenuExpanded(menuToOpen === 'settings' ? !isSettingsMenuExpanded : false);
     setIsEmployeeMenuExpanded(menuToOpen === 'employee' ? !isEmployeeMenuExpanded : false);
     setIsAcademicMenuExpanded(menuToOpen === 'academic' ? !isAcademicMenuExpanded : false);
     setIsExamMenuExpanded(menuToOpen === 'exam' ? !isExamMenuExpanded : false);
+    setIsCardMenuExpanded(menuToOpen === 'card' ? !isCardMenuExpanded : false);
   };
 
   const [editingExamTermId, setEditingExamTermId] = useState<string | null>(null);
@@ -1830,6 +1838,23 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
     { id: 'videos', labelBn: 'ভিডিও গ্যালারি', labelEn: 'Homepage Videos' },
     { id: 'blog_posts', labelBn: 'ব্লগ পোস্ট', labelEn: 'Blog Posts' },
     { id: 'footer_settings', labelBn: 'ফুটার', labelEn: 'Footer' },
+  ];
+
+  const cardSubMenus = [
+    { id: 'id_card', labelBn: 'আইডি কার্ড', labelEn: 'ID Card' },
+    { id: 'id_card_customize', labelBn: 'আইডি কার্ড কাস্টমাইজ', labelEn: 'ID Card Customize' },
+    { id: 'admit_card', labelBn: 'অ্যাডমিট কার্ড', labelEn: 'Admit Card' },
+    { id: 'admit_card_customize', labelBn: 'অ্যাডমিট কার্ড কাস্টমাইজ', labelEn: 'Admit Card Customize' },
+    { id: 'seat_plan', labelBn: 'সিট প্ল্যান', labelEn: 'Seat Plan' },
+    { id: 'seat_plan_customize', labelBn: 'সিট প্ল্যান কাস্টমাইজ', labelEn: 'Seat Plan Customize' },
+    { id: 'exam_controller_plan', labelBn: 'এক্সাম কন্ট্রোলার প্ল্যান', labelEn: 'Exam Controller Plan' },
+  ];
+
+  const certificateSubMenus = [
+    { id: 'generate', labelBn: 'সার্টিফিকেট জেনারেট', labelEn: 'Certificate Generate' },
+    { id: 'customize', labelBn: 'সার্টিফিকেট কাস্টমাইজ', labelEn: 'Certificate Customize' },
+    { id: 'pottoyon', labelBn: 'প্রত্যয়নপত্র', labelEn: 'Pottoyon Potro' },
+    { id: 'pottoyon_customize', labelBn: 'প্রত্যয়নপত্র কাস্টমাইজ', labelEn: 'Pottoyon Customize' },
   ];
 
   // Quotes rotation on Left Side of Login Page
@@ -4585,6 +4610,60 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
                   );
                 }
 
+                if (item.id === 'card') {
+                  return (
+                    <div key={item.id} className="space-y-1">
+                      <div className="w-full flex items-center bg-gray-50 rounded-2xl">
+                        <button
+                          onClick={() => {
+                            setAdminActiveTab('card');
+                          }}
+                          className={`flex-grow flex items-center gap-3 px-4 py-3 rounded-l-2xl text-xs font-black transition-all cursor-pointer ${
+                            isActive 
+                              ? 'bg-[#005c53] text-white shadow-xs font-black' 
+                              : 'text-gray-600 hover:bg-slate-50 hover:text-[#005c53] font-bold'
+                          }`}
+                        >
+                          <Icon className={`h-4.5 w-4.5 ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-[#005c53]'}`} />
+                          <span>{item.label}</span>
+                        </button>
+                        <button
+                          onClick={() => toggleExclusiveMenu('card')}
+                          className="px-3 py-3 text-gray-500 hover:text-[#005c53]"
+                        >
+                          <ChevronDown className={`h-3 w-3 opacity-50 transition-transform duration-200 ${isCardMenuExpanded ? 'rotate-180' : ''}`} />
+                        </button>
+                      </div>
+                      
+                      {isCardMenuExpanded && (
+                        <div className="pl-4 pr-1 py-1 space-y-1 border-l border-emerald-500/10 ml-6 max-h-[380px] overflow-y-auto scrollbar-none">
+                          {cardSubMenus.map((sub) => {
+                            const isSubActive = adminActiveTab === 'card' && cardSubTab === sub.id;
+                            return (
+                              <button
+                                key={sub.id}
+                                onClick={() => {
+                                  setAdminActiveTab('card');
+                                  setCardSubTab(sub.id);
+                                  setIsAdminSidebarOpen(false);
+                                }}
+                                className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[10px] font-black transition-all cursor-pointer text-left ${
+                                  isSubActive
+                                    ? 'bg-emerald-50 text-[#005c53] shadow-xs'
+                                    : 'text-gray-500 hover:bg-slate-50 hover:text-[#005c53] font-bold'
+                                }`}
+                              >
+                                <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${isSubActive ? 'bg-[#005c53]' : 'bg-emerald-150/45'}`} />
+                                <span className="truncate">{lang === 'bn' ? sub.labelBn : sub.labelEn}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
                 if (item.id === 'employee') {
                   const isEmployeeActive = adminActiveTab === 'employee';
                   return (
@@ -7265,208 +7344,398 @@ def approve_admission_application(request, pk):
 
             {/* STUDENT IDENTITY CARD GENERATOR */}
             {adminActiveTab === 'card' && (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 text-left">
-                <div className="lg:col-span-5 bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs space-y-4">
-                  <div>
-                    <h3 className="font-extrabold text-gray-900 text-base">Identity Card Generator</h3>
-                    <p className="text-xs text-gray-400 font-bold">Input student credentials to view and print physical ID cards</p>
+              <>
+                {cardSubTab === 'id_card' && (
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 text-left">
+                    <div className="lg:col-span-5 bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs space-y-4">
+                      <div>
+                        <h3 className="font-extrabold text-gray-900 text-base">Identity Card Generator</h3>
+                        <p className="text-xs text-gray-400 font-bold">Input student credentials to view and print physical ID cards</p>
+                      </div>
+                      <div className="space-y-3.5 text-xs">
+                        <div className="space-y-1">
+                          <label className="block font-bold text-gray-400">Student Full Name</label>
+                          <input 
+                            type="text" 
+                            value={idCardData.name} 
+                            onChange={(e) => setIdCardData(prev => ({ ...prev, name: e.target.value }))}
+                            className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold" 
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <label className="block font-bold text-gray-400">Class Level</label>
+                            <input 
+                              type="text" 
+                              value={idCardData.className} 
+                              onChange={(e) => setIdCardData(prev => ({ ...prev, className: e.target.value }))}
+                              className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold" 
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="block font-bold text-gray-400">Class Roll</label>
+                            <input 
+                              type="text" 
+                              value={idCardData.roll} 
+                              onChange={(e) => setIdCardData(prev => ({ ...prev, roll: e.target.value }))}
+                              className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold" 
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <label className="block font-bold text-gray-400">Blood Group</label>
+                            <input 
+                              type="text" 
+                              value={idCardData.bloodGroup} 
+                              onChange={(e) => setIdCardData(prev => ({ ...prev, bloodGroup: e.target.value }))}
+                              className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold" 
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="block font-bold text-gray-400">Guardian Phone</label>
+                            <input 
+                              type="text" 
+                              value={idCardData.phone} 
+                              onChange={(e) => setIdCardData(prev => ({ ...prev, phone: e.target.value }))}
+                              className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold" 
+                            />
+                          </div>
+                        </div>
+                        <button onClick={() => window.print()} className="w-full py-2.5 bg-[#025644] hover:bg-[#01352a] text-white font-black rounded-xl shadow-sm cursor-pointer transition-all">
+                          Print ID Card
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Live ID Card Preview Panel */}
+                    <div className="lg:col-span-7 flex flex-col items-center justify-center bg-gray-100/50 border border-gray-200 rounded-2xl p-6 shadow-inner min-h-[350px]">
+                      <style>
+                        {`
+                          @media print {
+                            body * { visibility: hidden; }
+                            #id-card-preview, #id-card-preview * { visibility: visible; }
+                            #id-card-preview { position: absolute; left: 0; top: 0; }
+                          }
+                        `}
+                      </style>
+                      <div id="id-card-preview" className="w-[300px] bg-white border border-gray-250 rounded-2xl overflow-hidden shadow-lg select-none">
+                        {/* ID Card Top Header */}
+                        <div className="bg-[#025644] p-4 text-white text-center border-b border-yellow-500/30">
+                          <h4 className="font-black text-[11px] uppercase tracking-wider">Students Care Model School</h4>
+                          <p className="text-[8px] font-bold text-emerald-200 tracking-widest uppercase mt-0.5">Academic Identity Card</p>
+                        </div>
+
+                        {/* ID Card Core Body */}
+                        <div className="p-5 text-center flex flex-col items-center space-y-3.5">
+                          <div className="h-24 w-24 bg-emerald-50 text-[#025644] rounded-full flex items-center justify-center border-2 border-[#025644]/20 shadow-inner">
+                            <User className="h-14 w-14" />
+                          </div>
+
+                          <div className="space-y-1">
+                            <h3 className="font-extrabold text-base text-gray-900 leading-tight">{idCardData.name}</h3>
+                            <p className="text-[10px] text-gray-400 font-bold tracking-wider uppercase">{idCardData.className} Scholar</p>
+                          </div>
+
+                          <div className="w-full bg-gray-50 border border-gray-150 rounded-xl p-3 text-xs text-left text-gray-600 font-bold space-y-1.5">
+                            <div className="flex justify-between">
+                              <span className="text-gray-400">Class Roll:</span>
+                              <span className="font-mono text-gray-800 font-black">{idCardData.roll}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-400">Level:</span>
+                              <span className="text-gray-800 font-extrabold">{idCardData.className}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-400">Blood Group:</span>
+                              <span className="text-red-600 font-black">{idCardData.bloodGroup}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-400">Contact:</span>
+                              <span className="font-mono text-gray-800 text-[11px]">{idCardData.phone}</span>
+                            </div>
+                          </div>
+
+                          {/* Styled barcode lines */}
+                          <div className="w-full flex justify-center gap-0.5 items-center h-6 opacity-60">
+                            {[1,3,1,1,4,1,2,3,1,3,2,1,4,1,2].map((w, idx) => (
+                              <span key={idx} className="bg-black h-full" style={{ width: `${w}px` }} />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      <p className="text-[10px] text-gray-400 font-bold mt-4">Standard size: 85.6mm x 54mm (CR-80 size layout)</p>
+                    </div>
                   </div>
-                  <div className="space-y-3.5 text-xs">
-                    <div className="space-y-1">
-                      <label className="block font-bold text-gray-400">Student Full Name</label>
-                      <input 
-                        type="text" 
-                        value={idCardData.name} 
-                        onChange={(e) => setIdCardData(prev => ({ ...prev, name: e.target.value }))}
-                        className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold" 
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <label className="block font-bold text-gray-400">Class Level</label>
-                        <input 
-                          type="text" 
-                          value={idCardData.className} 
-                          onChange={(e) => setIdCardData(prev => ({ ...prev, className: e.target.value }))}
-                          className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold" 
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="block font-bold text-gray-400">Class Roll</label>
-                        <input 
-                          type="text" 
-                          value={idCardData.roll} 
-                          onChange={(e) => setIdCardData(prev => ({ ...prev, roll: e.target.value }))}
-                          className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold" 
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <label className="block font-bold text-gray-400">Blood Group</label>
-                        <input 
-                          type="text" 
-                          value={idCardData.bloodGroup} 
-                          onChange={(e) => setIdCardData(prev => ({ ...prev, bloodGroup: e.target.value }))}
-                          className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold" 
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="block font-bold text-gray-400">Guardian Phone</label>
-                        <input 
-                          type="text" 
-                          value={idCardData.phone} 
-                          onChange={(e) => setIdCardData(prev => ({ ...prev, phone: e.target.value }))}
-                          className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold" 
-                        />
-                      </div>
-                    </div>
-                    <button onClick={() => {
-                      setAdminSuccessMsg("ID Card sent to local print driver queue successfully!");
-                      addAuditLog(`Admin printed identity card of student: "${idCardData.name}".`);
-                      setTimeout(() => setAdminSuccessMsg(''), 4000);
-                    }} className="w-full py-2.5 bg-[#025644] hover:bg-[#01352a] text-white font-black rounded-xl shadow-sm cursor-pointer transition-all">
-                      Print ID Card
-                    </button>
-                  </div>
-                </div>
-
-                {/* Live ID Card Preview Panel */}
-                <div className="lg:col-span-7 flex flex-col items-center justify-center bg-gray-100/50 border border-gray-200 rounded-2xl p-6 shadow-inner min-h-[350px]">
-                  <div className="w-[300px] bg-white border border-gray-250 rounded-2xl overflow-hidden shadow-lg select-none">
-                    {/* ID Card Top Header */}
-                    <div className="bg-[#025644] p-4 text-white text-center border-b border-yellow-500/30">
-                      <h4 className="font-black text-[11px] uppercase tracking-wider">Students Care Model School</h4>
-                      <p className="text-[8px] font-bold text-emerald-200 tracking-widest uppercase mt-0.5">Academic Identity Card</p>
-                    </div>
-
-                    {/* ID Card Core Body */}
-                    <div className="p-5 text-center flex flex-col items-center space-y-3.5">
-                      <div className="h-24 w-24 bg-emerald-50 text-[#025644] rounded-full flex items-center justify-center border-2 border-[#025644]/20 shadow-inner">
-                        <User className="h-14 w-14" />
-                      </div>
-
-                      <div className="space-y-1">
-                        <h3 className="font-extrabold text-base text-gray-900 leading-tight">{idCardData.name}</h3>
-                        <p className="text-[10px] text-gray-400 font-bold tracking-wider uppercase">{idCardData.className} Scholar</p>
-                      </div>
-
-                      <div className="w-full bg-gray-50 border border-gray-150 rounded-xl p-3 text-xs text-left text-gray-600 font-bold space-y-1.5">
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Class Roll:</span>
-                          <span className="font-mono text-gray-800 font-black">{idCardData.roll}</span>
+                )}
+                {cardSubTab === 'admit_card' && (
+                   <div className="space-y-4">
+                      {/* Filter Controls */}
+                      <div className="bg-white border border-gray-150 rounded-2xl p-4 flex flex-wrap gap-4 items-end shadow-2xs">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-black text-gray-400 uppercase">Academic Year</label>
+                          <select className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold w-36">
+                            <option>2026</option>
+                          </select>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Level:</span>
-                          <span className="text-gray-800 font-extrabold">{idCardData.className}</span>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-black text-gray-400 uppercase">Exam</label>
+                          <select className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold w-44">
+                            <option>Annual Examination</option>
+                          </select>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Blood Group:</span>
-                          <span className="text-red-600 font-black">{idCardData.bloodGroup}</span>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-black text-gray-400 uppercase">Class</label>
+                          <select className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold w-32">
+                            <option>Class 3</option>
+                          </select>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Contact:</span>
-                          <span className="font-mono text-gray-800 text-[11px]">{idCardData.phone}</span>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-black text-gray-400 uppercase">Section</label>
+                          <select className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold w-24">
+                            <option>A</option>
+                          </select>
                         </div>
+                        <button onClick={() => window.print()} className="p-2.5 bg-gray-900 text-white rounded-xl hover:bg-gray-800">
+                          <Filter className="h-4 w-4" />
+                        </button>
+                        <button onClick={() => window.print()} className="px-4 py-2.5 bg-emerald-700 text-white rounded-xl hover:bg-emerald-800 text-xs font-bold">
+                          Print All
+                        </button>
                       </div>
 
-                      {/* Styled barcode lines */}
-                      <div className="w-full flex justify-center gap-0.5 items-center h-6 opacity-60">
-                        {[1,3,1,1,4,1,2,3,1,3,2,1,4,1,2].map((w, idx) => (
-                          <span key={idx} className="bg-black h-full" style={{ width: `${w}px` }} />
+                      <style>
+                        {`
+                          @media print {
+                            body * { visibility: hidden; }
+                            #all-admit-cards-print, #all-admit-cards-print * { visibility: visible; }
+                            #all-admit-cards-print { position: absolute; left: 0; top: 0; }
+                            .page-break-after-always { page-break-after: always; }
+                          }
+                        `}
+                      </style>
+
+                      <div className="hidden print:block" id="all-admit-cards-print">
+                        {students.map(s => (
+                          <div key={s.id} className="page-break-after-always">
+                            <AdmitCardModal 
+                              student={{
+                                  name: s.name,
+                                  id: s.id,
+                                  classSection: `${s.class} (${s.section})`,
+                                  roll: s.roll,
+                                  guardian: s.guardianName,
+                                  contact: s.guardianPhone
+                              }}
+                              onClose={() => {}}
+                            />
+                          </div>
                         ))}
                       </div>
-                    </div>
+
+                      <div className="bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs space-y-4">
+                        <h3 className="font-extrabold text-gray-900 text-base">Admit Card Management</h3>
+                        <p className="text-xs text-gray-400 font-bold">Select a student to preview and print admit card.</p>
+                        <table className="w-full text-xs text-left">
+                          <thead>
+                            <tr className="border-b border-gray-200">
+                               <th className="p-2">Name</th>
+                               <th className="p-2">Roll</th>
+                               <th className="p-2">Action</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100">
+                            {students.slice(0,5).map(s => (
+                              <tr key={s.id}>
+                                 <td className="p-2 font-bold">{s.name}</td>
+                                 <td className="p-2 font-mono">{s.roll}</td>
+                                 <td className="p-2">
+                                    <button onClick={() => setShowAdmitCardFor(s)} className="text-emerald-700 font-black underline cursor-pointer">Preview</button>
+                                 </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                   </div>
+                )}
+                {showAdmitCardFor && (
+                  <AdmitCardModal 
+                    student={{
+                        name: showAdmitCardFor.name,
+                        id: showAdmitCardFor.id,
+                        classSection: `${showAdmitCardFor.class} (${showAdmitCardFor.section})`,
+                        roll: showAdmitCardFor.roll,
+                        guardian: showAdmitCardFor.guardianName,
+                        contact: showAdmitCardFor.guardianPhone
+                    }}
+                    onClose={() => setShowAdmitCardFor(null)}
+                  />
+                )}
+                {cardSubTab === 'id_card_customize' && (
+                  <div className="bg-white p-6 rounded-xl border border-gray-150 shadow-sm">
+                    <h3 className="font-bold text-gray-900">ID Card Customize</h3>
+                    <p className="text-sm text-gray-500">Customize ID card templates here.</p>
                   </div>
-                  <p className="text-[10px] text-gray-400 font-bold mt-4">Standard size: 85.6mm x 54mm (CR-80 size layout)</p>
-                </div>
-              </div>
+                )}
+                
+                {cardSubTab === 'admit_card_customize' && (
+                  <div className="bg-white p-6 rounded-xl border border-gray-150 shadow-sm">
+                    <h3 className="font-bold text-gray-900">Admit Card Customize</h3>
+                    <p className="text-sm text-gray-500">Customize Admit card templates here.</p>
+                  </div>
+                )}
+                
+                {cardSubTab === 'seat_plan' && (
+                  <div className="bg-white p-6 rounded-xl border border-gray-150 shadow-sm">
+                    <h3 className="font-bold text-gray-900">Seat Plan</h3>
+                    <p className="text-sm text-gray-500">View and generate seat plans here.</p>
+                  </div>
+                )}
+                
+                {cardSubTab === 'seat_plan_customize' && (
+                  <div className="bg-white p-6 rounded-xl border border-gray-150 shadow-sm">
+                    <h3 className="font-bold text-gray-900">Seat Plan Customize</h3>
+                    <p className="text-sm text-gray-500">Customize seat plan layouts here.</p>
+                  </div>
+                )}
+                
+                {cardSubTab === 'exam_controller_plan' && (
+                  <div className="bg-white p-6 rounded-xl border border-gray-150 shadow-sm">
+                    <h3 className="font-bold text-gray-900">Exam Controller Plan</h3>
+                    <p className="text-sm text-gray-500">Manage exam controller plans here.</p>
+                  </div>
+                )}
+              </>
             )}
+
 
             {/* ACADEMIC CERTIFICATE PORTAL */}
             {adminActiveTab === 'certificate' && (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 text-left">
-                <div className="lg:col-span-4 bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs space-y-4">
-                  <div>
-                    <h3 className="font-extrabold text-gray-900 text-base">Certificate Generator</h3>
-                    <p className="text-xs text-gray-400 font-bold">Configure and issue physical achievement credentials</p>
-                  </div>
-                  <div className="space-y-3.5 text-xs">
-                    <div className="space-y-1">
-                      <label className="block font-bold text-gray-400">Student Name</label>
-                      <input 
-                        type="text" 
-                        value={certificateData.studentName} 
-                        onChange={(e) => setCertificateData(prev => ({ ...prev, studentName: e.target.value }))}
-                        className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold" 
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="block font-bold text-gray-400">Class Grade</label>
-                      <input 
-                        type="text" 
-                        value={certificateData.className} 
-                        onChange={(e) => setCertificateData(prev => ({ ...prev, className: e.target.value }))}
-                        className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold" 
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="block font-bold text-gray-400">Honor Description Reason</label>
-                      <textarea 
-                        rows={3}
-                        value={certificateData.cause} 
-                        onChange={(e) => setCertificateData(prev => ({ ...prev, cause: e.target.value }))}
-                        className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold" 
-                      />
-                    </div>
-                    <button onClick={() => {
-                      setAdminSuccessMsg("Academic certificate document rendered and ready to print!");
-                      addAuditLog(`Admin generated certificate of excellence for: "${certificateData.studentName}".`);
-                      setTimeout(() => setAdminSuccessMsg(''), 4000);
-                    }} className="w-full py-2.5 bg-[#025644] hover:bg-[#01352a] text-white font-black rounded-xl shadow-sm cursor-pointer transition-all">
-                      Generate & Print
+              <div className="space-y-6">
+                {/* Sub-menu Navigation */}
+                <div className="flex space-x-2 bg-white p-1 rounded-xl border border-gray-150 shadow-sm">
+                  {certificateSubMenus.map((sub) => (
+                    <button
+                      key={sub.id}
+                      onClick={() => setCertificateSubTab(sub.id)}
+                      className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${
+                        certificateSubTab === sub.id
+                          ? 'bg-[#025644] text-white'
+                          : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      {sub.labelEn}
                     </button>
-                  </div>
+                  ))}
                 </div>
 
-                {/* Certificate Frame Layout */}
-                <div className="lg:col-span-8 flex flex-col items-center justify-center bg-gray-100/50 border border-gray-200 rounded-2xl p-6 shadow-inner min-h-[400px]">
-                  <div className="w-full max-w-[550px] bg-amber-50/20 border-8 border-double border-amber-600/60 p-6 sm:p-8 rounded-lg shadow-xl text-center space-y-6 relative select-none bg-white">
-                    {/* Classic Certificate background seals */}
-                    <div className="absolute inset-0 border border-amber-600/30 m-1 pointer-events-none" />
-
-                    <div className="space-y-1.5">
-                      <h4 className="font-serif italic font-extrabold text-amber-800 text-lg sm:text-xl">Certificate of Appreciation</h4>
-                      <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Students Care Model School, Chattogram</p>
+                {certificateSubTab === 'generate' && (
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 text-left">
+                    <div className="lg:col-span-4 bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs space-y-4">
+                      <div>
+                        <h3 className="font-extrabold text-gray-900 text-base">Certificate Generator</h3>
+                        <p className="text-xs text-gray-400 font-bold">Configure and issue physical achievement credentials</p>
+                      </div>
+                      <div className="space-y-3.5 text-xs">
+                        <div className="space-y-1">
+                          <label className="block font-bold text-gray-400">Student Name</label>
+                          <input 
+                            type="text" 
+                            value={certificateData.studentName} 
+                            onChange={(e) => setCertificateData(prev => ({ ...prev, studentName: e.target.value }))}
+                            className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold" 
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="block font-bold text-gray-400">Class Grade</label>
+                          <input 
+                            type="text" 
+                            value={certificateData.className} 
+                            onChange={(e) => setCertificateData(prev => ({ ...prev, className: e.target.value }))}
+                            className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold" 
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="block font-bold text-gray-400">Honor Description Reason</label>
+                          <textarea 
+                            rows={3}
+                            value={certificateData.cause} 
+                            onChange={(e) => setCertificateData(prev => ({ ...prev, cause: e.target.value }))}
+                            className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold" 
+                          />
+                        </div>
+                        <button onClick={() => {
+                          setAdminSuccessMsg("Academic certificate document rendered and ready to print!");
+                          addAuditLog(`Admin generated certificate of excellence for: "${certificateData.studentName}".`);
+                          setTimeout(() => setAdminSuccessMsg(''), 4000);
+                        }} className="w-full py-2.5 bg-[#025644] hover:bg-[#01352a] text-white font-black rounded-xl shadow-sm cursor-pointer transition-all">
+                          Generate & Print
+                        </button>
+                      </div>
                     </div>
 
-                    <p className="text-xs text-gray-400 italic">This academic award is proudly presented to</p>
+                    {/* Certificate Frame Layout */}
+                    <div className="lg:col-span-8 flex flex-col items-center justify-center bg-gray-100/50 border border-gray-200 rounded-2xl p-6 shadow-inner min-h-[400px]">
+                      <div className="w-full max-w-[550px] bg-amber-50/20 border-8 border-double border-amber-600/60 p-6 sm:p-8 rounded-lg shadow-xl text-center space-y-6 relative select-none bg-white">
+                        {/* Classic Certificate background seals */}
+                        <div className="absolute inset-0 border border-amber-600/30 m-1 pointer-events-none" />
 
-                    <div className="space-y-1">
-                      <h3 className="font-serif italic text-2xl sm:text-3xl text-amber-900 border-b-2 border-amber-600/30 w-fit mx-auto pb-1 px-4">{certificateData.studentName}</h3>
-                      <p className="text-[10px] text-gray-500 font-bold mt-1">Scholar of {certificateData.className}</p>
-                    </div>
+                        <div className="space-y-1.5">
+                          <h4 className="font-serif italic font-extrabold text-amber-800 text-lg sm:text-xl">Certificate of Appreciation</h4>
+                          <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Students Care Model School, Chattogram</p>
+                        </div>
 
-                    <p className="text-xs text-gray-600 leading-relaxed max-w-md mx-auto italic font-serif px-4">
-                      "{certificateData.cause}"
-                    </p>
+                        <p className="text-xs text-gray-400 italic">This academic award is proudly presented to</p>
 
-                    {/* Classic Signatures */}
-                    <div className="flex justify-between items-end pt-8 px-4 text-[10px] text-gray-400 font-bold">
-                      <div className="text-center space-y-1">
-                        <p className="font-serif italic text-gray-700">Mohammad Zakir Hosen</p>
-                        <div className="border-t border-gray-200 w-24 pt-1">Principal Signature</div>
-                      </div>
-                      <div className="h-10 w-10 bg-amber-600/10 rounded-full flex items-center justify-center border-2 border-amber-600/30">
-                        <Award className="h-5 w-5 text-amber-700" />
-                      </div>
-                      <div className="text-center space-y-1">
-                        <p className="font-serif italic text-gray-700">July 6, 2026</p>
-                        <div className="border-t border-gray-200 w-24 pt-1">Date of Issue</div>
+                        <div className="space-y-1">
+                          <h3 className="font-serif italic text-2xl sm:text-3xl text-amber-900 border-b-2 border-amber-600/30 w-fit mx-auto pb-1 px-4">{certificateData.studentName}</h3>
+                          <p className="text-[10px] text-gray-500 font-bold mt-1">Scholar of {certificateData.className}</p>
+                        </div>
+
+                        <p className="text-xs text-gray-600 leading-relaxed max-w-md mx-auto italic font-serif px-4">
+                          "{certificateData.cause}"
+                        </p>
+
+                        {/* Classic Signatures */}
+                        <div className="flex justify-between items-end pt-8 px-4 text-[10px] text-gray-400 font-bold">
+                          <div className="text-center space-y-1">
+                            <p className="font-serif italic text-gray-700">Mohammad Zakir Hosen</p>
+                            <div className="border-t border-gray-200 w-24 pt-1">Principal Signature</div>
+                          </div>
+                          <div className="h-10 w-10 bg-amber-600/10 rounded-full flex items-center justify-center border-2 border-amber-600/30">
+                            <Award className="h-5 w-5 text-amber-700" />
+                          </div>
+                          <div className="text-center space-y-1">
+                            <p className="font-serif italic text-gray-700">July 6, 2026</p>
+                            <div className="border-t border-gray-200 w-24 pt-1">Date of Issue</div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                )}
+
+                {certificateSubTab === 'customize' && (
+                  <div className="bg-white p-6 rounded-xl border border-gray-150 shadow-sm">
+                    <h3 className="font-bold text-gray-900">Certificate Customize</h3>
+                    <p className="text-sm text-gray-500">Customize certificate templates here.</p>
+                  </div>
+                )}
+
+                {certificateSubTab === 'pottoyon' && (
+                  <div className="bg-white p-6 rounded-xl border border-gray-150 shadow-sm">
+                    <h3 className="font-bold text-gray-900">Pottoyon Potro</h3>
+                    <p className="text-sm text-gray-500">Manage Pottoyon Potro generation here.</p>
+                  </div>
+                )}
+
+                {certificateSubTab === 'pottoyon_customize' && (
+                  <div className="bg-white p-6 rounded-xl border border-gray-150 shadow-sm">
+                    <h3 className="font-bold text-gray-900">Pottoyon Customize</h3>
+                    <p className="text-sm text-gray-500">Customize Pottoyon Potro templates here.</p>
+                  </div>
+                )}
               </div>
             )}
 

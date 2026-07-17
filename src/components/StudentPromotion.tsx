@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { Search, ChevronDown, CheckCircle, XCircle, Save } from 'lucide-react';
 
 const mockStudents = [
-  { roll: '101', name: 'Rahim Ahmed', marks: '85%', status: 'Pass' },
-  { roll: '102', name: 'Salma Begum', marks: '92%', status: 'Pass' },
-  { roll: '103', name: 'John Doe', marks: '35%', status: 'Fail' },
-  { roll: '104', name: 'Rina Islam', marks: '78%', status: 'Pass' },
+  { roll: '101', previousRoll: '901', name: 'Rahim Ahmed', marks: '85%', status: 'Pass', merit: 1 },
+  { roll: '102', previousRoll: '902', name: 'Salma Begum', marks: '92%', status: 'Pass', merit: 2 },
+  { roll: '103', previousRoll: '903', name: 'John Doe', marks: '35%', status: 'Fail', merit: 3 },
+  { roll: '104', previousRoll: '904', name: 'Rina Islam', marks: '78%', status: 'Pass', merit: 4 },
 ];
 
 const StudentPromotion: React.FC = () => {
@@ -46,9 +46,10 @@ const StudentPromotion: React.FC = () => {
         <table className="w-full text-sm text-left">
           <thead className="bg-gray-50 text-gray-600">
             <tr>
-              <th className="p-4">Roll No</th>
+              <th className="p-4">Previous Roll</th>
               <th className="p-4">Student Name</th>
               <th className="p-4">Total Marks/GPA</th>
+              <th className="p-4">Merit Position</th>
               <th className="p-4">Status</th>
               <th className="p-4">Action</th>
             </tr>
@@ -56,9 +57,10 @@ const StudentPromotion: React.FC = () => {
           <tbody className="divide-y divide-gray-100">
             {students.map((student) => (
               <tr key={student.roll} className="hover:bg-gray-50">
-                <td className="p-4">{student.roll}</td>
+                <td className="p-4">{student.previousRoll}</td>
                 <td className="p-4 font-medium text-gray-900">{student.name}</td>
                 <td className="p-4">{student.marks}</td>
+                <td className="p-4">{student.merit}</td>
                 <td className="p-4">
                   <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${student.status === 'Pass' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
                     {student.status === 'Pass' ? <CheckCircle size={12} /> : <XCircle size={12} />}
@@ -66,9 +68,12 @@ const StudentPromotion: React.FC = () => {
                   </span>
                 </td>
                 <td className="p-4">
-                  <select className="border border-gray-200 rounded-lg px-3 py-1.5 text-xs text-gray-700 outline-none">
-                    <option value="promote" selected={student.status === 'Pass'}>Promote</option>
-                    <option value="detain" selected={student.status === 'Fail'}>Detain/Repeat</option>
+                  <select 
+                    className="border border-gray-200 rounded-lg px-3 py-1.5 text-xs text-gray-700 outline-none"
+                    defaultValue={student.status === 'Pass' ? 'promote' : 'detain'}
+                  >
+                    <option value="promote">Promote</option>
+                    <option value="detain">Detain/Repeat</option>
                   </select>
                 </td>
               </tr>

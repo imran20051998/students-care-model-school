@@ -110,7 +110,7 @@ const ClassScheduleEditor: React.FC = () => {
                           <select 
                             className="w-full text-xs border rounded p-1" 
                             value={cell.subject || ""}
-                            onChange={(e) => handleCellChange(day, periodId as number, 'subject', e.target.value)}
+                            onChange={(e) => handleCellChange(day, period.id as number, 'subject', e.target.value)}
                           >
                             <option value="">Subject</option>
                             {AVAILABLE_SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
@@ -118,7 +118,7 @@ const ClassScheduleEditor: React.FC = () => {
                           <select 
                             className="w-full text-xs border rounded p-1" 
                             value={cell.teacher || ""}
-                            onChange={(e) => handleCellChange(day, periodId as number, 'teacher', e.target.value)}
+                            onChange={(e) => handleCellChange(day, period.id as number, 'teacher', e.target.value)}
                           >
                             <option value="">Teacher</option>
                             {AVAILABLE_TEACHERS.map(t => <option key={t} value={t}>{t}</option>)}
@@ -128,7 +128,7 @@ const ClassScheduleEditor: React.FC = () => {
                             placeholder="Room" 
                             value={cell.room || ""}
                             className="w-full text-xs border rounded p-1" 
-                            onChange={(e) => handleCellChange(day, periodId as number, 'room', e.target.value)} 
+                            onChange={(e) => handleCellChange(day, period.id as number, 'room', e.target.value)} 
                           />
                           <button onClick={() => markBreak(day, period.id as number)} className="text-[10px] text-emerald-700 underline">Mark Break</button>
                         </div>
