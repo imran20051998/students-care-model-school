@@ -98,6 +98,8 @@ import ClassRoutineGrid from './ClassRoutineGrid';
 import ClassScheduleEditor from './ClassScheduleEditor';
 import StudentPromotion from './StudentPromotion';
 import AdminMailbox from './AdminMailbox';
+import CertificateOfExcellence from './CertificateOfExcellence';
+import SeatPlan from './SeatPlan';
 import { HomeworkItem, Notice } from '../types';
 import GuardianDashboard from './GuardianDashboard';
 import TeacherDashboard from './TeacherDashboard';
@@ -329,8 +331,6 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
       setIdCardData(prev => ({
         ...prev,
         name: student.name,
-        class: student.class,
-        roll: student.roll
       }));
     }
   };
@@ -352,7 +352,23 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
     dateOfBirth: '',
     refNo: '',
     classGrade: '',
-    customBody: 'এই মর্মে প্রত্যয়ন করা যাচ্ছে যে, [নাম], পিতা: [বাবা], মাতা: [মা]। সে অত্র বিদ্যালয়ের [শ্রেণি] শ্রেণির একজন নিয়মিত শিক্ষার্থী। তার রোল নম্বর [রোল] এবং জন্ম তারিখ [জন্ম তারিখ]।\n\nসে অত্র বিদ্যালয়ের একজন মেধাবী এবং অনুগত শিক্ষার্থী। আমি তার উজ্জ্বল ভবিষ্যৎ কামনা করি।'
+    customBody: 'এই মর্মে প্রত্যয়ন করা যাচ্ছে যে, [নাম], পিতা: [বাবা], মাতা: [মা]। সে অত্র বিদ্যালয়ের [শ্রেণি] শ্রেণির একজন নিয়মিত শিক্ষার্থী। তার রোল নম্বর [রোল] এবং জন্ম তারিখ [জন্ম তারিখ]।\n\nসে অত্র বিদ্যালয়ের একজন মেধাবী এবং অনুগত শিক্ষার্থী। আমি তার উজ্জ্বল ভবিষ্যৎ কামনা করি.'
+  });
+
+  // Custom printable Testimonial state
+  const [testimonialData, setTestimonialData] = useState({
+    studentName: '',
+    fatherName: '',
+    motherName: '',
+    roll: '',
+    regNo: '',
+    session: '',
+    classExam: '',
+    gpa: '',
+    description: '',
+    backgroundImage: null as string | null,
+    fontSize: 14,
+    fontColor: '#000000'
   });
   const [savedDesigns, setSavedDesigns] = useState<{name: string, settings: typeof certificateData}[]>([]);
   const [newDesignName, setNewDesignName] = useState('');
@@ -592,7 +608,8 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
   const [examSubTab, setExamSubTab] = useState<string>('exam_term');
   const [isExamMenuExpanded, setIsExamMenuExpanded] = useState<boolean>(true);
 
-  const toggleExclusiveMenu = (menuToOpen: 'frontend' | 'settings' | 'employee' | 'academic' | 'exam' | 'card') => {
+  const toggleExclusiveMenu = (menuToOpen: 'student_details' | 'frontend' | 'settings' | 'employee' | 'academic' | 'exam' | 'card') => {
+    setIsStudentDetailsExpanded(menuToOpen === 'student_details' ? !isStudentDetailsExpanded : false);
     setIsFrontendMenuExpanded(menuToOpen === 'frontend' ? !isFrontendMenuExpanded : false);
     setIsSettingsMenuExpanded(menuToOpen === 'settings' ? !isSettingsMenuExpanded : false);
     setIsEmployeeMenuExpanded(menuToOpen === 'employee' ? !isEmployeeMenuExpanded : false);
@@ -1910,6 +1927,7 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
     { id: 'generate', labelBn: 'সার্টিফিকেট জেনারেট', labelEn: 'Certificate Generate' },
     { id: 'pottoyon', labelBn: 'প্রত্যয়নপত্র', labelEn: 'Pottoyon Potro' },
     { id: 'testimonial', labelBn: 'টেস্টিমোনিয়াল', labelEn: 'Testimonial' },
+    { id: 'excellence', labelBn: 'এক্সিলেন্স সার্টিফিকেট', labelEn: 'Excellence Certificate' },
   ];
 
   // Quotes rotation on Left Side of Login Page
@@ -4536,7 +4554,7 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
                     <div key={item.id} className="space-y-1">
                       <button
                         onClick={() => {
-                          setIsStudentDetailsExpanded(!isStudentDetailsExpanded);
+                          toggleExclusiveMenu('student_details');
                           setAdminActiveTab('student_details');
                         }}
                         className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
@@ -4863,6 +4881,7 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
                             { id: 'routine_overview', labelBn: 'রুটিন ওভারভিউ', labelEn: 'Routine Overview' },
                             { id: 'exam_hall_duty', labelBn: 'পরীক্ষা হল ডিউটি', labelEn: 'Exam Hall Duty' },
                             { id: 'seat_arrangement', labelBn: 'আসন বিন্যাস', labelEn: 'Seat Arrangement' },
+                            { id: 'seat_plan', labelBn: 'সিট প্ল্যান', labelEn: 'Seat Plan' },
                             { id: 'teacher_schedule', labelBn: 'শিক্ষকের সময়সূচী', labelEn: 'Teacher Schedule' },
                             { id: 'promotion', labelBn: 'প্রমোশন', labelEn: 'Promotion' }
                           ].map((sub) => {
@@ -4962,7 +4981,7 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
                     <div key={item.id} className="space-y-1">
                       <button
                         onClick={() => {
-                          setIsSettingsMenuExpanded(!isSettingsMenuExpanded);
+                          toggleExclusiveMenu('settings');
                           setAdminActiveTab('settings');
                         }}
                         className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
@@ -7888,6 +7907,10 @@ def approve_admission_application(request, pk):
                   </div>
                 )}
 
+                {certificateSubTab === 'excellence' && (
+                  <CertificateOfExcellence />
+                )}
+
                 {certificateSubTab === 'customize' && (
                   <div className="bg-white p-6 rounded-xl border border-gray-150 shadow-sm">
                     <h3 className="font-bold text-gray-900">Certificate Customize</h3>
@@ -7975,9 +7998,85 @@ def approve_admission_application(request, pk):
                 )}
 
                 {certificateSubTab === 'testimonial' && (
-                  <div className="bg-white p-6 rounded-xl border border-gray-150 shadow-sm">
-                    <h3 className="font-bold text-gray-900">Testimonial</h3>
-                    <p className="text-sm text-gray-500">Testimonial generation for students will be here.</p>
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 bg-white p-6 rounded-xl border border-gray-150 shadow-sm">
+                    {/* Left: Input Form */}
+                    <div className="lg:col-span-4 space-y-4">
+                      <div className="space-y-1">
+                        <label className="block text-xs font-bold text-gray-400">Student Name</label>
+                        <input type="text" value={testimonialData.studentName} onChange={(e) => setTestimonialData(prev => ({...prev, studentName: e.target.value}))} className="w-full p-2 border rounded" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="block text-xs font-bold text-gray-400">Father Name</label>
+                        <input type="text" value={testimonialData.fatherName} onChange={(e) => setTestimonialData(prev => ({...prev, fatherName: e.target.value}))} className="w-full p-2 border rounded" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="block text-xs font-bold text-gray-400">Mother Name</label>
+                        <input type="text" value={testimonialData.motherName} onChange={(e) => setTestimonialData(prev => ({...prev, motherName: e.target.value}))} className="w-full p-2 border rounded" />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                         <div className="space-y-1">
+                            <label className="block text-xs font-bold text-gray-400">Roll No</label>
+                            <input type="text" value={testimonialData.roll} onChange={(e) => setTestimonialData(prev => ({...prev, roll: e.target.value}))} className="w-full p-2 border rounded" />
+                         </div>
+                         <div className="space-y-1">
+                            <label className="block text-xs font-bold text-gray-400">Registration No</label>
+                            <input type="text" value={testimonialData.regNo} onChange={(e) => setTestimonialData(prev => ({...prev, regNo: e.target.value}))} className="w-full p-2 border rounded" />
+                         </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                         <div className="space-y-1">
+                            <label className="block text-xs font-bold text-gray-400">Session</label>
+                            <input type="text" value={testimonialData.session} onChange={(e) => setTestimonialData(prev => ({...prev, session: e.target.value}))} className="w-full p-2 border rounded" />
+                         </div>
+                         <div className="space-y-1">
+                            <label className="block text-xs font-bold text-gray-400">Class/Exam</label>
+                            <input type="text" value={testimonialData.classExam} onChange={(e) => setTestimonialData(prev => ({...prev, classExam: e.target.value}))} className="w-full p-2 border rounded" />
+                         </div>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="block text-xs font-bold text-gray-400">GPA/Result</label>
+                        <input type="text" value={testimonialData.gpa} onChange={(e) => setTestimonialData(prev => ({...prev, gpa: e.target.value}))} className="w-full p-2 border rounded" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="block text-xs font-bold text-gray-400">Character Description</label>
+                        <textarea value={testimonialData.description} onChange={(e) => setTestimonialData(prev => ({...prev, description: e.target.value}))} className="w-full p-2 border rounded" rows={5} />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                              <label className="block text-xs font-bold text-gray-400">Font Size (px)</label>
+                              <input type="number" value={testimonialData.fontSize} onChange={(e) => setTestimonialData(prev => ({...prev, fontSize: parseInt(e.target.value) || 14}))} className="w-full p-2 border rounded" />
+                          </div>
+                          <div className="space-y-1">
+                              <label className="block text-xs font-bold text-gray-400">Font Color</label>
+                              <input type="color" value={testimonialData.fontColor} onChange={(e) => setTestimonialData(prev => ({...prev, fontColor: e.target.value}))} className="w-full p-2 border rounded h-10" />
+                          </div>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="block text-xs font-bold text-gray-400">Background Image</label>
+                        <input type="file" onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                                const reader = new FileReader();
+                                reader.onloadend = () => setTestimonialData(prev => ({ ...prev, backgroundImage: reader.result as string }));
+                                reader.readAsDataURL(file);
+                            }
+                        }} className="w-full p-2 border rounded" />
+                      </div>
+                      <button onClick={() => window.print()} className="w-full py-2 bg-blue-600 text-white rounded font-bold">Generate & Print</button>
+                    </div>
+
+                    {/* Right: Preview */}
+                    <div className="lg:col-span-8 p-4 bg-white border rounded-lg relative" style={{fontSize: testimonialData.fontSize + 'px', color: testimonialData.fontColor, backgroundImage: testimonialData.backgroundImage ? `url(${testimonialData.backgroundImage})` : 'none', backgroundSize: 'cover', minHeight: '600px'}}>
+                        <div className="text-center">
+                            <h1 className="font-bold text-3xl underline">TESTIMONIAL</h1>
+                            <p className="mt-4 text-justify">
+                                This is to certify that <span className="font-bold">{testimonialData.studentName}</span>, son/daughter of <span className="font-bold">{testimonialData.fatherName}</span> and <span className="font-bold">{testimonialData.motherName}</span>, Roll No: <span className="font-bold">{testimonialData.roll}</span>, Registration No: <span className="font-bold">{testimonialData.regNo}</span>, Session: <span className="font-bold">{testimonialData.session}</span>, Class/Exam: <span className="font-bold">{testimonialData.classExam}</span> has secured GPA <span className="font-bold">{testimonialData.gpa}</span>.
+                            </p>
+                            <p className="mt-4 text-justify">
+                                {testimonialData.description}
+                            </p>
+                        </div>
+                    </div>
                   </div>
                 )}
 
@@ -10186,6 +10285,16 @@ def approve_admission_application(request, pk):
                       </div>
                     );
                   })()}
+
+                  {academicSubTab === 'seat_plan' && (
+                    <div className="bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs text-left space-y-6">
+                      <div className="border-b border-gray-100 pb-4">
+                        <h3 className="font-extrabold text-gray-900 text-lg">Seat Plan Generator</h3>
+                        <p className="text-xs text-gray-400 font-bold">Generate PDF seat plan slips for students</p>
+                      </div>
+                      <SeatPlan />
+                    </div>
+                  )}
 
                   {/* =================================================== */}
                   {/* SUB-TAB 9: TEACHER SCHEDULE AVAILABILITY            */}

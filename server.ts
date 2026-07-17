@@ -3,6 +3,7 @@ import path from "path";
 import fs from "fs";
 import multer from "multer";
 import { createServer as createViteServer } from "vite";
+import { ExamSeatPlan } from "./src/db/seatPlanSchema";
 
 // Set up directory paths
 const UPLOADS_DIR = path.join(process.cwd(), "uploads");
@@ -71,6 +72,7 @@ interface DatabaseStore {
   settings: SchoolSettings;
   slider: any[] | null;
   students: Student[];
+  examSeatPlans: ExamSeatPlan[];
 }
 
 const DEFAULT_SETTINGS: SchoolSettings = {
@@ -149,6 +151,7 @@ function getDb(): DatabaseStore {
     settings: DEFAULT_SETTINGS,
     slider: null,
     students: INITIAL_STUDENTS,
+    examSeatPlans: [],
   };
   saveDb(initialDb);
   return initialDb;
@@ -503,6 +506,49 @@ async function startServer() {
   app.post("/php_backend/reset_password.php", resetPasswordHandler);
   app.post("/public/php_backend/reset_password.php", resetPasswordHandler);
 
+
+  // 8. Save Seat Plan (save_seat_plan.php)
+  const saveSeatPlanHandler = (req: Request, res: Response) => {
+    const db = getDb();
+    const { examTerm, class: className, section, roomNumber, layoutType } = req.body;
+
+    const studentsInClass = db.students.filter(
+      (s) => s.class.toLowerCase() === className.toLowerCase() && s.section === section
+    );
+
+    if (studentsInClass.length === 0) {
+      return res.status(404).json({ status: "error", message: "No students found for this class and section" });
+    }
+
+    const assignedStudents = studentsInClass.map((s, i) => ({
+      studentId: s.sl,
+      rollNo: s.roll,
+      rowNumber: Math.floor(i / 2) + 1,
+      columnNumber: (i % 2) + 1,
+    }));
+
+    const newPlan: ExamSeatPlan = {
+      id: Date.now(),
+      examTerm,
+      class: className,
+      section,
+      roomNumber,
+      layoutType,
+      students: assignedStudents,
+      createdAt: new Date().toISOString(),
+    };
+
+    db.examSeatPlans.push(newPlan);
+    saveDb(db);
+
+    res.json({
+      status: "success",
+      message: "Seat plan generated and saved successfully!",
+      plan: newPlan,
+    });
+  };
+  app.post("/php_backend/save_seat_plan.php", saveSeatPlanHandler);
+  app.post("/public/php_backend/save_seat_plan.php", saveSeatPlanHandler);
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
