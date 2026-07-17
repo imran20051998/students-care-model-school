@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import AdmitCardModal from './AdmitCardModal';
 import { 
   Lock, 
@@ -75,9 +75,12 @@ import {
   Copy,
   Code,
   Heart,
-  Filter
+  Filter,
+  Barcode,
+  Download
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import html2pdf from 'html2pdf.js';
 import { 
   initAuth, 
   googleSignIn, 
@@ -284,13 +287,54 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
   
   // Custom printable ID card state
   const [idCardData, setIdCardData] = useState({
-    name: 'Aarav Hossain',
-    roll: '12',
-    className: 'Class 8',
-    phone: '01712-345678',
-    bloodGroup: 'O+',
-    photoUrl: ''
+    name: '',
+    class: '',
+    roll: '',
+    bloodGroup: '',
+    guardianPhone: '',
+    session: '2026',
+    photo: null as string | null
   });
+
+  const [idCardFilterClass, setIdCardFilterClass] = useState('Class 3');
+  const [idCardFilterSection, setIdCardFilterSection] = useState('A');
+  const bulkPrintRef = useRef<HTMLDivElement>(null);
+
+  const generateBulkPDF = () => {
+    const element = bulkPrintRef.current;
+    if (!element) return;
+    const opt = {
+      margin: 5,
+      filename: `ID_Cards_${idCardFilterClass}_${idCardFilterSection}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    html2pdf().set(opt).from(element).save();
+  };
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setIdCardData(prev => ({ ...prev, photo: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleStudentSelect = (studentId: string) => {
+    const student = students.find(s => s.id === studentId);
+    if (student) {
+      setIdCardData(prev => ({
+        ...prev,
+        name: student.name,
+        class: student.class,
+        roll: student.roll
+      }));
+    }
+  };
 
   // Custom printable Certificate state
   const [certificateData, setCertificateData] = useState({
@@ -298,8 +342,20 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
     className: 'Class 6',
     cause: 'Outstanding performance in Mathematics and co-curricular activities',
     issueDate: '2026-07-06',
-    principalName: 'Mohammad Zakir Hosen'
+    principalName: 'Mohammad Zakir Hosen',
+    template: 'classic',
+    backgroundImage: null as string | null,
+    fontSize: 16,
+    fontColor: '#000000',
+    fatherName: '',
+    motherName: '',
+    roll: '',
+    dateOfBirth: '',
+    refNo: '',
+    customBody: 'এই মর্মে প্রত্যয়ন করা যাচ্ছে যে, [নাম], পিতা: [বাবা], মাতা: [মা]। সে অত্র বিদ্যালয়ের [শ্রেণি] শ্রেণির একজন নিয়মিত শিক্ষার্থী। তার রোল নম্বর [রোল] এবং জন্ম তারিখ [জন্ম তারিখ]।\n\nসে অত্র বিদ্যালয়ের একজন মেধাবী এবং অনুগত শিক্ষার্থী। আমি তার উজ্জ্বল ভবিষ্যৎ কামনা করি।'
   });
+  const [savedDesigns, setSavedDesigns] = useState<{name: string, settings: typeof certificateData}[]>([]);
+  const [newDesignName, setNewDesignName] = useState('');
 
   const [showAdmitCardFor, setShowAdmitCardFor] = useState<any | null>(null);
 
@@ -1852,9 +1908,8 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
 
   const certificateSubMenus = [
     { id: 'generate', labelBn: 'সার্টিফিকেট জেনারেট', labelEn: 'Certificate Generate' },
-    { id: 'customize', labelBn: 'সার্টিফিকেট কাস্টমাইজ', labelEn: 'Certificate Customize' },
     { id: 'pottoyon', labelBn: 'প্রত্যয়নপত্র', labelEn: 'Pottoyon Potro' },
-    { id: 'pottoyon_customize', labelBn: 'প্রত্যয়নপত্র কাস্টমাইজ', labelEn: 'Pottoyon Customize' },
+    { id: 'testimonial', labelBn: 'টেস্টিমোনিয়াল', labelEn: 'Testimonial' },
   ];
 
   // Quotes rotation on Left Side of Login Page
@@ -7350,58 +7405,56 @@ def approve_admission_application(request, pk):
                     <div className="lg:col-span-5 bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs space-y-4">
                       <div>
                         <h3 className="font-extrabold text-gray-900 text-base">Identity Card Generator</h3>
-                        <p className="text-xs text-gray-400 font-bold">Input student credentials to view and print physical ID cards</p>
+                        <p className="text-xs text-gray-400 font-bold">Configure and generate student ID cards</p>
                       </div>
                       <div className="space-y-3.5 text-xs">
                         <div className="space-y-1">
-                          <label className="block font-bold text-gray-400">Student Full Name</label>
-                          <input 
-                            type="text" 
-                            value={idCardData.name} 
-                            onChange={(e) => setIdCardData(prev => ({ ...prev, name: e.target.value }))}
-                            className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold" 
-                          />
+                          <label className="block font-bold text-gray-400">Select Student</label>
+                          <select onChange={(e) => handleStudentSelect(e.target.value)} className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold">
+                            <option value="">Select a student</option>
+                            {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                          </select>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="block font-bold text-gray-400">Upload Student Photo</label>
+                          <input type="file" onChange={handlePhotoChange} className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold" />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-1">
-                            <label className="block font-bold text-gray-400">Class Level</label>
-                            <input 
-                              type="text" 
-                              value={idCardData.className} 
-                              onChange={(e) => setIdCardData(prev => ({ ...prev, className: e.target.value }))}
-                              className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold" 
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <label className="block font-bold text-gray-400">Class Roll</label>
-                            <input 
-                              type="text" 
-                              value={idCardData.roll} 
-                              onChange={(e) => setIdCardData(prev => ({ ...prev, roll: e.target.value }))}
-                              className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold" 
-                            />
-                          </div>
+                           <div className="space-y-1">
+                            <label className="block font-bold text-gray-400">Class</label>
+                            <input type="text" value={idCardData.class} onChange={(e) => setIdCardData(prev => ({ ...prev, class: e.target.value }))} className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold" />
+                           </div>
+                           <div className="space-y-1">
+                            <label className="block font-bold text-gray-400">Roll</label>
+                            <input type="text" value={idCardData.roll} onChange={(e) => setIdCardData(prev => ({ ...prev, roll: e.target.value }))} className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold" />
+                           </div>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="block font-bold text-gray-400">Session</label>
+                          <select value={idCardData.session} onChange={(e) => setIdCardData(prev => ({ ...prev, session: e.target.value }))} className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold">
+                            <option value="2026">2026</option>
+                            <option value="2027">2027</option>
+                          </select>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-1">
-                            <label className="block font-bold text-gray-400">Blood Group</label>
-                            <input 
-                              type="text" 
-                              value={idCardData.bloodGroup} 
-                              onChange={(e) => setIdCardData(prev => ({ ...prev, bloodGroup: e.target.value }))}
-                              className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold" 
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <label className="block font-bold text-gray-400">Guardian Phone</label>
-                            <input 
-                              type="text" 
-                              value={idCardData.phone} 
-                              onChange={(e) => setIdCardData(prev => ({ ...prev, phone: e.target.value }))}
-                              className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold" 
-                            />
-                          </div>
+                           <div className="space-y-1">
+                            <label className="block font-bold text-gray-400">Class</label>
+                            <select value={idCardFilterClass} onChange={(e) => setIdCardFilterClass(e.target.value)} className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold">
+                              <option>Class 3</option>
+                              <option>Class 4</option>
+                            </select>
+                           </div>
+                           <div className="space-y-1">
+                            <label className="block font-bold text-gray-400">Section</label>
+                            <select value={idCardFilterSection} onChange={(e) => setIdCardFilterSection(e.target.value)} className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold">
+                              <option>A</option>
+                              <option>B</option>
+                            </select>
+                           </div>
                         </div>
+                        <button onClick={generateBulkPDF} className="w-full flex items-center justify-center gap-2 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-black rounded-xl shadow-sm cursor-pointer transition-all">
+                          <Download className="h-4 w-4" /> Generate Bulk PDF
+                        </button>
                         <button onClick={() => window.print()} className="w-full py-2.5 bg-[#025644] hover:bg-[#01352a] text-white font-black rounded-xl shadow-sm cursor-pointer transition-all">
                           Print ID Card
                         </button>
@@ -7428,13 +7481,14 @@ def approve_admission_application(request, pk):
 
                         {/* ID Card Core Body */}
                         <div className="p-5 text-center flex flex-col items-center space-y-3.5">
-                          <div className="h-24 w-24 bg-emerald-50 text-[#025644] rounded-full flex items-center justify-center border-2 border-[#025644]/20 shadow-inner">
-                            <User className="h-14 w-14" />
+                          <div className="h-24 w-24 bg-emerald-50 text-[#025644] rounded-full flex items-center justify-center border-2 border-[#025644]/20 shadow-inner overflow-hidden">
+                            {idCardData.photo ? <img src={idCardData.photo} alt="Student" className="h-full w-full object-cover" /> : <User className="h-14 w-14" />}
                           </div>
 
                           <div className="space-y-1">
-                            <h3 className="font-extrabold text-base text-gray-900 leading-tight">{idCardData.name}</h3>
-                            <p className="text-[10px] text-gray-400 font-bold tracking-wider uppercase">{idCardData.className} Scholar</p>
+                            <h3 className="font-extrabold text-base text-gray-900 leading-tight">{idCardData.name || 'Student Name'}</h3>
+                            <p className="text-[10px] text-gray-400 font-bold tracking-wider uppercase">{idCardData.class || 'Class'} Scholar</p>
+                            <p className="text-[10px] text-gray-400 font-bold tracking-wider uppercase">Session: {idCardData.session}</p>
                           </div>
 
                           <div className="w-full bg-gray-50 border border-gray-150 rounded-xl p-3 text-xs text-left text-gray-600 font-bold space-y-1.5">
@@ -7443,17 +7497,20 @@ def approve_admission_application(request, pk):
                               <span className="font-mono text-gray-800 font-black">{idCardData.roll}</span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-gray-400">Level:</span>
-                              <span className="text-gray-800 font-extrabold">{idCardData.className}</span>
-                            </div>
-                            <div className="flex justify-between">
                               <span className="text-gray-400">Blood Group:</span>
                               <span className="text-red-600 font-black">{idCardData.bloodGroup}</span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-gray-400">Contact:</span>
-                              <span className="font-mono text-gray-800 text-[11px]">{idCardData.phone}</span>
+                              <span className="text-gray-400">Guardian:</span>
+                              <span className="font-mono text-gray-800 text-[11px]">{idCardData.guardianPhone}</span>
                             </div>
+                          </div>
+                          <div className="w-full flex justify-between items-end mt-2">
+                             <Barcode className="h-10 w-24" />
+                             <div className="text-center">
+                                <div className="w-20 h-8 border-b-2 border-gray-800"></div>
+                                <p className="text-[8px] font-bold text-gray-600">Principal Signature</p>
+                             </div>
                           </div>
 
                           {/* Styled barcode lines */}
@@ -7465,6 +7522,45 @@ def approve_admission_application(request, pk):
                         </div>
                       </div>
                       <p className="text-[10px] text-gray-400 font-bold mt-4">Standard size: 85.6mm x 54mm (CR-80 size layout)</p>
+                    </div>
+                    {/* Hidden Bulk Print Container */}
+                    <div ref={bulkPrintRef} className="hidden print:block">
+                      {students.filter(s => s.class === idCardFilterClass && s.section === idCardFilterSection).map(s => (
+                        <div key={s.id} className="page-break-after-always w-[300px] bg-white border border-gray-250 rounded-2xl overflow-hidden shadow-lg select-none p-5 text-center flex flex-col items-center space-y-3.5 mb-10">
+                          <div className="bg-[#025644] p-4 text-white text-center border-b border-yellow-500/30 w-full mb-3">
+                            <h4 className="font-black text-[11px] uppercase tracking-wider">Students Care Model School</h4>
+                          </div>
+                          <div className="h-24 w-24 bg-emerald-50 text-[#025644] rounded-full flex items-center justify-center border-2 border-[#025644]/20 shadow-inner overflow-hidden">
+                            <User className="h-14 w-14" />
+                          </div>
+                          <div className="space-y-1">
+                            <h3 className="font-extrabold text-base text-gray-900 leading-tight">{s.name}</h3>
+                            <p className="text-[10px] text-gray-400 font-bold tracking-wider uppercase">{s.class} Scholar</p>
+                            <p className="text-[10px] text-gray-400 font-bold tracking-wider uppercase">Session: {idCardData.session}</p>
+                          </div>
+                          <div className="w-full bg-gray-50 border border-gray-150 rounded-xl p-3 text-xs text-left text-gray-600 font-bold space-y-1.5">
+                            <div className="flex justify-between">
+                              <span className="text-gray-400">Roll:</span>
+                              <span className="font-mono text-gray-800 font-black">{s.roll}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-400">Blood Group:</span>
+                              <span className="text-red-600 font-black">N/A</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-400">Guardian:</span>
+                              <span className="font-mono text-gray-800 text-[11px]">{s.guardianPhone}</span>
+                            </div>
+                          </div>
+                          <div className="w-full flex justify-between items-end mt-2">
+                             <Barcode className="h-10 w-24" />
+                             <div className="text-center">
+                                <div className="w-20 h-8 border-b-2 border-gray-800"></div>
+                                <p className="text-[8px] font-bold text-gray-600">Principal Signature</p>
+                             </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
@@ -7665,6 +7761,56 @@ def approve_admission_application(request, pk):
                             className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold" 
                           />
                         </div>
+                        <div className="space-y-1">
+                          <label className="block font-bold text-gray-400">Certificate Template</label>
+                          <select
+                            value={certificateData.template}
+                            onChange={(e) => setCertificateData(prev => ({ ...prev, template: e.target.value }))}
+                            className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold"
+                          >
+                            <option value="classic">Classic</option>
+                            <option value="modern">Modern</option>
+                            <option value="elegant">Elegant</option>
+                          </select>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="block font-bold text-gray-400">Select Saved Design</label>
+                          <select
+                            onChange={(e) => {
+                                const design = savedDesigns.find(d => d.name === e.target.value);
+                                if (design) setCertificateData(design.settings);
+                            }}
+                            className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold"
+                          >
+                            <option value="">Select a design...</option>
+                            {savedDesigns.map(d => <option key={d.name} value={d.name}>{d.name}</option>)}
+                          </select>
+                        </div>
+                        <div className="flex gap-2">
+                           <input type="text" value={newDesignName} onChange={e => setNewDesignName(e.target.value)} placeholder="Design Name" className="flex-1 px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold" />
+                           <button onClick={() => { if(newDesignName) { setSavedDesigns([...savedDesigns, {name: newDesignName, settings: certificateData}]); setNewDesignName(''); } }} className="px-4 py-2 bg-[#025644] text-white font-black rounded-xl">Save</button>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="block font-bold text-gray-400">Background Image</label>
+                          <input type="file" onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                                const reader = new FileReader();
+                                reader.onloadend = () => setCertificateData(prev => ({ ...prev, backgroundImage: reader.result as string }));
+                                reader.readAsDataURL(file);
+                            }
+                          }} className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold" />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                                <label className="block font-bold text-gray-400">Font Size (px)</label>
+                                <input type="number" value={certificateData.fontSize} onChange={(e) => setCertificateData(prev => ({ ...prev, fontSize: parseInt(e.target.value) }))} className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644] text-gray-800 font-bold" />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="block font-bold text-gray-400">Font Color</label>
+                                <input type="color" value={certificateData.fontColor} onChange={(e) => setCertificateData(prev => ({ ...prev, fontColor: e.target.value }))} className="w-full h-12 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644]" />
+                            </div>
+                        </div>
                         <button onClick={() => {
                           setAdminSuccessMsg("Academic certificate document rendered and ready to print!");
                           addAuditLog(`Admin generated certificate of excellence for: "${certificateData.studentName}".`);
@@ -7677,41 +7823,67 @@ def approve_admission_application(request, pk):
 
                     {/* Certificate Frame Layout */}
                     <div className="lg:col-span-8 flex flex-col items-center justify-center bg-gray-100/50 border border-gray-200 rounded-2xl p-6 shadow-inner min-h-[400px]">
-                      <div className="w-full max-w-[550px] bg-amber-50/20 border-8 border-double border-amber-600/60 p-6 sm:p-8 rounded-lg shadow-xl text-center space-y-6 relative select-none bg-white">
-                        {/* Classic Certificate background seals */}
-                        <div className="absolute inset-0 border border-amber-600/30 m-1 pointer-events-none" />
-
-                        <div className="space-y-1.5">
-                          <h4 className="font-serif italic font-extrabold text-amber-800 text-lg sm:text-xl">Certificate of Appreciation</h4>
-                          <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Students Care Model School, Chattogram</p>
-                        </div>
-
-                        <p className="text-xs text-gray-400 italic">This academic award is proudly presented to</p>
-
-                        <div className="space-y-1">
-                          <h3 className="font-serif italic text-2xl sm:text-3xl text-amber-900 border-b-2 border-amber-600/30 w-fit mx-auto pb-1 px-4">{certificateData.studentName}</h3>
-                          <p className="text-[10px] text-gray-500 font-bold mt-1">Scholar of {certificateData.className}</p>
-                        </div>
-
-                        <p className="text-xs text-gray-600 leading-relaxed max-w-md mx-auto italic font-serif px-4">
-                          "{certificateData.cause}"
-                        </p>
-
-                        {/* Classic Signatures */}
-                        <div className="flex justify-between items-end pt-8 px-4 text-[10px] text-gray-400 font-bold">
-                          <div className="text-center space-y-1">
-                            <p className="font-serif italic text-gray-700">Mohammad Zakir Hosen</p>
-                            <div className="border-t border-gray-200 w-24 pt-1">Principal Signature</div>
+                      {certificateData.template === 'classic' && (
+                        <div className="w-full max-w-[550px] bg-amber-50/20 border-8 border-double border-amber-600/60 p-6 sm:p-8 rounded-lg shadow-xl text-center space-y-6 relative select-none bg-white" style={{ backgroundImage: certificateData.backgroundImage ? `url(${certificateData.backgroundImage})` : undefined, backgroundSize: 'cover', backgroundPosition: 'center', fontSize: `${certificateData.fontSize}px`, color: certificateData.fontColor }}>
+                          <div className="absolute inset-0 border border-amber-600/30 m-1 pointer-events-none" />
+                          <div className="space-y-1.5">
+                            <h4 className="font-serif italic font-extrabold text-amber-800 text-lg sm:text-xl">Certificate of Appreciation</h4>
+                            <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Students Care Model School, Chattogram</p>
                           </div>
-                          <div className="h-10 w-10 bg-amber-600/10 rounded-full flex items-center justify-center border-2 border-amber-600/30">
-                            <Award className="h-5 w-5 text-amber-700" />
+                          <p className="text-xs text-gray-400 italic">This academic award is proudly presented to</p>
+                          <div className="space-y-1">
+                            <h3 className="font-serif italic text-2xl sm:text-3xl text-amber-900 border-b-2 border-amber-600/30 w-fit mx-auto pb-1 px-4">{certificateData.studentName || 'Student Name'}</h3>
+                            <p className="text-[10px] text-gray-500 font-bold mt-1">Scholar of {certificateData.className || 'Class'}</p>
                           </div>
-                          <div className="text-center space-y-1">
-                            <p className="font-serif italic text-gray-700">July 6, 2026</p>
-                            <div className="border-t border-gray-200 w-24 pt-1">Date of Issue</div>
+                          <p className="text-xs text-gray-600 leading-relaxed max-w-md mx-auto italic font-serif px-4">
+                            "{certificateData.cause || 'Reason for certificate'}"
+                          </p>
+                          <div className="flex justify-between items-end pt-8 px-4 text-[10px] text-gray-400 font-bold">
+                            <div className="text-center space-y-1"><p className="font-serif italic text-gray-700">{certificateData.principalName}</p><div className="border-t border-gray-200 w-24 pt-1">Principal Signature</div></div>
+                            <div className="h-10 w-10 bg-amber-600/10 rounded-full flex items-center justify-center border-2 border-amber-600/30"><Award className="h-5 w-5 text-amber-700" /></div>
+                            <div className="text-center space-y-1"><p className="font-serif italic text-gray-700">{certificateData.issueDate}</p><div className="border-t border-gray-200 w-24 pt-1">Date of Issue</div></div>
                           </div>
                         </div>
-                      </div>
+                      )}
+                      
+                      {certificateData.template === 'modern' && (
+                        <div className="w-full max-w-[550px] bg-gray-900 text-white p-8 sm:p-12 rounded-lg shadow-2xl text-center space-y-8 relative select-none border border-gray-700" style={{ backgroundImage: certificateData.backgroundImage ? `url(${certificateData.backgroundImage})` : undefined, backgroundSize: 'cover', backgroundPosition: 'center', fontSize: `${certificateData.fontSize}px`, color: certificateData.fontColor }}>
+                          <div className="space-y-1">
+                             <h4 className="font-black text-xl uppercase tracking-[0.2em] text-emerald-400">Certificate</h4>
+                             <p className="text-[10px] text-gray-500 uppercase tracking-widest">Students Care Model School</p>
+                          </div>
+                          <div className="space-y-4">
+                             <p className="text-xs text-gray-400">Awarded to</p>
+                             <h3 className="font-bold text-3xl text-white border-y border-emerald-900/50 py-4">{certificateData.studentName || 'Student Name'}</h3>
+                             <p className="text-xs text-emerald-500 font-bold">{certificateData.className || 'Class'}</p>
+                          </div>
+                          <p className="text-xs text-gray-300 italic">"{certificateData.cause || 'Reason for certificate'}"</p>
+                          <div className="flex justify-between items-center pt-8 border-t border-gray-800">
+                             <div className="text-left text-[9px] text-gray-500">Principal: {certificateData.principalName}</div>
+                             <div className="text-right text-[9px] text-gray-500">Date: {certificateData.issueDate}</div>
+                          </div>
+                        </div>
+                      )}
+
+                      {certificateData.template === 'elegant' && (
+                        <div className="w-full max-w-[550px] bg-white p-8 sm:p-12 rounded-lg shadow-2xl text-center space-y-8 relative select-none border-t-8 border-emerald-800" style={{ backgroundImage: certificateData.backgroundImage ? `url(${certificateData.backgroundImage})` : undefined, backgroundSize: 'cover', backgroundPosition: 'center', fontSize: `${certificateData.fontSize}px`, color: certificateData.fontColor }}>
+                          <div className="absolute top-2 left-2 w-10 h-10 border-l-2 border-t-2 border-emerald-800"></div>
+                          <div className="absolute top-2 right-2 w-10 h-10 border-r-2 border-t-2 border-emerald-800"></div>
+                          <div className="absolute bottom-2 left-2 w-10 h-10 border-l-2 border-b-2 border-emerald-800"></div>
+                          <div className="absolute bottom-2 right-2 w-10 h-10 border-r-2 border-b-2 border-emerald-800"></div>
+                          <h4 className="font-serif font-extrabold text-2xl text-emerald-900 uppercase">Certificate of Excellence</h4>
+                          <div className="space-y-2">
+                             <p className="text-sm text-gray-600">This is to certify that</p>
+                             <h3 className="font-bold text-3xl text-emerald-950 font-serif italic">{certificateData.studentName || 'Student Name'}</h3>
+                             <p className="text-xs text-gray-500">of {certificateData.className || 'Class'}</p>
+                          </div>
+                          <p className="text-xs text-gray-700 italic border-l-4 border-emerald-200 pl-4 text-left">"{certificateData.cause || 'Reason for certificate'}"</p>
+                          <div className="flex justify-around items-end pt-12 text-[10px] text-gray-500">
+                             <div className="text-center">{certificateData.principalName}<div className="border-t border-gray-300 w-32 mt-1 pt-1">Principal</div></div>
+                             <div className="text-center">{certificateData.issueDate}<div className="border-t border-gray-300 w-32 mt-1 pt-1">Date</div></div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -7724,18 +7896,91 @@ def approve_admission_application(request, pk):
                 )}
 
                 {certificateSubTab === 'pottoyon' && (
-                  <div className="bg-white p-6 rounded-xl border border-gray-150 shadow-sm">
-                    <h3 className="font-bold text-gray-900">Pottoyon Potro</h3>
-                    <p className="text-sm text-gray-500">Manage Pottoyon Potro generation here.</p>
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 bg-white p-6 rounded-xl border border-gray-150 shadow-sm">
+                    {/* Form Panel */}
+                    <div className="lg:col-span-4 space-y-4">
+                        <h3 className="font-bold text-gray-900 mb-4">প্রত্যয়নপত্র (Pottoyon Potro)</h3>
+                        <div className="space-y-1">
+                            <label className="block text-xs font-bold text-gray-400">Student Name</label>
+                            <input type="text" value={certificateData.studentName} onChange={(e) => setCertificateData(prev => ({...prev, studentName: e.target.value}))} className="w-full p-2 border rounded" />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="block text-xs font-bold text-gray-400">Father Name</label>
+                            <input type="text" value={certificateData.fatherName} onChange={(e) => setCertificateData(prev => ({...prev, fatherName: e.target.value}))} className="w-full p-2 border rounded" />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="block text-xs font-bold text-gray-400">Mother Name</label>
+                            <input type="text" value={certificateData.motherName} onChange={(e) => setCertificateData(prev => ({...prev, motherName: e.target.value}))} className="w-full p-2 border rounded" />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="block text-xs font-bold text-gray-400">Class</label>
+                            <input type="text" value={certificateData.classGrade} onChange={(e) => setCertificateData(prev => ({...prev, classGrade: e.target.value}))} className="w-full p-2 border rounded" />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="block text-xs font-bold text-gray-400">Roll</label>
+                            <input type="text" value={certificateData.roll} onChange={(e) => setCertificateData(prev => ({...prev, roll: e.target.value}))} className="w-full p-2 border rounded" />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="block text-xs font-bold text-gray-400">Date of Birth</label>
+                            <input type="text" value={certificateData.dateOfBirth} onChange={(e) => setCertificateData(prev => ({...prev, dateOfBirth: e.target.value}))} className="w-full p-2 border rounded" />
+                        </div>
+                         <div className="space-y-1">
+                            <label className="block text-xs font-bold text-gray-400">Ref No.</label>
+                            <input type="text" value={certificateData.refNo} onChange={(e) => setCertificateData(prev => ({...prev, refNo: e.target.value}))} className="w-full p-2 border rounded" />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="block text-xs font-bold text-gray-400">Custom Body</label>
+                            <textarea value={certificateData.customBody} onChange={(e) => setCertificateData(prev => ({...prev, customBody: e.target.value}))} className="w-full p-2 border rounded" rows={5} />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="block text-xs font-bold text-gray-400">Background Image</label>
+                            <input type="file" onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => setCertificateData(prev => ({ ...prev, backgroundImage: reader.result as string }));
+                                    reader.readAsDataURL(file);
+                                }
+                            }} className="w-full p-2 border rounded" />
+                        </div>
+                        <button onClick={() => window.print()} className="w-full py-2 bg-blue-600 text-white rounded font-bold">Print Certificate</button>
+                    </div>
+                    {/* Preview Panel */}
+                    <div className="lg:col-span-8">
+                        <div className="relative w-full max-w-[600px] aspect-[1/1.4] mx-auto border" style={{ backgroundImage: `url('${certificateData.backgroundImage || '/testimonial-bg-CUH7xwLC.jpeg'}')`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+                            {/* Absolute positioned elements */}
+                            
+                            {/* Body */}
+                            <div className="absolute top-[250px] left-[50px] right-[50px] text-lg leading-relaxed text-center">
+                                <p className="font-bold text-xl mb-4">প্রত্যয়নপত্র</p>
+                                <p className="text-left whitespace-pre-line">
+                                    {certificateData.customBody
+                                        .replace(/\[নাম\]/g, certificateData.studentName || '[নাম]')
+                                        .replace(/\[বাবা\]/g, certificateData.fatherName || '[বাবা]')
+                                        .replace(/\[মা\]/g, certificateData.motherName || '[মা]')
+                                        .replace(/\[শ্রেণি\]/g, certificateData.classGrade || '[শ্রেণি]')
+                                        .replace(/\[রোল\]/g, certificateData.roll || '[রোল]')
+                                        .replace(/\[জন্ম তারিখ\]/g, certificateData.dateOfBirth || '[জন্ম তারিখ]')
+                                    }
+                                </p>
+                            </div>
+                            
+                            {/* Signature */}
+                            <div className="absolute bottom-[50px] right-[50px] text-center">
+                                <div className="border-t border-black w-40 pt-1">প্রধান শিক্ষক</div>
+                            </div>
+                        </div>
+                    </div>
                   </div>
                 )}
 
-                {certificateSubTab === 'pottoyon_customize' && (
+                {certificateSubTab === 'testimonial' && (
                   <div className="bg-white p-6 rounded-xl border border-gray-150 shadow-sm">
-                    <h3 className="font-bold text-gray-900">Pottoyon Customize</h3>
-                    <p className="text-sm text-gray-500">Customize Pottoyon Potro templates here.</p>
+                    <h3 className="font-bold text-gray-900">Testimonial</h3>
+                    <p className="text-sm text-gray-500">Testimonial generation for students will be here.</p>
                   </div>
                 )}
+
               </div>
             )}
 
