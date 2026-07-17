@@ -41,7 +41,7 @@ app.post('/api/login', async (req: Request, res: Response): Promise<any> => {
                 email: user.email,
                 role: user.role_name
             }
-        });
+       });
 
     } catch (error) {
         console.error(error);
