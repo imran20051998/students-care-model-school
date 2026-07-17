@@ -526,6 +526,15 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
   // Exam Terms State and UI Expanded States
   const [examSubTab, setExamSubTab] = useState<string>('exam_term');
   const [isExamMenuExpanded, setIsExamMenuExpanded] = useState<boolean>(true);
+
+  const toggleExclusiveMenu = (menuToOpen: 'frontend' | 'settings' | 'employee' | 'academic' | 'exam') => {
+    setIsFrontendMenuExpanded(menuToOpen === 'frontend' ? !isFrontendMenuExpanded : false);
+    setIsSettingsMenuExpanded(menuToOpen === 'settings' ? !isSettingsMenuExpanded : false);
+    setIsEmployeeMenuExpanded(menuToOpen === 'employee' ? !isEmployeeMenuExpanded : false);
+    setIsAcademicMenuExpanded(menuToOpen === 'academic' ? !isAcademicMenuExpanded : false);
+    setIsExamMenuExpanded(menuToOpen === 'exam' ? !isExamMenuExpanded : false);
+  };
+
   const [editingExamTermId, setEditingExamTermId] = useState<string | null>(null);
   const [newExamTermForm, setNewExamTermForm] = useState({
     name: '',
@@ -4523,27 +4532,27 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
                 if (item.id === 'frontend') {
                   return (
                     <div key={item.id} className="space-y-1">
-                      <button
-                        onClick={() => {
-                          setIsFrontendMenuExpanded(!isFrontendMenuExpanded);
-                          setAdminActiveTab('frontend');
-                        }}
-                        className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
-                          isActive 
-                            ? 'bg-[#005c53] text-white shadow-xs font-black' 
-                            : 'text-gray-600 hover:bg-slate-50 hover:text-[#005c53] font-bold'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
+                      <div className="w-full flex items-center bg-gray-50 rounded-2xl">
+                        <button
+                          onClick={() => {
+                            setAdminActiveTab('frontend');
+                          }}
+                          className={`flex-grow flex items-center gap-3 px-4 py-3 rounded-l-2xl text-xs font-black transition-all cursor-pointer ${
+                            isActive 
+                              ? 'bg-[#005c53] text-white shadow-xs font-black' 
+                              : 'text-gray-600 hover:bg-slate-50 hover:text-[#005c53] font-bold'
+                          }`}
+                        >
                           <Icon className={`h-4.5 w-4.5 ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-[#005c53]'}`} />
                           <span>{item.label}</span>
-                        </div>
-                        {isActive ? (
-                          <ChevronRight className="h-3.5 w-3.5 text-white shrink-0" />
-                        ) : (
+                        </button>
+                        <button
+                          onClick={() => toggleExclusiveMenu('frontend')}
+                          className="px-3 py-3 text-gray-500 hover:text-[#005c53]"
+                        >
                           <ChevronDown className={`h-3 w-3 opacity-50 transition-transform duration-200 ${isFrontendMenuExpanded ? 'rotate-180' : ''}`} />
-                        )}
-                      </button>
+                        </button>
+                      </div>
                       
                       {isFrontendMenuExpanded && (
                         <div className="pl-4 pr-1 py-1 space-y-1 border-l border-emerald-500/10 ml-6 max-h-[380px] overflow-y-auto scrollbar-none">
@@ -4578,27 +4587,27 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
                   const isEmployeeActive = adminActiveTab === 'employee';
                   return (
                     <div key={item.id} className="space-y-1">
-                      <button
-                        onClick={() => {
-                          setIsEmployeeMenuExpanded(!isEmployeeMenuExpanded);
-                          setAdminActiveTab('employee');
-                        }}
-                        className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
-                          isEmployeeActive 
-                            ? 'bg-[#005c53] text-white shadow-xs font-black' 
-                            : 'text-gray-600 hover:bg-slate-50 hover:text-[#005c53] font-bold'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
+                      <div className="w-full flex items-center bg-gray-50 rounded-2xl">
+                        <button
+                          onClick={() => {
+                            setAdminActiveTab('employee');
+                          }}
+                          className={`flex-grow flex items-center gap-3 px-4 py-3 rounded-l-2xl text-xs font-black transition-all cursor-pointer ${
+                            isEmployeeActive 
+                              ? 'bg-[#005c53] text-white shadow-xs font-black' 
+                              : 'text-gray-600 hover:bg-slate-50 hover:text-[#005c53] font-bold'
+                          }`}
+                        >
                           <Icon className={`h-4.5 w-4.5 shrink-0 ${isEmployeeActive ? 'text-white' : 'text-gray-400 group-hover:text-[#005c53]'}`} />
                           <span className="truncate">{item.label}</span>
-                        </div>
-                        {isEmployeeActive ? (
-                          <ChevronRight className="h-3.5 w-3.5 text-white shrink-0" />
-                        ) : (
+                        </button>
+                        <button
+                          onClick={() => toggleExclusiveMenu('employee')}
+                          className="px-3 py-3 text-gray-500 hover:text-[#005c53]"
+                        >
                           <ChevronDown className={`h-3 w-3 opacity-50 transition-transform duration-200 ${isEmployeeMenuExpanded ? 'rotate-180' : ''}`} />
-                        )}
-                      </button>
+                        </button>
+                      </div>
                       
                       {isEmployeeMenuExpanded && (
                         <div className="pl-4 pr-1 py-1 space-y-1 border-l border-emerald-500/10 ml-6">
@@ -4641,27 +4650,27 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
                 if (item.id === 'settings') {
                   return (
                     <div key={item.id} className="space-y-1">
-                      <button
-                        onClick={() => {
-                          setIsSettingsMenuExpanded(!isSettingsMenuExpanded);
-                          setAdminActiveTab('settings');
-                        }}
-                        className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
-                          isActive 
-                            ? 'bg-[#005c53] text-white shadow-xs font-black' 
-                            : 'text-gray-600 hover:bg-slate-50 hover:text-[#005c53] font-bold'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
+                      <div className="w-full flex items-center bg-gray-50 rounded-2xl">
+                        <button
+                          onClick={() => {
+                            setAdminActiveTab('settings');
+                          }}
+                          className={`flex-grow flex items-center gap-3 px-4 py-3 rounded-l-2xl text-xs font-black transition-all cursor-pointer ${
+                            isActive 
+                              ? 'bg-[#005c53] text-white shadow-xs font-black' 
+                              : 'text-gray-600 hover:bg-slate-50 hover:text-[#005c53] font-bold'
+                          }`}
+                        >
                           <Icon className={`h-4.5 w-4.5 ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-[#005c53]'}`} />
                           <span>{item.label}</span>
-                        </div>
-                        {isActive ? (
-                          <ChevronRight className="h-3.5 w-3.5 text-white shrink-0" />
-                        ) : (
+                        </button>
+                        <button
+                          onClick={() => toggleExclusiveMenu('settings')}
+                          className="px-3 py-3 text-gray-500 hover:text-[#005c53]"
+                        >
                           <ChevronDown className={`h-3 w-3 opacity-50 transition-transform duration-200 ${isSettingsMenuExpanded ? 'rotate-180' : ''}`} />
-                        )}
-                      </button>
+                        </button>
+                      </div>
                       
                       {isSettingsMenuExpanded && (
                         <div className="pl-4 pr-1 py-1 space-y-1 border-l border-emerald-500/10 ml-6">
@@ -4685,27 +4694,27 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
                   const isAcademicActive = adminActiveTab === 'academic';
                   return (
                     <div key={item.id} className="space-y-1">
-                      <button
-                        onClick={() => {
-                          setIsAcademicMenuExpanded(!isAcademicMenuExpanded);
-                          setAdminActiveTab('academic');
-                        }}
-                        className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
-                          isAcademicActive 
-                            ? 'bg-[#005c53] text-white shadow-xs font-black' 
-                            : 'text-gray-600 hover:bg-slate-50 hover:text-[#005c53] font-bold'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
+                      <div className="w-full flex items-center bg-gray-50 rounded-2xl">
+                        <button
+                          onClick={() => {
+                            setAdminActiveTab('academic');
+                          }}
+                          className={`flex-grow flex items-center gap-3 px-4 py-3 rounded-l-2xl text-xs font-black transition-all cursor-pointer ${
+                            isAcademicActive 
+                              ? 'bg-[#005c53] text-white shadow-xs font-black' 
+                              : 'text-gray-600 hover:bg-slate-50 hover:text-[#005c53] font-bold'
+                          }`}
+                        >
                           <Icon className={`h-4.5 w-4.5 shrink-0 ${isAcademicActive ? 'text-white' : 'text-gray-400 group-hover:text-[#005c53]'}`} />
                           <span className="truncate">{item.label}</span>
-                        </div>
-                        {isAcademicActive ? (
-                          <ChevronRight className="h-3.5 w-3.5 text-white shrink-0" />
-                        ) : (
+                        </button>
+                        <button
+                          onClick={() => toggleExclusiveMenu('academic')}
+                          className="px-3 py-3 text-gray-500 hover:text-[#005c53]"
+                        >
                           <ChevronDown className={`h-3 w-3 opacity-50 transition-transform duration-200 ${isAcademicMenuExpanded ? 'rotate-180' : ''}`} />
-                        )}
-                      </button>
+                        </button>
+                      </div>
                       
                       {isAcademicMenuExpanded && (
                         <div className="pl-4 pr-1 py-1 space-y-1 border-l border-emerald-500/10 ml-6">
@@ -4751,27 +4760,27 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
                   const isExamActive = adminActiveTab === 'exam';
                   return (
                     <div key={item.id} className="space-y-1">
-                      <button
-                        onClick={() => {
-                          setIsExamMenuExpanded(!isExamMenuExpanded);
-                          setAdminActiveTab('exam');
-                        }}
-                        className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
-                          isExamActive 
-                            ? 'bg-[#005c53] text-white shadow-xs font-black' 
-                            : 'text-gray-600 hover:bg-slate-50 hover:text-[#005c53] font-bold'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
+                      <div className="w-full flex items-center bg-gray-50 rounded-2xl">
+                        <button
+                          onClick={() => {
+                            setAdminActiveTab('exam');
+                          }}
+                          className={`flex-grow flex items-center gap-3 px-4 py-3 rounded-l-2xl text-xs font-black transition-all cursor-pointer ${
+                            isExamActive 
+                              ? 'bg-[#005c53] text-white shadow-xs font-black' 
+                              : 'text-gray-600 hover:bg-slate-50 hover:text-[#005c53] font-bold'
+                          }`}
+                        >
                           <Icon className={`h-4.5 w-4.5 shrink-0 ${isExamActive ? 'text-white' : 'text-gray-400 group-hover:text-[#005c53]'}`} />
                           <span className="truncate">{item.label}</span>
-                        </div>
-                        {isExamActive ? (
-                          <ChevronRight className="h-3.5 w-3.5 text-white shrink-0" />
-                        ) : (
+                        </button>
+                        <button
+                          onClick={() => toggleExclusiveMenu('exam')}
+                          className="px-3 py-3 text-gray-500 hover:text-[#005c53]"
+                        >
                           <ChevronDown className={`h-3 w-3 opacity-50 transition-transform duration-200 ${isExamMenuExpanded ? 'rotate-180' : ''}`} />
-                        )}
-                      </button>
+                        </button>
+                      </div>
                       
                       {isExamMenuExpanded && (
                         <div className="pl-4 pr-1 py-1 space-y-1 border-l border-emerald-500/10 ml-6">
