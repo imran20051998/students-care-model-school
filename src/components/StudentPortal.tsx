@@ -27,7 +27,8 @@ import {
   Settings, 
   Users, 
   PlusCircle, 
-  Trash2, 
+  Trash2,
+  Printer,
   Shield,
   LayoutGrid,
   Table, 
@@ -8335,9 +8336,15 @@ def approve_admission_application(request, pk):
                     <div className="bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs text-left space-y-6">
                       
                       {/* Header matching user description */}
-                      <div className="space-y-1">
-                        <h2 className="text-2xl font-black text-gray-900 tracking-tight">Class Schedule</h2>
-                        <p className="text-xs text-gray-500 font-bold">Routine grid by class — subject, teacher, room with conflict detection</p>
+                      <div className="flex justify-between items-center">
+                        <div className="space-y-1">
+                          <h2 className="text-2xl font-black text-gray-900 tracking-tight">Class Schedule</h2>
+                          <p className="text-xs text-gray-500 font-bold">Routine grid by class — subject, teacher, room with conflict detection</p>
+                        </div>
+                        <button onClick={() => { console.log('Print button clicked'); window.print(); }} className="px-4 py-2 bg-[#005c53] hover:bg-[#004d44] text-white text-xs font-black rounded-xl flex items-center gap-1.5 shadow-sm transition-all cursor-pointer print:hidden">
+                          <Printer className="h-4 w-4" />
+                          <span>Print/PDF</span>
+                        </button>
                       </div>
 
                       {/* Dropdown Filters and Copy Card (Exactly styled as in the screenshot) */}
