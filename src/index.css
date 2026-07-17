@@ -95,12 +95,7 @@
 /* Bulletproof @media print styles for Application Summary */
 @media print {
   /* Hide all standard web content, headers, navbars, footers, interactive buttons */
-  body {
-    background-color: #ffffff !important;
-    color: #000000 !important;
-  }
-
-  body * {
+  body > * {
     visibility: hidden;
   }
 
