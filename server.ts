@@ -4,7 +4,51 @@ import fs from "fs";
 import multer from "multer";
 import { createServer as createViteServer } from "vite";
 import { ExamSeatPlan } from "./src/db/seatPlanSchema";
+import db from "./src/db"; // আমাদের তৈরি করা db.ts ফাইল
+// ================= LOGIN API ROUTE =================
+app.post('/api/login', async (req: Request, res: Response): Promise<any> => {
+    const { email, password } = req.body;
 
+    if (!email || !password) {
+        return res.status(400).json({ success: false, message: 'ইমেইল এবং পাসওয়ার্ড দিন!' });
+    }
+
+    try {
+        const [rows]: any = await db.query(
+            `SELECT users.*, roles.role_name 
+             FROM users 
+             JOIN roles ON users.role_id = roles.id 
+             WHERE users.email = ?`, 
+            [email]
+        );
+
+        if (rows.length === 0) {
+            return res.status(401).json({ success: false, message: 'ভুল ইমেইল অথবা পাসওয়ার্ড!' });
+        }
+
+        const user = rows[0];
+
+        if (user.password !== password) {
+            return res.status(401).json({ success: false, message: 'ভুল ইমেইল অথবা পাসওয়ার্ড!' });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: 'লগইন সফল হয়েছে!',
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role_name
+            }
+        });
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ success: false, message: 'সার্ভারে কোনো সমস্যা হয়েছে!' });
+    }
+});
+// ===================================================
 // Set up directory paths
 const UPLOADS_DIR = path.join(process.cwd(), "uploads");
 const DB_FILE = path.join(process.cwd(), "db_store.json");
