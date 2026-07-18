@@ -107,24 +107,12 @@
     display: none !important;
   }
 
-  /* Hide everything by default */
-  body * {
-    visibility: hidden;
+  /* Hide everything at body level except the printable element if it exists */
+  body > *:not(#printable-application-summary):not(#printable-routine):not(#printable-admit-card):not(#printable-report-card) {
+    display: none !important;
   }
 
-  /* Make sure printable elements and their contents are visible */
-  #printable-application-summary,
-  #printable-application-summary *,
-  #printable-routine,
-  #printable-routine *,
-  #printable-admit-card,
-  #printable-admit-card *,
-  #printable-report-card,
-  #printable-report-card * {
-    visibility: visible;
-  }
-
-  /* Position printable elements at the top left */
+  /* Ensure printable elements are positioned correctly */
   #printable-application-summary,
   #printable-routine,
   #printable-admit-card,
