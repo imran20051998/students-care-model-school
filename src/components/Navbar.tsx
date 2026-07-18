@@ -119,6 +119,11 @@ export default function Navbar({ activeTab, setActiveTab, lang, setLang, onSearc
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isSearchOpen]);
 
+  // Academic Session State
+  const [academicSession, setAcademicSession] = useState('2023');
+  const [isSessionOpen, setIsSessionOpen] = useState(false);
+  const sessions = ['2021', '2022', '2023'];
+
   // Construct bilingual search database index
   const searchIndex = React.useMemo(() => {
     const list: Array<{
@@ -539,6 +544,35 @@ export default function Navbar({ activeTab, setActiveTab, lang, setLang, onSearc
             <span>লগইন</span>
             <ChevronDown className="h-3 w-3 opacity-70" />
           </button>
+
+          {/* Academic Session Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setIsSessionOpen(!isSessionOpen)}
+              className="bg-white text-gray-800 px-3 sm:px-4 py-1 rounded-md text-[11px] sm:text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm ml-2 border border-gray-300"
+            >
+              <Calendar className="h-3.5 w-3.5" />
+              <span>{academicSession}</span>
+              <ChevronDown className="h-3 w-3 opacity-70" />
+            </button>
+            {isSessionOpen && (
+              <div className="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg border border-gray-200 z-50 p-2 text-sm text-gray-700">
+                {sessions.map((session) => (
+                  <button
+                    key={session}
+                    onClick={() => {
+                      setAcademicSession(session);
+                      setIsSessionOpen(false);
+                    }}
+                    className={`w-full text-left px-3 py-2 rounded-md hover:bg-gray-100 flex justify-between items-center ${academicSession === session ? 'bg-gray-100 font-bold' : ''}`}
+                  >
+                    {session}
+                    {academicSession === session && <span>✓</span>}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* Mobile Search Button */}
           <button

@@ -4,51 +4,7 @@ import fs from "fs";
 import multer from "multer";
 import { createServer as createViteServer } from "vite";
 import { ExamSeatPlan } from "./src/db/seatPlanSchema";
-import db from "./src/db"; // আমাদের তৈরি করা db.ts ফাইল
-// ================= LOGIN API ROUTE =================
-app.post('/api/login', async (req: Request, res: Response): Promise<any> => {
-    const { email, password } = req.body;
 
-    if (!email || !password) {
-        return res.status(400).json({ success: false, message: 'ইমেইল এবং পাসওয়ার্ড দিন!' });
-    }
-
-    try {
-        const [rows]: any = await db.query(
-            `SELECT users.*, roles.role_name 
-             FROM users 
-             JOIN roles ON users.role_id = roles.id 
-             WHERE users.email = ?`, 
-            [email]
-        );
-
-        if (rows.length === 0) {
-            return res.status(401).json({ success: false, message: 'ভুল ইমেইল অথবা পাসওয়ার্ড!' });
-        }
-
-        const user = rows[0];
-
-        if (user.password !== password) {
-            return res.status(401).json({ success: false, message: 'ভুল ইমেইল অথবা পাসওয়ার্ড!' });
-        }
-
-        return res.status(200).json({
-            success: true,
-            message: 'লগইন সফল হয়েছে!',
-            user: {
-                id: user.id,
-                name: user.name,
-                email: user.email,
-                role: user.role_name
-            }
-       });
-
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ success: false, message: 'সার্ভারে কোনো সমস্যা হয়েছে!' });
-    }
-});
-// ===================================================
 // Set up directory paths
 const UPLOADS_DIR = path.join(process.cwd(), "uploads");
 const DB_FILE = path.join(process.cwd(), "db_store.json");
@@ -112,11 +68,39 @@ interface Student {
   created_at: string;
 }
 
+interface Attendance {
+  working: number;
+  present: number;
+  percentage: number;
+  grade: string;
+}
+
+interface Mark {
+  subject: string;
+  theory: number;
+  mcq: number;
+  practical: number;
+  highest: number;
+  total: number;
+  grade: string;
+  gp: number;
+  combined: boolean;
+  papers?: string[];
+}
+
+interface StudentRecord {
+  sl: number;
+  attendance: Attendance;
+  marks: Mark[];
+  remarks: string;
+}
+
 interface DatabaseStore {
   settings: SchoolSettings;
   slider: any[] | null;
   students: Student[];
   examSeatPlans: ExamSeatPlan[];
+  studentRecords: StudentRecord[];
 }
 
 const DEFAULT_SETTINGS: SchoolSettings = {
@@ -196,6 +180,7 @@ function getDb(): DatabaseStore {
     slider: null,
     students: INITIAL_STUDENTS,
     examSeatPlans: [],
+    studentRecords: [],
   };
   saveDb(initialDb);
   return initialDb;
@@ -593,6 +578,27 @@ async function startServer() {
   };
   app.post("/php_backend/save_seat_plan.php", saveSeatPlanHandler);
   app.post("/public/php_backend/save_seat_plan.php", saveSeatPlanHandler);
+
+  // 9. Get Student Report (get_report.php / API)
+  const getStudentReportHandler = (req: Request, res: Response) => {
+    const db = getDb();
+    const studentId = parseInt(req.params.studentId, 10);
+    const student = db.students.find((s) => s.sl === studentId);
+    
+    if (!student) {
+        return res.status(404).json({ status: "error", message: "Student not found" });
+    }
+
+    const record = db.studentRecords.find((r) => r.sl === studentId);
+    
+    // If no record, return student info + default empty report
+    res.json({
+      status: "success",
+      student,
+      report: record || { attendance: null, marks: [], remarks: "" }
+    });
+  };
+  app.get("/api/student-report/:studentId", getStudentReportHandler);
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {

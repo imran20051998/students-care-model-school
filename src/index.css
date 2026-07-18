@@ -115,7 +115,8 @@
   /* Ensure printable elements are visible and positioned correctly */
   #printable-application-summary,
   #printable-routine,
-  #printable-admit-card {
+  #printable-admit-card,
+  #printable-report-card {
     display: block !important;
     visibility: visible !important;
     position: absolute !important;

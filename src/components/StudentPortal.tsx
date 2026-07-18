@@ -100,6 +100,10 @@ import StudentPromotion from './StudentPromotion';
 import AdminMailbox from './AdminMailbox';
 import CertificateOfExcellence from './CertificateOfExcellence';
 import SeatPlan from './SeatPlan';
+import AdmitCardTemplate from './AdmitCardTemplate';
+import SessionSettings from './SessionSettings';
+import ReportCard from './ReportCard';
+import ExamHallDuty from './ExamHallDuty';
 import { HomeworkItem, Notice } from '../types';
 import GuardianDashboard from './GuardianDashboard';
 import TeacherDashboard from './TeacherDashboard';
@@ -4832,16 +4836,32 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
                       
                       {isSettingsMenuExpanded && (
                         <div className="pl-4 pr-1 py-1 space-y-1 border-l border-emerald-500/10 ml-6">
-                          <button
-                            onClick={() => {
-                              setAdminActiveTab('settings');
-                              setIsAdminSidebarOpen(false);
-                            }}
-                            className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[10px] font-black transition-all cursor-pointer text-left bg-emerald-50 text-[#005c53] shadow-xs`}
-                          >
-                            <span className="h-1.5 w-1.5 rounded-full shrink-0 bg-[#005c53]" />
-                            <span className="truncate">{lang === 'bn' ? 'সাধারণ সেটিংস' : 'General Settings'}</span>
-                          </button>
+                          {[
+                            { id: 'general_settings', labelBn: 'সাধারণ সেটিংস', labelEn: 'General Settings' },
+                            { id: 'school_settings', labelBn: 'স্কুল সেটিংস', labelEn: 'School Settings' },
+                            { id: 'role_permission', labelBn: 'রোল পারমিশন', labelEn: 'Role Permission' },
+                            { id: 'session_settings', labelBn: 'সেশন সেটিংস', labelEn: 'Session Settings' },
+                            { id: 'translations', labelBn: 'অনুবাদ', labelEn: 'Translations' },
+                            { id: 'cron_job', labelBn: 'ক্রন জব', labelEn: 'Cron Job' },
+                            { id: 'system_student_field', labelBn: 'সিস্টেম স্টুডেন্ট ফিল্ড', labelEn: 'System Student Field' },
+                            { id: 'custom_field', labelBn: 'কাস্টম ফিল্ড', labelEn: 'Custom Field' },
+                            { id: 'report_card', labelBn: 'রিপোর্ট কার্ড', labelEn: 'Report Card' },
+                          ].map(item => (
+                            <button
+                              key={item.id}
+                              onClick={() => {
+                                setAdminActiveTab('settings');
+                                setSettingsSubTab(item.id);
+                                setIsAdminSidebarOpen(false);
+                              }}
+                              className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[10px] font-black transition-all cursor-pointer text-left ${
+                                settingsSubTab === item.id ? 'bg-emerald-50 text-[#005c53] shadow-xs' : 'text-gray-500 hover:bg-slate-50 hover:text-[#005c53]'
+                              }`}
+                            >
+                              <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${settingsSubTab === item.id ? 'bg-[#005c53]' : 'bg-[#005c53]/20'}`} />
+                              <span className="truncate">{lang === 'bn' ? item.labelBn : item.labelEn}</span>
+                            </button>
+                          ))}
                         </div>
                       )}
                     </div>
@@ -5413,6 +5433,15 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
 
             {/* DEVELOPER HUB & CODE CHANGE GUIDE */}
             {adminActiveTab === 'developer_hub' && renderDeveloperHub()}
+
+            {/* EXAM CONTROLLER PANEL */}
+            {adminActiveTab === 'exam_controller' && (
+              <>
+                {examControllerSubTab === 'exam_hall_duty' && <ExamHallDuty />}
+                {examControllerSubTab === 'seat_arrangement' && <div className="p-6 text-gray-500">Seat Arrangement (Coming Soon)</div>}
+                {examControllerSubTab === 'seat_plan' && <SeatPlan />}
+              </>
+            )}
 
             {/* STUDENT DETAILS PANEL */}
             {adminActiveTab === 'student_details' && (() => {
@@ -7755,12 +7784,7 @@ def approve_admission_application(request, pk):
                   </div>
                 )}
                 
-                {cardSubTab === 'admit_card_customize' && (
-                  <div className="bg-white p-6 rounded-xl border border-gray-150 shadow-sm">
-                    <h3 className="font-bold text-gray-900">Admit Card Customize</h3>
-                    <p className="text-sm text-gray-500">Customize Admit card templates here.</p>
-                  </div>
-                )}
+                {cardSubTab === 'admit_card_customize' && <AdmitCardTemplate />}
                 
                 {cardSubTab === 'seat_plan' && (
                   <div className="bg-white p-6 rounded-xl border border-gray-150 shadow-sm">
@@ -16291,6 +16315,25 @@ async function buildAttendanceExcelSheet(monthName, className, section, students
                     </form>
                   </div>
                 )}
+
+                {/* Sub-tab: Session Settings */}
+                {settingsSubTab === 'session_settings' && (
+                  <SessionSettings />
+                )}
+
+                {/* Sub-tab: Report Card */}
+                {settingsSubTab === 'report_card' && (
+                  <ReportCard />
+                )}
+
+                {/* Other Settings */}
+                {['global_settings', 'role_permission', 'translations', 'cron_job', 'system_student_field', 'custom_field'].includes(settingsSubTab) && (
+                    <div className="bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs text-left animate-fade-in">
+                        <h4 className="font-extrabold text-gray-900 text-lg">Coming Soon</h4>
+                        <p className="text-sm text-gray-500">The {settingsSubTab.replace('_', ' ')} settings module is under development.</p>
+                    </div>
+                )}
+
 
                 {/* Sub-tab 2: Report Card — Primary Section */}
                 {settingsSubTab === 'report_primary' && (
