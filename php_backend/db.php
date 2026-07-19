@@ -19,7 +19,7 @@ $password = "Cisfa1998$#@";
 $dbname = "u451653929_login_control";
 
 // Create connection
-$conn = new mysqli($servername, $username, $password);
+$conn = new mysqli($servername, $username, $password, $dbname);
 
 // Check connection
 if ($conn->connect_error) {
