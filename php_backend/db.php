@@ -14,9 +14,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 $servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "school_admin_db";
+$username = "u451653929_logincontrol";
+$password = "Cisfa1998$#@";
+$dbname = "u451653929_login_control";
 
 // Create connection
 $conn = new mysqli($servername, $username, $password);
