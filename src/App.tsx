@@ -83,7 +83,15 @@ import { translations } from './data/translations';
 import { getMergedFrontendData } from './data/defaultFrontendData';
 
 export default function App() {
-  const [lang, setLang] = useState<'bn' | 'en'>('bn');
+  const [lang, setLang] = useState<'bn' | 'en'>(() => {
+    const saved = localStorage.getItem('app_lang');
+    if (saved === 'en' || saved === 'bn') return saved;
+    return 'en';
+  });
+
+  React.useEffect(() => {
+    localStorage.setItem('app_lang', lang);
+  }, [lang]);
   const t = translations[lang];
   const [activeTab, setActiveTab] = useState<string>(() => {
     return localStorage.getItem('app_activeTab') || 'home';

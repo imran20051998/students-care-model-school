@@ -159,7 +159,7 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
   const [lang, setLang] = useState<'bn' | 'en'>(() => {
     const saved = localStorage.getItem('portal_lang');
     if (saved === 'en' || saved === 'bn') return saved;
-    return 'bn';
+    return 'en';
   });
 
   useEffect(() => {
