@@ -1860,6 +1860,7 @@ export const ReportsManager: React.FC<ReportsManagerProps> = ({
             const handlePdfDownload = () => {
               addAuditLog(`Downloaded PDF report card for student ${selectedStudent.name}`);
               showToast(`Downloading high-resolution PDF for ${selectedStudent.name}...`, 'info');
+              window.print();
             };
 
             const handlePrint = () => {
@@ -2843,6 +2844,7 @@ export const ReportsManager: React.FC<ReportsManagerProps> = ({
             const handlePdfDownload = () => {
               addAuditLog(`Downloaded PDF report card for High Section student ${selectedStudent.name}`);
               showToast(`Downloading high-resolution PDF for ${selectedStudent.name}...`, 'info');
+              window.print();
             };
 
             const handlePrint = () => {
