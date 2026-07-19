@@ -159,7 +159,7 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
   const [lang, setLang] = useState<'bn' | 'en'>(() => {
     const saved = localStorage.getItem('portal_lang');
     if (saved === 'en' || saved === 'bn') return saved;
-       return 'en';
+    return 'en';
   });
 
   useEffect(() => {
@@ -169,7 +169,7 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
   useEffect(() => {
     const fetchLiveBannerSettings = async () => {
       try {
-        const res = await fetch('/public/php_backend/get_banner.php');
+        const res = await fetch('/php_backend/get_banner.php');
         const text = await res.text();
         
         // If the PHP file is returned as raw source code or HTML, parse error is avoided.
@@ -1745,7 +1745,7 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
   const saveFrontendDataToServer = async (customMsgBn?: string, customMsgEn?: string) => {
     if (!frontendData) return;
     try {
-      const response = await fetch('/public/php_backend/save_frontend_data.php', {
+      const response = await fetch('/php_backend/save_frontend_data.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -17042,7 +17042,7 @@ async function buildAttendanceExcelSheet(monthName, className, section, students
                         formData.append('bannerGradient', (frontendData.settings as any).bannerGradient ? '1' : '0');
                         formData.append('logoUrl', frontendData.settings.logoUrl || '');
 
-                        const response = await fetch('/public/php_backend/save_banner.php', {
+                        const response = await fetch('/php_backend/save_banner.php', {
                           method: 'POST',
                           body: formData
                         });
@@ -19129,7 +19129,7 @@ class PageSectionController extends Controller {
                                 const formData = new FormData();
                                 formData.append('slider', JSON.stringify(listItems));
 
-                                const response = await fetch('/public/php_backend/save_slider.php', {
+                                const response = await fetch('/php_backend/save_slider.php', {
                                   method: 'POST',
                                   body: formData
                                 });
