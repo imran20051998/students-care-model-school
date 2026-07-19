@@ -13,6 +13,8 @@ import {
   Mail,
   Home,
   CheckCircle2, 
+  Eye,
+  EyeOff,
   Clock, 
   Calendar, 
   BookOpen, 
@@ -22,8 +24,6 @@ import {
   Check, 
   AlertCircle, 
   Info,
-  Eye, 
-  EyeOff, 
   Sparkles, 
   Settings, 
   Users, 
@@ -224,6 +224,9 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
     return (localStorage.getItem('portal_loggedInRole') as any) || null;
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(() => {
     return localStorage.getItem('portal_rememberMe') !== 'false';
   });
@@ -4848,6 +4851,7 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
                             { id: 'system_student_field', labelBn: 'সিস্টেম স্টুডেন্ট ফিল্ড', labelEn: 'System Student Field' },
                             { id: 'custom_field', labelBn: 'কাস্টম ফিল্ড', labelEn: 'Custom Field' },
                             { id: 'report_card', labelBn: 'রিপোর্ট কার্ড', labelEn: 'Report Card' },
+{ id: 'change_password', labelBn: 'পাসওয়ার্ড পরিবর্তন', labelEn: 'Change Password' },
                           ].map(item => (
                             <button
                               key={item.id}
@@ -16318,6 +16322,32 @@ async function buildAttendanceExcelSheet(monthName, className, section, students
                   </div>
                 )}
 
+                {/* Sub-tab: Change Password */}
+                {settingsSubTab === 'change_password' && (
+                  <div className="bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs text-left animate-fade-in space-y-4">
+                    <h4 className="font-extrabold text-gray-900 text-lg">{lang === 'bn' ? 'পাসওয়ার্ড পরিবর্তন' : 'Change Password'}</h4>
+                    <form onSubmit={(e) => {
+                      e.preventDefault();
+                      alert('Password Change Logic Needed');
+                    }} className="space-y-4 text-xs font-bold text-gray-700">
+                      <div className="space-y-1">
+                        <label className="text-gray-400">{lang === 'bn' ? 'পুরনো পাসওয়ার্ড' : 'Old Password'}</label>
+                        <input type="password" required className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-gray-400">{lang === 'bn' ? 'নতুন পাসওয়ার্ড' : 'New Password'}</label>
+                        <input type="password" required className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-gray-400">{lang === 'bn' ? 'নতুন পাসওয়ার্ড নিশ্চিত করুন' : 'Confirm New Password'}</label>
+                        <input type="password" required className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl" />
+                      </div>
+                      <button type="submit" className="w-full py-3 bg-[#025644] hover:bg-[#01352a] text-white font-black rounded-xl shadow-sm cursor-pointer mt-2 text-center transition-all">
+                        {lang === 'bn' ? 'পাসওয়ার্ড পরিবর্তন করুন' : 'Update Password'}
+                      </button>
+                    </form>
+                  </div>
+                )}
                 {/* Sub-tab: Session Settings */}
                 {settingsSubTab === 'session_settings' && (
                   <SessionSettings />
@@ -16924,13 +16954,26 @@ async function buildAttendanceExcelSheet(monthName, className, section, students
                       addAuditLog("Admin changed dashboard entry password.");
                       setTimeout(() => setAdminSuccessMsg(''), 4000);
                     }} className="max-w-md space-y-4 text-xs font-bold text-gray-700">
-                      <div className="space-y-1">
+                      <div className="space-y-1 relative">
                         <label className="text-gray-400">{lang === 'bn' ? 'বর্তমান পাসওয়ার্ড' : 'Current Password'}</label>
-                        <input type="password" required className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644]" />
+                        <input type={showOldPassword ? "text" : "password"} required className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644]" />
+                        <button type="button" onClick={() => setShowOldPassword(!showOldPassword)} className="absolute right-3 top-9 text-gray-400 hover:text-gray-600">
+                           {showOldPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
                       </div>
-                      <div className="space-y-1">
+                      <div className="space-y-1 relative">
                         <label className="text-gray-400">{lang === 'bn' ? 'নতুন পাসওয়ার্ড' : 'New Password'}</label>
-                        <input type="password" required className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644]" />
+                        <input type={showNewPassword ? "text" : "password"} required className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644]" />
+                        <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-3 top-9 text-gray-400 hover:text-gray-600">
+                           {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                      <div className="space-y-1 relative">
+                        <label className="text-gray-400">{lang === 'bn' ? 'নতুন পাসওয়ার্ড নিশ্চিত করুন' : 'Confirm New Password'}</label>
+                        <input type={showConfirmPassword ? "text" : "password"} required className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644]" />
+                        <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-9 text-gray-400 hover:text-gray-600">
+                           {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
                       </div>
                       <button type="submit" className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-xl shadow-sm cursor-pointer mt-2 text-center transition-all flex items-center justify-center gap-2">
                         <Lock className="h-4 w-4" /> {lang === 'bn' ? 'পাসওয়ার্ড আপডেট করুন' : 'Change Security Password'}
