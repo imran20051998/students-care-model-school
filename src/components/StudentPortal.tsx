@@ -2043,6 +2043,8 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
     setErrorMsg('');
     localStorage.removeItem('portal_isLoggedIn');
     localStorage.removeItem('portal_loggedInRole');
+    localStorage.removeItem('user');
+    window.location.href = '/login';
   };
 
   // ----------------------------------------------------
