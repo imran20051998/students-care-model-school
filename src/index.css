@@ -99,7 +99,7 @@
   animation-play-state: paused;
 }
 
-/* Bulletproof @media print styles for Application Summary */
+/* Bulletproof @media print styles for all printable elements */
 @media print {
   /* Hide elements marked print:hidden */
   .print\:hidden,
@@ -107,22 +107,46 @@
     display: none !important;
   }
 
-  /* Hide everything at body level except the printable element if it exists */
-  body > *:not(#printable-application-summary):not(#printable-routine):not(#printable-admit-card):not(#printable-report-card) {
-    display: none !important;
+  /* Set everything inside body to hidden by default */
+  body * {
+    visibility: hidden !important;
   }
 
-  /* Ensure printable elements are positioned correctly */
+  /* Enable visibility for the target printable containers and all their descendants */
+  #printable-application-summary,
+  #printable-application-summary *,
+  #printable-routine,
+  #printable-routine *,
+  #printable-admit-card,
+  #printable-admit-card *,
+  #printable-report-card,
+  #printable-report-card *,
+  #printable-voucher-sheet,
+  #printable-voucher-sheet *,
+  #printable-admission-form,
+  #printable-admission-form *,
+  #printable-admit-card-element,
+  #printable-admit-card-element *,
+  #printable-money-receipt-sheet,
+  #printable-money-receipt-sheet * {
+    visibility: visible !important;
+  }
+
+  /* Align and scale the printable content on the page */
   #printable-application-summary,
   #printable-routine,
   #printable-admit-card,
-  #printable-report-card {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    margin: 0;
-    padding: 0;
+  #printable-report-card,
+  #printable-voucher-sheet,
+  #printable-admission-form,
+  #printable-admit-card-element,
+  #printable-money-receipt-sheet {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
     background: #ffffff !important;
     border: none !important;
     box-shadow: none !important;
@@ -131,8 +155,6 @@
   /* Page margins and layout optimization */
   @page {
     size: A4 portrait;
-    margin: 15mm 15mm 15mm 15mm;
+    margin: 15mm;
   }
 }
-
-
