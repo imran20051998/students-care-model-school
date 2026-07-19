@@ -1,4 +1,5 @@
 import React from 'react';
+import { Printer, FileDown, Info } from 'lucide-react';
 
 const reportData = {
   schoolName: "STUDENTS CARE MODEL SCHOOL",
@@ -34,14 +35,41 @@ const reportData = {
 };
 
 export default function ReportCard() {
+  const handlePrintOrPdf = () => {
+    window.print();
+  };
+
   return (
     <>
-      <button 
-        onClick={() => window.print()}
-        className="fixed z-50 bottom-8 right-8 px-6 py-3 bg-emerald-800 text-white font-bold rounded-full shadow-lg hover:bg-emerald-700 print:hidden"
-      >
-        Print Report Card
-      </button>
+      {/* Top Action Control Bar */}
+      <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 print:hidden text-left">
+        <div className="space-y-1">
+          <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+            <Info className="w-4 h-4 text-emerald-600" />
+            Report Card Print & PDF Controls
+          </h4>
+          <p className="text-xs text-slate-500 font-medium">
+            Click print or download. In the print dialog, select <strong className="text-emerald-700">"Save as PDF"</strong> as the destination to download a high-resolution PDF.
+          </p>
+        </div>
+        <div className="flex items-center gap-2.5">
+          <button 
+            onClick={handlePrintOrPdf}
+            className="px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer"
+          >
+            <Printer className="w-4 h-4" />
+            Print Report Card
+          </button>
+          <button 
+            onClick={handlePrintOrPdf}
+            className="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-extrabold text-xs rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer"
+          >
+            <FileDown className="w-4 h-4" />
+            Download PDF
+          </button>
+        </div>
+      </div>
+
       <div id="printable-report-card" className="bg-white p-6 max-w-[210mm] mx-auto min-h-[297mm] shadow-lg border-[2px] border-[#1b5e20]">
         {/* Header */}
       <header className="grid grid-cols-[100px_1fr_auto] gap-4 items-center mb-4 border-b-2 border-emerald-600 pb-2">
