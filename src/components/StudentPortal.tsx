@@ -224,6 +224,9 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
     return (localStorage.getItem('portal_loggedInRole') as any) || null;
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -231,6 +234,44 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
     return localStorage.getItem('portal_rememberMe') !== 'false';
   });
   const [errorMsg, setErrorMsg] = useState('');
+  const [adminSuccessMsg, setAdminSuccessMsg] = useState('');
+
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      setErrorMsg(lang === 'bn' ? "নতুন পাসওয়ার্ড মিলছে না!" : "New passwords do not match!");
+      return;
+    }
+
+    try {
+      const response = await fetch('php_backend/change_password.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: username, // Assuming username is email
+          old_password: currentPassword,
+          new_password: newPassword,
+        }),
+      });
+
+      const data = await response.json();
+      if (response.ok && data.success) {
+        setAdminSuccessMsg(lang === 'bn' ? "পাসওয়ার্ড সফলভাবে পরিবর্তন করা হয়েছে!" : "Password updated successfully!");
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+        setErrorMsg('');
+        addAuditLog("Admin changed dashboard entry password.");
+      } else {
+        setErrorMsg(data.message || (lang === 'bn' ? "পাসওয়ার্ড পরিবর্তন ব্যর্থ হয়েছে।" : "Failed to update password."));
+      }
+    } catch (err) {
+      setErrorMsg(lang === 'bn' ? "সার্ভারে সমস্যা হয়েছে।" : "Server error.");
+    }
+    setTimeout(() => setAdminSuccessMsg(''), 4000);
+  };
 
   // Custom states for Redesigned Admin Dashboard
   const [adminActiveTab, setAdminActiveTab] = useState<string>(() => {
@@ -2173,7 +2214,6 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
     category: 'general' as any,
     urgent: false
   });
-  const [adminSuccessMsg, setAdminSuccessMsg] = useState('');
   const [adminErrorMsg, setAdminErrorMsg] = useState('');
 
   const handleConfirmApproveAdmission = (e: React.FormEvent) => {
@@ -16948,29 +16988,26 @@ async function buildAttendanceExcelSheet(monthName, className, section, students
                       <h4 className="font-extrabold text-gray-900 text-lg">{lang === 'bn' ? 'অ্যাডমিন সিকিউর পাসওয়ার্ড পরিবর্তন' : 'Change Password'}</h4>
                       <p className="text-xs text-gray-400 font-bold">{lang === 'bn' ? 'সিস্টেম প্যানেলে ঢোকার প্রধান অ্যাডমিন পাসওয়ার্ড আপডেট করুন।' : 'Update your credentials secret key code to keep your system safe.'}</p>
                     </div>
-                    <form onSubmit={(e) => {
-                      e.preventDefault();
-                      setAdminSuccessMsg(lang === 'bn' ? "পাসওয়ার্ড সফলভাবে পরিবর্তন করা হয়েছে!" : "Admin password updated successfully!");
-                      addAuditLog("Admin changed dashboard entry password.");
-                      setTimeout(() => setAdminSuccessMsg(''), 4000);
-                    }} className="max-w-md space-y-4 text-xs font-bold text-gray-700">
+                    <form onSubmit={handleUpdatePassword} className="max-w-md space-y-4 text-xs font-bold text-gray-700">
+                      {errorMsg && <p className="text-red-500 font-bold">{errorMsg}</p>}
+                      {adminSuccessMsg && <p className="text-emerald-500 font-bold">{adminSuccessMsg}</p>}
                       <div className="space-y-1 relative">
                         <label className="text-gray-400">{lang === 'bn' ? 'বর্তমান পাসওয়ার্ড' : 'Current Password'}</label>
-                        <input type={showOldPassword ? "text" : "password"} required className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644]" />
+                        <input type={showOldPassword ? "text" : "password"} value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} required className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644]" />
                         <button type="button" onClick={() => setShowOldPassword(!showOldPassword)} className="absolute right-3 top-9 text-gray-400 hover:text-gray-600">
                            {showOldPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                       </div>
                       <div className="space-y-1 relative">
                         <label className="text-gray-400">{lang === 'bn' ? 'নতুন পাসওয়ার্ড' : 'New Password'}</label>
-                        <input type={showNewPassword ? "text" : "password"} required className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644]" />
+                        <input type={showNewPassword ? "text" : "password"} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644]" />
                         <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-3 top-9 text-gray-400 hover:text-gray-600">
                            {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                       </div>
                       <div className="space-y-1 relative">
                         <label className="text-gray-400">{lang === 'bn' ? 'নতুন পাসওয়ার্ড নিশ্চিত করুন' : 'Confirm New Password'}</label>
-                        <input type={showConfirmPassword ? "text" : "password"} required className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644]" />
+                        <input type={showConfirmPassword ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl focus:outline-none focus:border-[#025644]" />
                         <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-9 text-gray-400 hover:text-gray-600">
                            {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
