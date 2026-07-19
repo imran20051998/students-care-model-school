@@ -1,61 +1,54 @@
 import React, { useState } from 'react';
 
 const Login: React.FC = () => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState(''); // username এর জায়গায় email
   const [password, setPassword] = useState('');
+  const [role_id, setRoleId] = useState('1'); // অ্যাডমিনের জন্য ডিফল্ট ১
   const [error, setError] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    if (!username || !password) {
+    if (!email || !password) {
       setError('Please fill in all fields.');
       return;
     }
 
     try {
-      // Replace with your exact auth endpoint
-      const response = await fetch('/api/auth/login', {
+      // আপনার সঠিক পাথ: /php_backend/login.php
+      const response = await fetch('/php_backend/login.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ email, password, role_id }), 
       });
 
-      if (!response.ok) {
-        throw new Error('Invalid credentials');
-      }
-
       const data = await response.json();
-      // Redirect or store token logic here
-      window.location.href = '/dashboard';
+
+      if (data.status === 'success') {
+        // লগইন সফল হলে ডাটা সেভ করুন এবং ড্যাশবোর্ডে পাঠান
+        localStorage.setItem('user', JSON.stringify(data));
+        window.location.href = '/dashboard';
+      } else {
+        throw new Error(data.message || 'Invalid credentials');
+      }
     } catch (err: any) {
-      setError(err.message || 'Something went wrong. Please try again.');
+      setError(err.message || 'Something went wrong.');
     }
   };
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#f5f5f5' }}>
-      <form onSubmit={handleLogin} style={{ background: '#fff', padding: '40px', borderRadius: '4px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', width: '100%', maxWidth: '400px' }}>
-        <h2 style={{ textAlign: 'center', marginBottom: '24px', color: '#1b5e20' }}>School Portal Login</h2>
-        
-        {error && <div style={{ color: 'red', marginBottom: '16px', fontSize: '14px' }}>{error}</div>}
-        
-        <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>Username / Email</label>
-          <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '4px' }} placeholder="Enter your username" />
-        </div>
-
-        <div style={{ marginBottom: '24px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>Password</label>
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '4px' }} placeholder="Enter your password" />
-        </div>
-
-        <button type="submit" style={{ width: '100%', padding: '12px', background: '#1b5e20', color: '#fff', border: 'none', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer' }}>
-          Sign In
-        </button>
-      </form>
+    // ... আগের মতো ডিজাইন রাখুন, শুধু নিচে রোল সিলেক্ট অপশনটি যোগ করুন
+    <div style={{ marginBottom: '16px' }}>
+      <label>Select Role</label>
+      <select onChange={(e) => setRoleId(e.target.value)} style={{ width: '100%', padding: '10px' }}>
+        <option value="1">Admin</option>
+        <option value="2">Teacher</option>
+        <option value="3">Guardian</option>
+        <option value="4">Accountant</option>
+      </select>
     </div>
+    // ... বাকি ফর্মের বাটনটি আগের মতোই থাকবে
   );
 };
 
