@@ -346,7 +346,7 @@ export default function AdmissionForm({ lang: appLang, onBack }: AdmissionFormPr
         fd.append('photo', photoFile);
       }
 
-      fetch('/insert.php', {
+      fetch(`${window.location.origin}/php_backend/insert.php`, {
         method: 'POST',
         body: fd
       })
