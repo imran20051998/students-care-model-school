@@ -38,7 +38,7 @@ const SeatPlan: React.FC<SeatPlanProps> = ({ students: propStudents }) => {
   const handleDownload = async () => {
     // Call API to save seat plan
     try {
-      const response = await fetch(`${window.location.origin}/php_backend/save_seat_plan.php`, {
+      const response = await fetch('https://studentscaremodelschool.com/php_backend/save_seat_plan.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
