@@ -16384,21 +16384,20 @@ async function buildAttendanceExcelSheet(monthName, className, section, students
                 {settingsSubTab === 'change_password' && (
                   <div className="bg-white border border-gray-150 rounded-2xl p-6 shadow-2xs text-left animate-fade-in space-y-4">
                     <h4 className="font-extrabold text-gray-900 text-lg">{lang === 'bn' ? 'পাসওয়ার্ড পরিবর্তন' : 'Change Password'}</h4>
-                    <form onSubmit={(e) => {
-                      e.preventDefault();
-                      alert('Password Change Logic Needed');
-                    }} className="space-y-4 text-xs font-bold text-gray-700">
+                    <form onSubmit={handleUpdatePassword} className="space-y-4 text-xs font-bold text-gray-700">
+                      {errorMsg && <p className="text-red-500 font-bold">{errorMsg}</p>}
+                      {adminSuccessMsg && <p className="text-emerald-500 font-bold">{adminSuccessMsg}</p>}
                       <div className="space-y-1">
                         <label className="text-gray-400">{lang === 'bn' ? 'পুরনো পাসওয়ার্ড' : 'Old Password'}</label>
-                        <input type="password" required className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl" />
+                        <input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} required className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl" />
                       </div>
                       <div className="space-y-1">
                         <label className="text-gray-400">{lang === 'bn' ? 'নতুন পাসওয়ার্ড' : 'New Password'}</label>
-                        <input type="password" required className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl" />
+                        <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl" />
                       </div>
                       <div className="space-y-1">
                         <label className="text-gray-400">{lang === 'bn' ? 'নতুন পাসওয়ার্ড নিশ্চিত করুন' : 'Confirm New Password'}</label>
-                        <input type="password" required className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl" />
+                        <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white rounded-xl" />
                       </div>
                       <button type="submit" className="w-full py-3 bg-[#025644] hover:bg-[#01352a] text-white font-black rounded-xl shadow-sm cursor-pointer mt-2 text-center transition-all">
                         {lang === 'bn' ? 'পাসওয়ার্ড পরিবর্তন করুন' : 'Update Password'}
