@@ -346,7 +346,7 @@ export default function AdmissionForm({ lang: appLang, onBack }: AdmissionFormPr
         fd.append('photo', photoFile);
       }
 
-      fetch(`${window.location.origin}/php_backend/insert.php`, {
+      fetch('https://studentscaremodelschool.com/php_backend/insert.php', {
         method: 'POST',
         body: fd
       })
