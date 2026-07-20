@@ -669,6 +669,17 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
     setIsCardMenuExpanded(menuToOpen === 'card' ? !isCardMenuExpanded : false);
   };
 
+  const openOnlyMenu = (menuToOpen: 'student_details' | 'frontend' | 'settings' | 'employee' | 'academic' | 'exam' | 'exam_controller' | 'card') => {
+    setIsStudentDetailsExpanded(menuToOpen === 'student_details');
+    setIsFrontendMenuExpanded(menuToOpen === 'frontend');
+    setIsSettingsMenuExpanded(menuToOpen === 'settings');
+    setIsEmployeeMenuExpanded(menuToOpen === 'employee');
+    setIsAcademicMenuExpanded(menuToOpen === 'academic');
+    setIsExamMenuExpanded(menuToOpen === 'exam');
+    setIsExamControllerMenuExpanded(menuToOpen === 'exam_controller');
+    setIsCardMenuExpanded(menuToOpen === 'card');
+  };
+
   const [editingExamTermId, setEditingExamTermId] = useState<string | null>(null);
   const [newExamTermForm, setNewExamTermForm] = useState({
     name: '',
@@ -4715,6 +4726,7 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
                               <button
                                 key={sub.id}
                                 onClick={() => {
+                                  openOnlyMenu('frontend');
                                   setAdminActiveTab('frontend');
                                   setFrontendSubTab(sub.id);
                                   setIsAdminSidebarOpen(false);
@@ -4769,6 +4781,7 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
                               <button
                                 key={sub.id}
                                 onClick={() => {
+                                  openOnlyMenu('card');
                                   setAdminActiveTab('card');
                                   setCardSubTab(sub.id);
                                   setIsAdminSidebarOpen(false);
@@ -4830,6 +4843,7 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
                               <button
                                 key={sub.id}
                                 onClick={() => {
+                                  openOnlyMenu('employee');
                                   setAdminActiveTab('employee');
                                   setEmployeeSubTab(sub.id as any);
                                   setIsAdminSidebarOpen(false);
@@ -4896,6 +4910,7 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
                             <button
                               key={item.id}
                               onClick={() => {
+                                openOnlyMenu('settings');
                                 setAdminActiveTab('settings');
                                 setSettingsSubTab(item.id);
                                 setIsAdminSidebarOpen(false);
@@ -4953,6 +4968,7 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
                               <button
                                 key={sub.id}
                                 onClick={() => {
+                                  openOnlyMenu('exam_controller');
                                   setAdminActiveTab('exam_controller');
                                   setExamControllerSubTab(sub.id as any);
                                   setIsAdminSidebarOpen(false);
@@ -5017,6 +5033,7 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
                               <button
                                 key={sub.id}
                                 onClick={() => {
+                                  openOnlyMenu('academic');
                                   setAdminActiveTab('academic');
                                   setAcademicSubTab(sub.id as any);
                                   setIsAdminSidebarOpen(false);
@@ -5081,6 +5098,7 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
                               <button
                                 key={sub.id}
                                 onClick={() => {
+                                  openOnlyMenu('exam');
                                   setAdminActiveTab('exam');
                                   setExamSubTab(sub.id);
                                   setIsAdminSidebarOpen(false);
