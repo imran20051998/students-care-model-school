@@ -94,7 +94,7 @@ export default function App() {
   }, [lang]);
   const t = translations[lang];
   const [activeTab, setActiveTab] = useState<string>(() => {
-    return localStorage.getItem('app_activeTab') || 'home';
+    return sessionStorage.getItem('app_activeTab') || 'home';
   });
   const [selectedNoticeFromSearch, setSelectedNoticeFromSearch] = useState<any>(null);
   
@@ -109,7 +109,7 @@ export default function App() {
   }, []);
 
   React.useEffect(() => {
-    localStorage.setItem('app_activeTab', activeTab);
+    sessionStorage.setItem('app_activeTab', activeTab);
   }, [activeTab]);
 
   const [faqOpenId, setFaqOpenId] = useState<string | null>(null);
