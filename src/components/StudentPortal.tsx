@@ -244,7 +244,7 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
     }
 
     try {
-      const response = await fetch('php_backend/change_password.php', {
+      const response = await fetch('/php_backend/change_password.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
