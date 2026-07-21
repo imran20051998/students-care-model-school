@@ -46,6 +46,9 @@ export default function AdmissionForm({ lang: appLang, onBack }: AdmissionFormPr
     birthDate: '',
     gender: 'Male',
     
+    roll: '',
+    section: '',
+    
     presentDivision: '',
     presentDistrict: '',
     presentFullAddress: '',
@@ -336,12 +339,14 @@ export default function AdmissionForm({ lang: appLang, onBack }: AdmissionFormPr
 
       // Create FormData to send to php backend
       const fd = new FormData();
-      fd.append('roll', `ADM-${randomId.split('-').pop()}`);
       fd.append('name', formData.studentName);
+      fd.append('roll', formData.roll || `ADM-${randomId.split('-').pop()}`);
       fd.append('class', formData.selectedClass || 'N/A');
-      fd.append('section', 'A'); // Default for new admission
+      fd.append('section', formData.section || 'A');
+      fd.append('mobile_number', formData.phone);
+      fd.append('address', formData.presentFullAddress);
+      
       fd.append('guardian', formData.fatherName || formData.motherName || 'N/A');
-      fd.append('phone', formData.phone);
       if (photoFile) {
         fd.append('photo', photoFile);
       }
@@ -644,6 +649,36 @@ export default function AdmissionForm({ lang: appLang, onBack }: AdmissionFormPr
                       <AlertCircle className="h-3 w-3" /> {errors.studentName}
                     </p>
                   )}
+                </div>
+
+                {/* Roll Number */}
+                <div id="field-roll" className="space-y-1.5">
+                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider">
+                    {lang === 'bn' ? "রোল নম্বর" : "Roll Number"}
+                  </label>
+                  <input
+                    type="text"
+                    name="roll"
+                    value={formData.roll}
+                    onChange={handleInputChange}
+                    placeholder={lang === 'bn' ? "রোল নম্বর" : "Roll Number"}
+                    className="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl text-xs sm:text-sm font-semibold text-gray-800 focus:outline-none focus:border-[#025644] transition-all"
+                  />
+                </div>
+
+                {/* Section */}
+                <div id="field-section" className="space-y-1.5">
+                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider">
+                    {lang === 'bn' ? "সেকশন" : "Section"}
+                  </label>
+                  <input
+                    type="text"
+                    name="section"
+                    value={formData.section}
+                    onChange={handleInputChange}
+                    placeholder={lang === 'bn' ? "সেকশন" : "Section"}
+                    className="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl text-xs sm:text-sm font-semibold text-gray-800 focus:outline-none focus:border-[#025644] transition-all"
+                  />
                 </div>
 
                 {/* Father's Name */}
