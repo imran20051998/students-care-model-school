@@ -346,7 +346,7 @@ export default function AdmissionForm({ lang: appLang, onBack }: AdmissionFormPr
         fd.append('photo', photoFile);
       }
 
-   fetch('https://studentscaremodelschool.com/assets/public/save_student.php', {
+   fetch('https://studentscaremodelschool.com/save_student.php', {
         method: 'POST',
         body: fd
       })
