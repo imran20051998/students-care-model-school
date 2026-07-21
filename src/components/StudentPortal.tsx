@@ -166,45 +166,39 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
     localStorage.setItem('portal_lang', lang);
   }, [lang]);
 
-  useEffect(() => {
-    const fetchLiveBannerSettings = async () => {
+ useEffect(() => {
+    const fetchStudentsFromDB = async () => {
       try {
-        const res = await fetch('https://studentscaremodelschool.com/php_backend/get_banner.php');
+        const res = await fetch('https://studentscaremodelschool.com/get_students.php');
         const text = await res.text();
         
-        // If the PHP file is returned as raw source code or HTML, parse error is avoided.
         if (text.trim().startsWith('<?php') || text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html') || !res.ok) {
-          throw new Error('PHP script was not executed (returned raw source or HTML)');
+          throw new Error('PHP script was not executed properly');
         }
         
         const data = JSON.parse(text);
-        if (data && data.frontend_data) {
-          setFrontendData((prev: any) => ({
-            ...prev,
-            ...data.frontend_data
+        if (Array.isArray(data) && data.length > 0) {
+          const mappedStudents = data.map(item => ({
+            id: item.roll ? `STD-${item.roll}` : `STD-${item.id}`,
+            photo: item.image || '',
+            name: item.name,
+            class: item.class,
+            section: item.section || 'A',
+            roll: item.roll,
+            group: 'General',
+            guardianName: item.address || 'N/A',
+            guardianPhone: item.mobile || '',
+            status: 'Active',
+            loginActive: true
           }));
-        }
-        if (data && data.settings) {
-          setFrontendData((prev: any) => ({
-            ...prev,
-            settings: {
-              ...prev?.settings,
-              ...data.settings
-            }
-          }));
-        }
-        if (data && data.slider) {
-          setFrontendData((prev: any) => ({
-            ...prev,
-            slider: data.slider
-          }));
+          setStudents(mappedStudents);
         }
       } catch (err: any) {
-        console.warn('PHP get_banner.php fetch bypassed/failed in portal (expected in development):', err.message);
-        // We already have frontendData loaded from localStorage during useState initialization, so no extra action is needed.
+        console.warn('Failed to fetch students from database:', err.message);
       }
     };
-    fetchLiveBannerSettings();
+
+    fetchStudentsFromDB();
   }, []);
 
   // Login Panel States
