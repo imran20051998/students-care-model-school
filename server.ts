@@ -228,6 +228,7 @@ async function startServer() {
       slider: db.slider,
     });
   };
+  app.get("/get_banner.php", getBannerHandler);
   app.get("/php_backend/get_banner.php", getBannerHandler);
   app.get("/public/php_backend/get_banner.php", getBannerHandler);
 
@@ -273,6 +274,7 @@ async function startServer() {
       });
     });
   };
+  app.post("/save_banner.php", saveBannerHandler);
   app.post("/php_backend/save_banner.php", saveBannerHandler);
   app.post("/public/php_backend/save_banner.php", saveBannerHandler);
 
@@ -309,6 +311,7 @@ async function startServer() {
       slider: db.slider,
     });
   };
+  app.post("/save_slider.php", saveSliderHandler);
   app.post("/php_backend/save_slider.php", saveSliderHandler);
   app.post("/public/php_backend/save_slider.php", saveSliderHandler);
 
@@ -416,6 +419,7 @@ async function startServer() {
       students: filtered,
     });
   };
+  app.get("/get_students.php", getStudentsHandler);
   app.get("/php_backend/get_students.php", getStudentsHandler);
   app.get("/public/php_backend/get_students.php", getStudentsHandler);
 
@@ -480,6 +484,7 @@ async function startServer() {
       message: "Bad Request: Please provide admin or student login details.",
     });
   };
+  app.post("/login.php", loginHandler);
   app.post("/php_backend/login.php", loginHandler);
   app.post("/public/php_backend/login.php", loginHandler);
 
@@ -532,6 +537,7 @@ async function startServer() {
       message: "Student phone contact details successfully updated in the database!",
     });
   };
+  app.post("/reset_password.php", resetPasswordHandler);
   app.post("/php_backend/reset_password.php", resetPasswordHandler);
   app.post("/public/php_backend/reset_password.php", resetPasswordHandler);
 
@@ -576,6 +582,7 @@ async function startServer() {
       plan: newPlan,
     });
   };
+  app.post("/save_seat_plan.php", saveSeatPlanHandler);
   app.post("/php_backend/save_seat_plan.php", saveSeatPlanHandler);
   app.post("/public/php_backend/save_seat_plan.php", saveSeatPlanHandler);
 

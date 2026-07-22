@@ -169,7 +169,7 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
   useEffect(() => {
     const fetchLiveBannerSettings = async () => {
       try {
-        const res = await fetch('https://studentscaremodelschool.com/php_backend/get_banner.php');
+        const res = await fetch('https://studentscaremodelschool.com/get_banner.php');
         const text = await res.text();
         
         // If the PHP file is returned as raw source code or HTML, parse error is avoided.
@@ -244,7 +244,7 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
     }
 
     try {
-      const response = await fetch('https://studentscaremodelschool.com/php_backend/change_password.php', {
+      const response = await fetch('https://studentscaremodelschool.com/change_password.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1800,7 +1800,7 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
   const saveFrontendDataToServer = async (customMsgBn?: string, customMsgEn?: string) => {
     if (!frontendData) return;
     try {
-      const response = await fetch('https://studentscaremodelschool.com/php_backend/save_frontend_data.php', {
+      const response = await fetch('https://studentscaremodelschool.com/save_frontend_data.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -17141,7 +17141,7 @@ async function buildAttendanceExcelSheet(monthName, className, section, students
                         formData.append('bannerGradient', (frontendData.settings as any).bannerGradient ? '1' : '0');
                         formData.append('logoUrl', frontendData.settings.logoUrl || '');
 
-                        const response = await fetch('https://studentscaremodelschool.com/php_backend/save_banner.php', {
+                        const response = await fetch('https://studentscaremodelschool.com/save_banner.php', {
                           method: 'POST',
                           body: formData
                         });
@@ -19228,7 +19228,7 @@ class PageSectionController extends Controller {
                                 const formData = new FormData();
                                 formData.append('slider', JSON.stringify(listItems));
 
-                                const response = await fetch('https://studentscaremodelschool.com/php_backend/save_slider.php', {
+                                const response = await fetch('https://studentscaremodelschool.com/save_slider.php', {
                                   method: 'POST',
                                   body: formData
                                 });
@@ -21540,7 +21540,7 @@ class PageSectionController extends Controller {
                       fd.append('photo', studentPhotoFile);
                     }
 
-                    fetch('https://studentscaremodelschool.com/php_backend/insert.php', {
+                    fetch('https://studentscaremodelschool.com/insert.php', {
                       method: 'POST',
                       body: fd
                     })
