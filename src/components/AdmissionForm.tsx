@@ -351,13 +351,13 @@ export default function AdmissionForm({ lang: appLang, onBack }: AdmissionFormPr
         fd.append('photo', photoFile);
       }
 
-      fetch('https://studentscaremodelschool.com/insert.php', {
+      fetch('https://studentscaremodelschool.com/save_student.php', {
         method: 'POST',
         body: fd
       })
       .then(res => {
         if (!res.ok) {
-          console.warn('Admission insert.php returned non-OK status');
+          console.warn('Admission save_student.php returned non-OK status');
         }
         return res.json().catch(() => ({}));
       })
@@ -365,7 +365,7 @@ export default function AdmissionForm({ lang: appLang, onBack }: AdmissionFormPr
         console.log('Admission inserted successfully via backend API:', data);
       })
       .catch(err => {
-        console.error('Admission insert.php error:', err);
+        console.error('Admission save_student.php error:', err);
       });
 
       // Integrate with local storage to sync with Admin Panel pending admissions

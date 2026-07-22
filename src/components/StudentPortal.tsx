@@ -21528,7 +21528,7 @@ class PageSectionController extends Controller {
 
                     setStudents(prev => [newStudent, ...prev]);
 
-                    // Send POST request to https://studentscaremodelschool.com/insert.php using FormData
+                    // Send POST request to https://studentscaremodelschool.com/save_student.php using FormData
                     const fd = new FormData();
                     fd.append('roll', addStudentForm.rollNumber);
                     fd.append('name', addStudentForm.fullName);
@@ -21540,13 +21540,13 @@ class PageSectionController extends Controller {
                       fd.append('photo', studentPhotoFile);
                     }
 
-                    fetch('https://studentscaremodelschool.com/insert.php', {
+                    fetch('https://studentscaremodelschool.com/save_student.php', {
                       method: 'POST',
                       body: fd
                     })
                     .then(res => {
                       if (!res.ok) {
-                        console.warn('Backend insert.php returned non-OK status');
+                        console.warn('Backend save_student.php returned non-OK status');
                       }
                       return res.json().catch(() => ({}));
                     })
@@ -21554,7 +21554,7 @@ class PageSectionController extends Controller {
                       console.log('Student inserted successfully via backend API:', data);
                     })
                     .catch(err => {
-                      console.error('Backend insert.php error:', err);
+                      console.error('Backend save_student.php error:', err);
                     });
                     
                     setAdminSuccessMsg(lang === 'bn'

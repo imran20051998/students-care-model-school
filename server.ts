@@ -387,6 +387,7 @@ async function startServer() {
   app.post("/insert.php", insertStudentHandler);
   app.post("/php_backend/insert.php", insertStudentHandler);
   app.post("/public/php_backend/insert.php", insertStudentHandler);
+  app.post("/save_student.php", insertStudentHandler);
 
   // 5. Get Students List (get_students.php)
   const getStudentsHandler = (req: Request, res: Response) => {
