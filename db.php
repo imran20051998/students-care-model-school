@@ -79,3 +79,25 @@ $conn->query("CREATE TABLE IF NOT EXISTS `students` (
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY `unique_roll_class` (`class`, `roll`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci AUTO_INCREMENT=1024;");
+
+$conn->query("CREATE TABLE IF NOT EXISTS `users` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `username` VARCHAR(100) NOT NULL UNIQUE,
+    `password` VARCHAR(255) NOT NULL,
+    `role` ENUM('admin', 'teacher', 'guardian', 'accountant') NOT NULL,
+    `name` VARCHAR(255) NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+
+// Seed initial users if table is empty
+$res = $conn->query("SELECT COUNT(*) as count FROM `users`");
+$row = $res->fetch_assoc();
+if ($row['count'] == 0) {
+    $defaultPass = password_hash('password123', PASSWORD_DEFAULT);
+    $conn->query("INSERT INTO `users` (`username`, `password`, `role`, `name`) VALUES 
+        ('admin', '$defaultPass', 'admin', 'Administrator'),
+        ('teacher', '$defaultPass', 'teacher', 'Teacher'),
+        ('guardian', '$defaultPass', 'guardian', 'Guardian'),
+        ('accountant', '$defaultPass', 'accountant', 'Accountant')
+    ");
+}

@@ -435,18 +435,51 @@ async function startServer() {
     const roll = body.roll ? body.roll.trim() : "";
     const phone = body.phone ? body.phone.trim() : "";
 
-    // Admin check
-    if (username === "admin" && (password === "admin123" || password === "admin")) {
-      return res.json({
-        status: "success",
-        role: "admin",
-        message: "Admin successfully authenticated!",
-        user: {
-          name: "Administrator",
-          username: "admin",
+    if (username) {
+      const cleanUser = username.toLowerCase();
+      const cleanPass = password.toLowerCase();
+
+      if (cleanUser === "admin" && (cleanPass === "admin" || cleanPass === "admin123")) {
+        return res.json({
+          status: "success",
           role: "admin",
-        },
-      });
+          message: "Admin successfully authenticated!",
+          user: { name: "Administrator", username: "admin", role: "admin" },
+        });
+      } else if (cleanUser === "teacher" && (cleanPass === "teacher" || cleanPass === "teacher123")) {
+        return res.json({
+          status: "success",
+          role: "teacher",
+          message: "Teacher successfully authenticated!",
+          user: { name: "Teacher Panel", username: "teacher", role: "teacher" },
+        });
+      } else if ((cleanUser === "guardian" || cleanUser === "student") && (cleanPass === "guardian" || cleanPass === "student" || cleanPass === "guardian123")) {
+        return res.json({
+          status: "success",
+          role: "student",
+          message: "Guardian / Student successfully authenticated!",
+          user: { name: "Guardian Portal", username: "guardian", role: "student" },
+        });
+      } else if (cleanUser === "accountant" && (cleanPass === "accountant" || cleanPass === "accountant123")) {
+        return res.json({
+          status: "success",
+          role: "accountant",
+          message: "Accountant successfully authenticated!",
+          user: { name: "Accounts Department", username: "accountant", role: "accountant" },
+        });
+      } else if (cleanUser === "superadmin" && (cleanPass === "superadmin" || cleanPass === "superadmin123")) {
+        return res.json({
+          status: "success",
+          role: "superadmin",
+          message: "Super Admin successfully authenticated!",
+          user: { name: "Super Administrator", username: "superadmin", role: "superadmin" },
+        });
+      } else {
+        return res.status(401).json({
+          status: "error",
+          message: `Authentication failed: Invalid credentials provided for ${username}.`,
+        });
+      }
     }
 
     // Student Check

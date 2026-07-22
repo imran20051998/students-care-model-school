@@ -1,7 +1,7 @@
 <?php
 /**
  * login.php
- * Handles student or admin login
+ * Handles student, teacher, guardian, accountant, admin, and superadmin login
  */
 
 require_once 'db.php';
@@ -22,8 +22,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $phone = isset($input['phone']) ? $conn->real_escape_string(trim($input['phone'])) : '';
 
     if (!empty($username)) {
-        // Admin or staff check
-        if ($username === 'admin' && ($password === 'admin123' || $password === 'admin')) {
+        $cleanUser = strtolower($username);
+        $cleanPass = strtolower($password);
+
+        if ($cleanUser === 'admin' && ($cleanPass === 'admin' || $cleanPass === 'admin123')) {
             $response = [
                 "status" => "success",
                 "role" => "admin",
@@ -34,8 +36,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     "role" => "admin"
                 ]
             ];
+        } else if ($cleanUser === 'teacher' && ($cleanPass === 'teacher' || $cleanPass === 'teacher123')) {
+            $response = [
+                "status" => "success",
+                "role" => "teacher",
+                "message" => "Teacher successfully authenticated!",
+                "user" => [
+                    "name" => "Teacher Panel",
+                    "username" => "teacher",
+                    "role" => "teacher"
+                ]
+            ];
+        } else if (($cleanUser === 'guardian' || $cleanUser === 'student') && ($cleanPass === 'guardian' || $cleanPass === 'student' || $cleanPass === 'guardian123')) {
+            $response = [
+                "status" => "success",
+                "role" => "student",
+                "message" => "Guardian / Student successfully authenticated!",
+                "user" => [
+                    "name" => "Guardian Portal",
+                    "username" => "guardian",
+                    "role" => "student"
+                ]
+            ];
+        } else if ($cleanUser === 'accountant' && ($cleanPass === 'accountant' || $cleanPass === 'accountant123')) {
+            $response = [
+                "status" => "success",
+                "role" => "accountant",
+                "message" => "Accountant successfully authenticated!",
+                "user" => [
+                    "name" => "Accounts Department",
+                    "username" => "accountant",
+                    "role" => "accountant"
+                ]
+            ];
+        } else if ($cleanUser === 'superadmin' && ($cleanPass === 'superadmin' || $cleanPass === 'superadmin123')) {
+            $response = [
+                "status" => "success",
+                "role" => "superadmin",
+                "message" => "Super Admin successfully authenticated!",
+                "user" => [
+                    "name" => "Super Administrator",
+                    "username" => "superadmin",
+                    "role" => "superadmin"
+                ]
+            ];
         } else {
-            $response['message'] = "Authentication failed: Invalid admin credentials.";
+            $response['message'] = "Authentication failed: Invalid credentials provided for " . htmlspecialchars($username) . ".";
         }
     } else if (!empty($class) && !empty($roll) && !empty($phone)) {
         // Student login

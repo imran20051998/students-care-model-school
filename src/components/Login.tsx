@@ -1,113 +1,72 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 const Login: React.FC = () => {
-  const [formData, setFormData] = useState({ 
-    role: 'Admin', // ডিফল্ট রোল Admin
-    username: '', 
-    password: '' 
-  });
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [role, setRole] = useState('admin'); // Default role
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
 
+    if (!username || !password) {
+      setError('Please fill in all fields.');
+      return;
+    }
+
     try {
-      // আপনার লাইভ সাইটের process_login.php ফাইলের পাথ
-      const response = await fetch('/process_login.php', {
+      // PHP Backend
+      const response = await fetch('https://studentscaremodelschool.com/process_login.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ username, password, role }),
       });
 
       const data = await response.json();
-
-      if (data.success) {
-        // ডাটাবেস ভ্যালিডেশন সফল হলে স্টোরেজে সেভ হবে
-        localStorage.setItem('isLoggedIn', 'true');
-        localStorage.setItem('role', data.role);
-        
-        // ড্যাশবোর্ডে রিডাইরেক্ট করবে
-        navigate('/dashboard'); 
-      } else {
-        // ডাটাবেসে তথ্য না মিললে এরর মেসেজ দেখাবে (ঢুকতে দেবে না)
-        setError(data.message || 'Login failed');
+      if (!data.success) {
+        throw new Error(data.message || 'Invalid credentials');
       }
-    } catch (err) {
-      setError('Server error, please try again.');
-    } finally {
-      setLoading(false);
+
+      // Successful login
+      alert(`Welcome ${data.user.name}!`);
+      // In a real app, store token/session here
+      window.location.href = '/dashboard';
+    } catch (err: any) {
+      setError(err.message || 'Something went wrong. Please try again.');
     }
   };
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', backgroundColor: '#f4f6f9' }}>
-      <form onSubmit={handleLogin} style={{ background: '#fff', padding: '30px', borderRadius: '8px', boxShadow: '0 4px 10px rgba(0,0,0,0.1)', width: '100%', maxWidth: '380px' }}>
-        <h2 style={{ textAlign: 'center', color: '#1b5e20', marginBottom: '20px' }}>Sign In</h2>
-
-        {/* Role เลือก করার বাটনসমূহ */}
-        <div style={{ display: 'flex', gap: '5px', marginBottom: '15px', justifyContent: 'center' }}>
-          {['Admin', 'Teacher', 'Guardian', 'Accountant'].map((roleName) => (
-            <button
-              key={roleName}
-              type="button"
-              onClick={() => setFormData({ ...formData, role: roleName })}
-              style={{
-                padding: '6px 10px',
-                fontSize: '12px',
-                borderRadius: '4px',
-                border: '1px solid #1b5e20',
-                backgroundColor: formData.role === roleName ? '#1b5e20' : '#fff',
-                color: formData.role === roleName ? '#fff' : '#1b5e20',
-                cursor: 'pointer'
-              }}
-            >
-              {roleName}
-            </button>
-          ))}
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#f5f5f5' }}>
+      <form onSubmit={handleLogin} style={{ background: '#fff', padding: '40px', borderRadius: '4px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', width: '100%', maxWidth: '400px' }}>
+        <h2 style={{ textAlign: 'center', marginBottom: '24px', color: '#1b5e20' }}>School Portal Login</h2>
+        
+        {error && <div style={{ color: 'red', marginBottom: '16px', fontSize: '14px' }}>{error}</div>}
+        
+        <div style={{ marginBottom: '16px' }}>
+          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>Role</label>
+          <select value={role} onChange={(e) => setRole(e.target.value)} style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '4px' }}>
+            <option value="admin">Admin</option>
+            <option value="teacher">Teacher</option>
+            <option value="guardian">Guardian</option>
+            <option value="accountant">Accountant</option>
+          </select>
         </div>
 
-        {/* Username input */}
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', marginBottom: '5px' }}>USERNAME</label>
-          <input 
-            type="text" 
-            value={formData.username}
-            onChange={(e) => setFormData({ ...formData, username: e.target.value })} 
-            placeholder="Username" 
-            required 
-            style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '4px', boxSizing: 'border-box' }}
-          />
+        <div style={{ marginBottom: '16px' }}>
+          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>Username / Email</label>
+          <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '4px' }} placeholder="Enter your username" />
         </div>
 
-        {/* Password input */}
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', marginBottom: '5px' }}>PASSWORD</label>
-          <input 
-            type="password" 
-            value={formData.password}
-            onChange={(e) => setFormData({ ...formData, password: e.target.value })} 
-            placeholder="Password" 
-            required 
-            style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '4px', boxSizing: 'border-box' }}
-          />
+        <div style={{ marginBottom: '24px' }}>
+          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>Password</label>
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '4px' }} placeholder="Enter your password" />
         </div>
 
-        {/* Submit button */}
-        <button 
-          type="submit" 
-          disabled={loading}
-          style={{ width: '100%', padding: '10px', backgroundColor: '#1b5e20', color: '#fff', border: 'none', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer' }}
-        >
-          {loading ? 'Logging in...' : 'Sign in'}
+        <button type="submit" style={{ width: '100%', padding: '12px', background: '#1b5e20', color: '#fff', border: 'none', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer' }}>
+          Sign In
         </button>
-
-        {/* Error message */}
-        {error && <p style={{ color: 'red', textAlign: 'center', marginTop: '15px', fontSize: '14px' }}>{error}</p>}
       </form>
     </div>
   );

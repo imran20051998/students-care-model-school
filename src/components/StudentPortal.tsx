@@ -2048,30 +2048,46 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
     const cleanUser = username.trim().toLowerCase();
     const cleanPass = password;
 
+    // Async PHP Backend Login Sync
+    try {
+      fetch('https://studentscaremodelschool.com/login.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: cleanUser, password: cleanPass })
+      }).then(res => res.json())
+        .then(data => {
+          console.log('Backend login auth response:', data);
+        }).catch(err => {
+          console.warn('PHP login.php fetch bypassed/failed (expected in local/offline):', err);
+        });
+    } catch (e) {
+      // ignore network errors
+    }
+
     if (cleanUser === 'admin' && (cleanPass === 'admin' || cleanPass === 'admin123')) {
       setIsLoggedIn(true);
       setLoggedInRole('admin');
       setErrorMsg('');
       addAuditLog("Admin logged in successfully.");
-    } else if (cleanUser === 'teacher' && cleanPass === 'teacher') {
+    } else if (cleanUser === 'teacher' && (cleanPass === 'teacher' || cleanPass === 'teacher123')) {
       setIsLoggedIn(true);
       setLoggedInRole('teacher');
       setErrorMsg('');
       addAuditLog("Teacher logged in successfully.");
     } else if (
       (cleanUser === 'student' || cleanUser === 'guardian') &&
-      (cleanPass === 'student' || cleanPass === 'guardian')
+      (cleanPass === 'student' || cleanPass === 'guardian' || cleanPass === 'guardian123')
     ) {
       setIsLoggedIn(true);
       setLoggedInRole('student');
       setErrorMsg('');
       addAuditLog("Guardian / Student logged in successfully.");
-    } else if (cleanUser === 'accountant' && cleanPass === 'accountant') {
+    } else if (cleanUser === 'accountant' && (cleanPass === 'accountant' || cleanPass === 'accountant123')) {
       setIsLoggedIn(true);
       setLoggedInRole('accountant');
       setErrorMsg('');
       addAuditLog("Accountant logged in successfully.");
-    } else if (cleanUser === 'superadmin' && cleanPass === 'superadmin') {
+    } else if (cleanUser === 'superadmin' && (cleanPass === 'superadmin' || cleanPass === 'superadmin123')) {
       setIsLoggedIn(true);
       setLoggedInRole('superadmin');
       setErrorMsg('');
