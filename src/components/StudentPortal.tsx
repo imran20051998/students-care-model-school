@@ -17341,7 +17341,7 @@ async function buildAttendanceExcelSheet(monthName, className, section, students
                         <label className="text-[10px] font-black uppercase tracking-wider text-slate-500">WEBSITE</label>
                         <input 
                           type="text" 
-                          value={(frontendData.settings as any).website || "studentscaremodelschool.com"} 
+                          value={(frontendData.settings as any).website || "smartschoolmanagementsytem.com"} 
                           onChange={(e) => setFrontendData(prev => ({ ...prev, settings: { ...prev.settings, website: e.target.value } }))}
                           className="w-full px-3.5 py-2.5 bg-white border border-slate-200 focus:bg-slate-50 rounded-lg focus:outline-none focus:border-blue-500 font-extrabold text-xs" 
                         />
@@ -21561,16 +21561,19 @@ class PageSectionController extends Controller {
                       body: fd
                     })
                     .then(res => {
-                      if (!res.ok) {
-                        console.warn('Backend insert.php returned non-OK status');
-                      }
-                      return res.json().catch(() => ({}));
+                      return res.json().then(data => {
+                        if (!res.ok) {
+                          console.error('Backend insert.php error:', data);
+                          throw new Error(data.message || 'Server error');
+                        }
+                        return data;
+                      });
                     })
                     .then(data => {
                       console.log('Student inserted successfully via backend API:', data);
                     })
                     .catch(err => {
-                      console.error('Backend save_student.php error:', err);
+                      console.error('Backend insert.php error:', err);
                     });
                     
                     setAdminSuccessMsg(lang === 'bn'
