@@ -13,10 +13,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-$servername = getenv('DB_HOST') ?: "localhost";
-$username = getenv('DB_USER') ?: "root";
-$password = getenv('DB_PASSWORD') ?: "";
-$dbname = getenv('DB_NAME') ?: "school_admin_db";
+$servername = "localhost";
+$username = "u451653929_admin";
+$password = "Cisfa1998$#@";
+$dbname = "u451653929_StudentsCare";
 
 // Create connection
 $conn = new mysqli($servername, $username, $password, $dbname);
