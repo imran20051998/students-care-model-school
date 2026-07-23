@@ -4,6 +4,24 @@ import fs from "fs";
 import multer from "multer";
 import { createServer as createViteServer } from "vite";
 import { ExamSeatPlan } from "./src/db/seatPlanSchema";
+import mysql from "mysql2/promise";
+
+let pool: mysql.Pool | null = null;
+
+function getPool(): mysql.Pool {
+  if (!pool) {
+    pool = mysql.createPool({
+      host: "localhost",
+      user: "u398502275_admin",
+      password: "Cisfa1998$#@",
+      database: "u398502275_StudentsCare",
+      waitForConnections: true,
+      connectionLimit: 10,
+      queueLimit: 0,
+    });
+  }
+  return pool;
+}
 
 // Set up directory paths
 const UPLOADS_DIR = path.join(process.cwd(), "uploads");
@@ -316,8 +334,8 @@ async function startServer() {
   app.post("/public/php_backend/save_slider.php", saveSliderHandler);
 
   // 4. Insert Student (insert.php)
-  const insertStudentHandler = (req: Request, res: Response) => {
-    upload.single("photo")(req, res, (err) => {
+  const insertStudentHandler = async (req: Request, res: Response) => {
+    upload.single("photo")(req, res, async (err) => {
       if (err) {
         return res.status(400).json({ status: "error", message: err.message });
       }
@@ -356,32 +374,27 @@ async function startServer() {
         photoPath = "uploads/" + req.file.filename;
       }
 
-      const newStudent: Student = {
-        sl: db.students.length > 0 ? Math.max(...db.students.map((s) => s.sl)) + 1 : 1001,
-        photo: photoPath,
-        roll,
-        name,
-        class: className,
-        section,
-        guardian,
-        phone,
-        created_at: new Date().toISOString(),
-      };
+      try {
+        await getPool().execute(
+          "INSERT INTO students (name, roll, class, section, mobile_number, image_url) VALUES (?, ?, ?, ?, ?, ?)",
+          [name, roll, className, section, phone, photoPath]
+        );
 
-      db.students.push(newStudent);
-      saveDb(db);
-
-      res.status(201).json({
-        status: "success",
-        message: "Student record has been successfully inserted into the database table!",
-        student: {
-          name: newStudent.name,
-          roll: newStudent.roll,
-          class: newStudent.class,
-          section: newStudent.section,
-          photo: newStudent.photo || "No Photo Uploaded",
-        },
-      });
+        res.status(201).json({
+          status: "success",
+          message: "Student record has been successfully inserted into the database table!",
+          student: {
+            name,
+            roll,
+            class: className,
+            section,
+            photo: photoPath || "No Photo Uploaded",
+          },
+        });
+      } catch (e) {
+        console.error("Database error:", e);
+        res.status(500).json({ status: "error", message: "Failed to insert student into database." });
+      }
     });
   };
   app.post("/insert.php", insertStudentHandler);
