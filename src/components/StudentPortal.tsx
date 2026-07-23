@@ -21544,7 +21544,7 @@ class PageSectionController extends Controller {
 
                     setStudents(prev => [newStudent, ...prev]);
 
-                    // Send POST request to https://smartschoolmanagementsytem.com/save_student.php using FormData
+                    // Send POST request to https://smartschoolmanagementsytem.com/insert.php using FormData
                     const fd = new FormData();
                     fd.append('roll', addStudentForm.rollNumber);
                     fd.append('name', addStudentForm.fullName);
@@ -21556,13 +21556,13 @@ class PageSectionController extends Controller {
                       fd.append('photo', studentPhotoFile);
                     }
 
-                    fetch('https://smartschoolmanagementsytem.com/save_student.php', {
+                    fetch('https://smartschoolmanagementsytem.com/insert.php', {
                       method: 'POST',
                       body: fd
                     })
                     .then(res => {
                       if (!res.ok) {
-                        console.warn('Backend save_student.php returned non-OK status');
+                        console.warn('Backend insert.php returned non-OK status');
                       }
                       return res.json().catch(() => ({}));
                     })
