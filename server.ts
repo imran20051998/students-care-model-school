@@ -335,11 +335,15 @@ async function startServer() {
 
   // 4. Insert Student (insert.php)
   const insertStudentHandler = async (req: Request, res: Response) => {
+    console.log("Received request for /insert.php");
+    console.log("Body:", req.body);
     upload.single("photo")(req, res, async (err) => {
       if (err) {
+        console.error("Upload error:", err);
         return res.status(400).json({ status: "error", message: err.message });
       }
 
+      console.log("File:", req.file);
       const body = req.body;
       const roll = body.roll;
       const name = body.name;
@@ -348,7 +352,10 @@ async function startServer() {
       const guardian = body.guardian || "N/A";
       const phone = body.phone;
 
+      console.log("Extracted Data:", { roll, name, className, section, guardian, phone });
+
       if (!roll || !name || !className || !phone) {
+        console.log("Validation failed");
         return res.status(400).json({
           status: "error",
           message: "Validation Failed: Roll, Name, Class, and Phone Number are mandatory.",

@@ -351,7 +351,7 @@ export default function AdmissionForm({ lang: appLang, onBack }: AdmissionFormPr
         fd.append('photo', photoFile);
       }
 
-      fetch('https://smartschoolmanagementsytem.com/insert.php', {
+      fetch('/insert.php', {
         method: 'POST',
         body: fd
       })

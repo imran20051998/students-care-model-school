@@ -21556,7 +21556,7 @@ class PageSectionController extends Controller {
                       fd.append('photo', studentPhotoFile);
                     }
 
-                    fetch('https://smartschoolmanagementsytem.com/insert.php', {
+                    fetch('/insert.php', {
                       method: 'POST',
                       body: fd
                     })
