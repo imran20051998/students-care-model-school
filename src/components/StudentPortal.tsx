@@ -24163,31 +24163,6 @@ class PageSectionController extends Controller {
 
             {/* Setup / Links block */}
             <div className="space-y-4 pt-4 text-center border-t border-gray-200/50">
-              {/* First time account setup */}
-              <button
-                type="button"
-                onClick={() => {
-                  if (selectedRole === 'student') {
-                    setUsername('guardian');
-                    setPassword('guardian');
-                  } else {
-                    setUsername(selectedRole);
-                    setPassword(selectedRole);
-                  }
-                  setErrorMsg('');
-                  alert(lang === 'bn' 
-                    ? "পরীক্ষামূলক ডেমো ক্রেডেনশিয়াল পূর্ণ হয়েছে! সাইন ইন বাটনে ক্লিক করুন।" 
-                    : "Demo credentials are set up! Simply click 'Sign in'."
-                  );
-                }}
-                className="w-full flex items-center justify-center gap-1.5 text-xs text-gray-400 hover:text-gray-700 transition-colors font-semibold cursor-pointer"
-              >
-                <Sparkles className="h-3.5 w-3.5 text-[#025644]" />
-                <span>
-                  {lang === 'bn' ? "প্রথমবার? ডিফল্ট পোর্টাল অ্যাকাউন্ট তৈরি করুন" : "First time? Create default portal accounts"}
-                </span>
-              </button>
-
               {/* Apply for admission */}
               <p className="text-xs text-gray-500 font-bold">
                 {lang === 'bn' ? "নতুন শিক্ষার্থী? " : "New student? "}
@@ -24209,19 +24184,6 @@ class PageSectionController extends Controller {
                   {lang === 'bn' ? "ভর্তির জন্য আবেদন কর" : "Apply for admission"}
                 </button>
               </p>
-
-              {/* Need help via Whatsapp */}
-              <div className="flex justify-center items-center gap-1.5 pt-1 text-xs text-gray-500 font-bold">
-                <MessageSquare className="h-4 w-4 text-[#025644]" />
-                <a 
-                  href="https://wa.me/8801814913049" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="text-[#025644] hover:underline font-extrabold cursor-pointer"
-                >
-                  {lang === 'bn' ? "সহায়তা প্রয়োজন? হোয়াটসঅ্যাপে যোগাযোগ করুন" : "Need Help? Contact Admin on WhatsApp"}
-                </a>
-              </div>
             </div>
 
           </div>
