@@ -169,7 +169,7 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
   useEffect(() => {
     const fetchLiveBannerSettings = async () => {
       try {
-        const res = await fetch('https://studentscaremodelschool.com/get_banner.php');
+        const res = await fetch('https://smartschoolmanagementsytem.com/get_banner.php');
         const text = await res.text();
         
         // If the PHP file is returned as raw source code or HTML, parse error is avoided.
@@ -244,7 +244,7 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
     }
 
     try {
-      const response = await fetch('https://studentscaremodelschool.com/change_password.php', {
+      const response = await fetch('https://smartschoolmanagementsytem.com/change_password.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1800,7 +1800,7 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
   const saveFrontendDataToServer = async (customMsgBn?: string, customMsgEn?: string) => {
     if (!frontendData) return;
     try {
-      const response = await fetch('https://studentscaremodelschool.com/save_frontend_data.php', {
+      const response = await fetch('https://smartschoolmanagementsytem.com/save_frontend_data.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -2050,7 +2050,7 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
 
     // Async PHP Backend Login Sync
     try {
-      fetch('https://studentscaremodelschool.com/login.php', {
+      fetch('https://smartschoolmanagementsytem.com/login.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: cleanUser, password: cleanPass })
@@ -17157,7 +17157,7 @@ async function buildAttendanceExcelSheet(monthName, className, section, students
                         formData.append('bannerGradient', (frontendData.settings as any).bannerGradient ? '1' : '0');
                         formData.append('logoUrl', frontendData.settings.logoUrl || '');
 
-                        const response = await fetch('https://studentscaremodelschool.com/save_banner.php', {
+                        const response = await fetch('https://smartschoolmanagementsytem.com/save_banner.php', {
                           method: 'POST',
                           body: formData
                         });
@@ -19244,7 +19244,7 @@ class PageSectionController extends Controller {
                                 const formData = new FormData();
                                 formData.append('slider', JSON.stringify(listItems));
 
-                                const response = await fetch('https://studentscaremodelschool.com/save_slider.php', {
+                                const response = await fetch('https://smartschoolmanagementsytem.com/save_slider.php', {
                                   method: 'POST',
                                   body: formData
                                 });
@@ -21544,7 +21544,7 @@ class PageSectionController extends Controller {
 
                     setStudents(prev => [newStudent, ...prev]);
 
-                    // Send POST request to https://studentscaremodelschool.com/save_student.php using FormData
+                    // Send POST request to https://smartschoolmanagementsytem.com/save_student.php using FormData
                     const fd = new FormData();
                     fd.append('roll', addStudentForm.rollNumber);
                     fd.append('name', addStudentForm.fullName);
@@ -21556,7 +21556,7 @@ class PageSectionController extends Controller {
                       fd.append('photo', studentPhotoFile);
                     }
 
-                    fetch('https://studentscaremodelschool.com/save_student.php', {
+                    fetch('https://smartschoolmanagementsytem.com/save_student.php', {
                       method: 'POST',
                       body: fd
                     })

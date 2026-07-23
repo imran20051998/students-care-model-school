@@ -132,7 +132,7 @@ export default function App() {
       let merged = getMergedFrontendData(saved);
 
       try {
-        const res = await fetch('https://studentscaremodelschool.com/get_banner.php');
+        const res = await fetch('https://smartschoolmanagementsytem.com/get_banner.php');
         const text = await res.text();
         
         // If the PHP file is returned as raw source code or HTML, parse error is avoided.
