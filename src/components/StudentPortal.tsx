@@ -169,7 +169,7 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
   useEffect(() => {
     const fetchLiveBannerSettings = async () => {
       try {
-        const res = await fetch('/get_banner.php');
+        const res = await fetch('/api/banner');
         const text = await res.text();
         
         // If the PHP file is returned as raw source code or HTML, parse error is avoided.
@@ -1800,7 +1800,7 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
   const saveFrontendDataToServer = async (customMsgBn?: string, customMsgEn?: string) => {
     if (!frontendData) return;
     try {
-      const response = await fetch('/save_frontend_data.php', {
+      const response = await fetch('/api/frontend-data', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

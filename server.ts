@@ -237,7 +237,7 @@ async function startServer() {
   // API Routes representing PHP Endpoints
   // ==========================================
 
-  // 1. Get Settings & Banner (get_banner.php)
+  // 1. Get Settings & Banner (/api/banner)
   const getBannerHandler = (req: Request, res: Response) => {
     const db = getDb();
     res.json({
@@ -246,11 +246,9 @@ async function startServer() {
       slider: db.slider,
     });
   };
-  app.get("/get_banner.php", getBannerHandler);
-  app.get("/php_backend/get_banner.php", getBannerHandler);
-  app.get("/public/php_backend/get_banner.php", getBannerHandler);
+  app.get("/api/banner", getBannerHandler);
 
-  // 2. Save Settings & Banner (save_banner.php)
+  // 2. Save Settings & Banner (/api/banner)
   const saveBannerHandler = (req: Request, res: Response) => {
     upload.single("logo")(req, res, (err) => {
       if (err) {
@@ -262,7 +260,7 @@ async function startServer() {
 
       let logoUrl = db.settings.logoUrl;
       if (req.file) {
-        logoUrl = "php_backend/uploads/" + req.file.filename;
+        logoUrl = "uploads/" + req.file.filename;
       } else if (body.logoUrl !== undefined) {
         logoUrl = body.logoUrl;
       }
@@ -292,11 +290,9 @@ async function startServer() {
       });
     });
   };
-  app.post("/save_banner.php", saveBannerHandler);
-  app.post("/php_backend/save_banner.php", saveBannerHandler);
-  app.post("/public/php_backend/save_banner.php", saveBannerHandler);
+  app.post("/api/banner", saveBannerHandler);
 
-  // 3. Save Slider (save_slider.php)
+  // 3. Save Slider (/api/slider)
   const saveSliderHandler = (req: Request, res: Response) => {
     const db = getDb();
     let sliderJson = req.body.slider;
@@ -329,21 +325,25 @@ async function startServer() {
       slider: db.slider,
     });
   };
-  app.post("/save_slider.php", saveSliderHandler);
-  app.post("/php_backend/save_slider.php", saveSliderHandler);
-  app.post("/public/php_backend/save_slider.php", saveSliderHandler);
+  app.post("/api/slider", saveSliderHandler);
 
-  // 4. Insert Student (insert.php)
+  // 3.1 Save Frontend Data (/api/frontend-data)
+  const saveFrontendDataHandler = (req: Request, res: Response) => {
+    const db = getDb();
+    const data = req.body;
+    db.settings = { ...db.settings, ...data };
+    saveDb(db);
+    res.json({ status: "success", message: "Data saved" });
+  };
+  app.post("/api/frontend-data", saveFrontendDataHandler);
+
+  // 4. Insert Student (/api/students)
   const insertStudentHandler = async (req: Request, res: Response) => {
-    console.log("Received request for /insert.php");
-    console.log("Body:", req.body);
     upload.single("photo")(req, res, async (err) => {
       if (err) {
-        console.error("Upload error:", err);
         return res.status(400).json({ status: "error", message: err.message });
       }
 
-      console.log("File:", req.file);
       const body = req.body;
       const roll = body.roll;
       const name = body.name;
@@ -351,12 +351,9 @@ async function startServer() {
       const section = body.section || "A";
       const guardian = body.guardian || "N/A";
       const phone = body.phone;
-      const address = body.address || "N/A"; // Handle address
-
-      console.log("Extracted Data:", { roll, name, className, section, guardian, phone, address });
+      const address = body.address || "N/A";
 
       if (!roll || !name || !className || !phone) {
-        console.log("Validation failed");
         return res.status(400).json({
           status: "error",
           message: "Validation Failed: Roll, Name, Class, and Phone Number are mandatory.",
@@ -400,7 +397,6 @@ async function startServer() {
           },
         });
       } catch (e) {
-        console.error("Database error:", e);
         res.status(500).json({
           status: "error",
           message: "Failed to insert student into database: " + (e instanceof Error ? e.message : String(e)),
@@ -408,12 +404,9 @@ async function startServer() {
       }
     });
   };
-  app.post("/insert.php", insertStudentHandler);
-  app.post("/php_backend/insert.php", insertStudentHandler);
-  app.post("/public/php_backend/insert.php", insertStudentHandler);
-  app.post("/save_student.php", insertStudentHandler);
+  app.post("/api/students", insertStudentHandler);
 
-  // 5. Get Students List (get_students.php)
+  // 5. Get Students List (/api/students)
   const getStudentsHandler = (req: Request, res: Response) => {
     const db = getDb();
     const classFilter = req.query.class as string;
@@ -444,11 +437,9 @@ async function startServer() {
       students: filtered,
     });
   };
-  app.get("/get_students.php", getStudentsHandler);
-  app.get("/php_backend/get_students.php", getStudentsHandler);
-  app.get("/public/php_backend/get_students.php", getStudentsHandler);
+  app.get("/api/students", getStudentsHandler);
 
-  // 6. Student Login (login.php)
+  // 6. Student Login (/api/login)
   const loginHandler = (req: Request, res: Response) => {
     const db = getDb();
     const body = req.body;
@@ -542,11 +533,9 @@ async function startServer() {
       message: "Bad Request: Please provide admin or student login details.",
     });
   };
-  app.post("/login.php", loginHandler);
-  app.post("/php_backend/login.php", loginHandler);
-  app.post("/public/php_backend/login.php", loginHandler);
+  app.post("/api/login", loginHandler);
 
-  // 7. Reset Student Password/Phone (reset_password.php)
+  // 7. Reset Student Password/Phone (/api/reset-password)
   const resetPasswordHandler = (req: Request, res: Response) => {
     const db = getDb();
     const body = req.body;
@@ -595,12 +584,9 @@ async function startServer() {
       message: "Student phone contact details successfully updated in the database!",
     });
   };
-  app.post("/reset_password.php", resetPasswordHandler);
-  app.post("/php_backend/reset_password.php", resetPasswordHandler);
-  app.post("/public/php_backend/reset_password.php", resetPasswordHandler);
+  app.post("/api/reset-password", resetPasswordHandler);
 
-
-  // 8. Save Seat Plan (save_seat_plan.php)
+  // 8. Save Seat Plan (/api/seat-plan)
   const saveSeatPlanHandler = (req: Request, res: Response) => {
     const db = getDb();
     const { examTerm, class: className, section, roomNumber, layoutType } = req.body;
@@ -640,9 +626,7 @@ async function startServer() {
       plan: newPlan,
     });
   };
-  app.post("/save_seat_plan.php", saveSeatPlanHandler);
-  app.post("/php_backend/save_seat_plan.php", saveSeatPlanHandler);
-  app.post("/public/php_backend/save_seat_plan.php", saveSeatPlanHandler);
+  app.post("/api/seat-plan", saveSeatPlanHandler);
 
   // 9. Get Student Report (get_report.php / API)
   const getStudentReportHandler = (req: Request, res: Response) => {
