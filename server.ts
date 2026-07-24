@@ -246,7 +246,12 @@ async function startServer() {
       slider: db.slider,
     });
   };
+
+  // নতুন এবং পুরনো উভয় রুটই একসাথে হ্যান্ডেল করার জন্য
   app.get("/api/banner", getBannerHandler);
+  app.get("/get_banner.php", getBannerHandler);
+  app.get("/php_backend/get_banner.php", getBannerHandler);
+  app.get("/public/php_backend/get_banner.php", getBannerHandler);
 
   // 2. Save Settings & Banner (/api/banner)
   const saveBannerHandler = (req: Request, res: Response) => {
