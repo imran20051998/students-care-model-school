@@ -12,9 +12,9 @@ function getPool(): mysql.Pool {
   if (!pool) {
     pool = mysql.createPool({
       host: "localhost",
-      user: "u398502275_admin",
+      user: "u451653929_admin123",
       password: "Cisfa1998$#@",
-      database: "u398502275_StudentsCare",
+      database: "u451653929_AdminControl",
       waitForConnections: true,
       connectionLimit: 10,
       queueLimit: 0,
@@ -351,8 +351,9 @@ async function startServer() {
       const section = body.section || "A";
       const guardian = body.guardian || "N/A";
       const phone = body.phone;
+      const address = body.address || "N/A"; // Handle address
 
-      console.log("Extracted Data:", { roll, name, className, section, guardian, phone });
+      console.log("Extracted Data:", { roll, name, className, section, guardian, phone, address });
 
       if (!roll || !name || !className || !phone) {
         console.log("Validation failed");
@@ -383,8 +384,8 @@ async function startServer() {
 
       try {
         await getPool().execute(
-          "INSERT INTO students (name, roll, class, section, mobile_number, image_url) VALUES (?, ?, ?, ?, ?, ?)",
-          [name, roll, className, section, phone, photoPath]
+          "INSERT INTO students (name, roll, class, section, mobile_number, address, image_url) VALUES (?, ?, ?, ?, ?, ?, ?)",
+          [name, roll, className, section, phone, address, photoPath]
         );
 
         res.status(201).json({
