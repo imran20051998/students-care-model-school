@@ -401,7 +401,10 @@ async function startServer() {
         });
       } catch (e) {
         console.error("Database error:", e);
-        res.status(500).json({ status: "error", message: "Failed to insert student into database." });
+        res.status(500).json({
+          status: "error",
+          message: "Failed to insert student into database: " + (e instanceof Error ? e.message : String(e)),
+        });
       }
     });
   };
