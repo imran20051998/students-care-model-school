@@ -244,7 +244,7 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
     }
 
     try {
-      const response = await fetch('/change_password.php', {
+      const response = await fetch('/api/reset-password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -2050,7 +2050,7 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
 
     // Async PHP Backend Login Sync
     try {
-      fetch('/login.php', {
+      fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: cleanUser, password: cleanPass })
@@ -17157,7 +17157,7 @@ async function buildAttendanceExcelSheet(monthName, className, section, students
                         formData.append('bannerGradient', (frontendData.settings as any).bannerGradient ? '1' : '0');
                         formData.append('logoUrl', frontendData.settings.logoUrl || '');
 
-                        const response = await fetch('https://smartschoolmanagementsytem.com/save_banner.php', {
+                        const response = await fetch('/api/banner', {
                           method: 'POST',
                           body: formData
                         });
@@ -19244,7 +19244,7 @@ class PageSectionController extends Controller {
                                 const formData = new FormData();
                                 formData.append('slider', JSON.stringify(listItems));
 
-                                const response = await fetch('/save_slider.php', {
+                                const response = await fetch('/api/slider', {
                                   method: 'POST',
                                   body: formData
                                 });
@@ -21556,14 +21556,14 @@ class PageSectionController extends Controller {
                       fd.append('photo', studentPhotoFile);
                     }
 
-                    fetch('/insert.php', {
+                    fetch('/api/students', {
                       method: 'POST',
                       body: fd
                     })
                     .then(res => {
                       return res.json().then(data => {
                         if (!res.ok) {
-                          console.error('Backend insert.php error:', data);
+                          console.error('Backend /api/students error:', data);
                           throw new Error(data.message || 'Server error');
                         }
                         return data;
@@ -21573,7 +21573,7 @@ class PageSectionController extends Controller {
                       console.log('Student inserted successfully via backend API:', data);
                     })
                     .catch(err => {
-                      console.error('Backend insert.php error:', err);
+                      console.error('Backend /api/students error:', err);
                     });
                     
                     setAdminSuccessMsg(lang === 'bn'
