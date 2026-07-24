@@ -169,7 +169,7 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
   useEffect(() => {
     const fetchLiveBannerSettings = async () => {
       try {
-        const res = await fetch('https://smartschoolmanagementsytem.com/get_banner.php');
+        const res = await fetch('/get_banner.php');
         const text = await res.text();
         
         // If the PHP file is returned as raw source code or HTML, parse error is avoided.
@@ -244,7 +244,7 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
     }
 
     try {
-      const response = await fetch('https://smartschoolmanagementsytem.com/change_password.php', {
+      const response = await fetch('/change_password.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1800,7 +1800,7 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
   const saveFrontendDataToServer = async (customMsgBn?: string, customMsgEn?: string) => {
     if (!frontendData) return;
     try {
-      const response = await fetch('https://smartschoolmanagementsytem.com/save_frontend_data.php', {
+      const response = await fetch('/save_frontend_data.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -2050,7 +2050,7 @@ export default function StudentPortal({ lang: propLang, onBackToHome }: StudentP
 
     // Async PHP Backend Login Sync
     try {
-      fetch('https://smartschoolmanagementsytem.com/login.php', {
+      fetch('/login.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: cleanUser, password: cleanPass })
@@ -19244,7 +19244,7 @@ class PageSectionController extends Controller {
                                 const formData = new FormData();
                                 formData.append('slider', JSON.stringify(listItems));
 
-                                const response = await fetch('https://smartschoolmanagementsytem.com/save_slider.php', {
+                                const response = await fetch('/save_slider.php', {
                                   method: 'POST',
                                   body: formData
                                 });

@@ -17,7 +17,7 @@ const Login: React.FC = () => {
 
     try {
       // PHP Backend
-      const response = await fetch('https://smartschoolmanagementsytem.com/process_login.php', {
+      const response = await fetch('/login.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password, role }),

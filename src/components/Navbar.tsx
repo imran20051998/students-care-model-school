@@ -520,8 +520,8 @@ export default function Navbar({ activeTab, setActiveTab, lang, setLang, onSearc
             </div>
             <div className="flex items-center gap-1 sm:gap-2 border-t border-white/10 pt-1 sm:pt-1.5">
               <Globe className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 text-blue-200 shrink-0" />
-              <span className="font-bold truncate" title={settings?.website || 'smartschoolmanagementsytem.com'}>
-                {settings?.website || 'smartschoolmanagementsytem.com'}
+              <span className="font-bold truncate" title={settings?.website || 'Students Care'}>
+                {settings?.website || 'Students Care'}
               </span>
             </div>
           </div>

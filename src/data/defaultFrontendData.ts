@@ -42,7 +42,7 @@ export const defaultFullData = {
     addressEn: "Charalakshya, Karnafuli, Chattogram",
     eiin: "471547",
     foundedYear: "2018",
-    website: "smartschoolmanagementsytem.com",
+    website: "Students Care",
     bannerColor: "#1E63D3",
     bannerFontSize: 32,
     bannerGradient: true,
