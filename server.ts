@@ -11,7 +11,7 @@ let pool: mysql.Pool | null = null;
 function getPool(): mysql.Pool {
   if (!pool) {
     pool = mysql.createPool({
-      host: "localhost",
+      host: "srv613.hstgr.io",
       user: "u451653929_admin123",
       password: "Cisfa1998$#@",
       database: "u451653929_AdminControl",
